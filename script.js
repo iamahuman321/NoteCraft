@@ -672,6 +672,14 @@ function showNotesPage() {
   const fab = document.getElementById("addNoteBtn");
   if (fab) fab.classList.remove("hidden");
   
+  // Show search section on notes page
+  const searchSection = document.getElementById("searchSection");
+  if (searchSection) searchSection.style.display = "block";
+  
+  // Update main content margin for search section
+  const mainContent = document.querySelector(".main-content");
+  if (mainContent) mainContent.style.marginTop = "calc(var(--header-height) + 64px)";
+  
   // Force refresh the notes view to show latest changes
   setTimeout(() => {
     renderNotes();
@@ -698,6 +706,14 @@ function showEditorPage() {
   
   const fab = document.getElementById("addNoteBtn");
   if (fab) fab.classList.add("hidden");
+  
+  // Hide search section on editor page
+  const searchSection = document.getElementById("searchSection");
+  if (searchSection) searchSection.style.display = "none";
+  
+  // Update main content margin without search section
+  const mainContent = document.querySelector(".main-content");
+  if (mainContent) mainContent.style.marginTop = "var(--header-height)";
   
   // Setup real-time collaboration if note is shared
   if (currentNote && currentNote.isShared && currentNote.sharedId) {
