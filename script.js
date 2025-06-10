@@ -1535,6 +1535,9 @@ function setupRealtimeCollaboration(sharedId) {
   // Update presence to show user is actively editing
   updatePresence(sharedId, { status: 'editing' });
   
+  // Show collaboration status indicator
+  showCollaborationStatus();
+  
   collaborativeEditingEnabled = true;
   console.log('Real-time collaboration enabled for shared note:', sharedId);
 }
@@ -1550,6 +1553,9 @@ function cleanupRealtimeCollaboration(sharedId) {
   if (window.authFunctions?.updatePresence) {
     window.authFunctions.updatePresence(sharedId, { status: 'idle' });
   }
+  
+  // Hide collaboration status indicator
+  hideCollaborationStatus();
   
   collaborativeEditingEnabled = false;
 }
@@ -1570,6 +1576,20 @@ function showCollaboratorActivity(userId, action) {
         showToast(`${userName} ${action} this note`, 'info');
       }
     });
+  }
+}
+
+function showCollaborationStatus() {
+  const collaborationStatus = document.getElementById('collaborationStatus');
+  if (collaborationStatus) {
+    collaborationStatus.style.display = 'block';
+  }
+}
+
+function hideCollaborationStatus() {
+  const collaborationStatus = document.getElementById('collaborationStatus');
+  if (collaborationStatus) {
+    collaborationStatus.style.display = 'none';
   }
 }
 
