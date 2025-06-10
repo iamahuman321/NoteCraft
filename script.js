@@ -110,6 +110,9 @@ function initializeApp() {
           updateFilterChips();
         }
         
+        // Load shared shopping lists for all users (signed in and guest)
+        loadSharedShoppingLists();
+        
         updateShareButtonVisibility();
         updateSidebarAuth();
       });
@@ -707,6 +710,9 @@ function showShoppingPage() {
   // Clean up home page sync when leaving notes page
   cleanupHomePageSync();
   
+  // Setup real-time shopping list sync
+  setupShoppingListSync();
+  
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
   const shoppingPage = document.getElementById("shoppingPage");
   if (shoppingPage) shoppingPage.classList.add("active");
@@ -802,20 +808,98 @@ function deleteShoppingItem(category, index) {
 function saveShoppingLists() {
   localStorage.setItem("shoppingLists", JSON.stringify(shoppingLists));
   
-  // Save to Firebase if user is signed in
+  // Save to Firebase with a universal shared shopping list ID
   const currentUser = window.authFunctions?.getCurrentUser();
   if (currentUser && window.authFunctions?.updateSharedNote) {
     try {
-      // Use a shared shopping list ID for all family members
-      const shoppingListId = `shopping_${currentUser.uid.substring(0, 8)}`;
-      window.authFunctions.updateSharedNote(shoppingListId, {
+      // Use a universal shopping list ID that all users share
+      const universalShoppingListId = "family_shopping_lists";
+      window.authFunctions.updateSharedNote(universalShoppingListId, {
         shoppingLists: shoppingLists,
         type: 'shoppingList',
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        lastUpdatedBy: currentUser.displayName || currentUser.email
       });
     } catch (error) {
       console.error("Error saving shopping lists to Firebase:", error);
     }
+  }
+}
+
+let shoppingListListener = null;
+
+function setupShoppingListSync() {
+  if (!window.database) return;
+  
+  // Clean up existing listener
+  if (shoppingListListener) {
+    cleanupShoppingListSync();
+  }
+  
+  const shoppingListRef = window.database.ref('sharedNotes/family_shopping_lists');
+  
+  shoppingListListener = shoppingListRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data && data.shoppingLists) {
+      // Update local shopping lists with Firebase data
+      shoppingLists = data.shoppingLists;
+      localStorage.setItem("shoppingLists", JSON.stringify(shoppingLists));
+      
+      // Re-render current shopping category if user is viewing one
+      if (currentShoppingCategory) {
+        renderShoppingList(currentShoppingCategory);
+      }
+    }
+  });
+}
+
+function cleanupShoppingListSync() {
+  if (shoppingListListener && window.database) {
+    window.database.ref('sharedNotes/family_shopping_lists').off('value', shoppingListListener);
+    shoppingListListener = null;
+  }
+}
+
+// Load shared shopping lists for all users
+function loadSharedShoppingLists() {
+  if (window.database) {
+    window.database.ref('sharedNotes/family_shopping_lists').once('value')
+      .then((snapshot) => {
+        const data = snapshot.val();
+        if (data && data.shoppingLists) {
+          shoppingLists = data.shoppingLists;
+          localStorage.setItem("shoppingLists", JSON.stringify(shoppingLists));
+        } else {
+          // Initialize empty shopping lists if none exist
+          const defaultShoppingLists = {
+            grocery: [],
+            pharmacy: [],
+            other: []
+          };
+          
+          // Save default lists to Firebase for all users to access
+          const currentUser = window.authFunctions?.getCurrentUser();
+          if (currentUser && window.authFunctions?.updateSharedNote) {
+            window.authFunctions.updateSharedNote("family_shopping_lists", {
+              shoppingLists: defaultShoppingLists,
+              type: 'shoppingList',
+              createdAt: Date.now(),
+              createdBy: currentUser.displayName || currentUser.email
+            });
+          }
+          
+          shoppingLists = defaultShoppingLists;
+          localStorage.setItem("shoppingLists", JSON.stringify(shoppingLists));
+        }
+      })
+      .catch((error) => {
+        console.error("Error loading shared shopping lists:", error);
+        // Fallback to local storage if Firebase fails
+        const localShoppingLists = localStorage.getItem("shoppingLists");
+        if (localShoppingLists) {
+          shoppingLists = JSON.parse(localShoppingLists);
+        }
+      });
   }
 }
 
