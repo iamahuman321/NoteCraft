@@ -9,7 +9,6 @@ let currentListType = "bulleted";
 let sharedNoteListeners = new Map(); // Track Firebase listeners for shared notes
 let isReceivingUpdate = false; // Prevent infinite loops during real-time updates
 let collaborativeEditingEnabled = false;
-let autoSaveTimeout = null; // Define autoSaveTimeout globally
 
 // Translations
 const translations = {
@@ -666,7 +665,6 @@ function updateSettingsContent() {
   const isGuest = window.authFunctions?.isUserGuest();
   
   const userSettings = document.getElementById("userSettings");
-  const colorSettings = document.getElementById("colorSettings");
   const userNameDisplay = document.getElementById("userNameDisplay");
   const userEmailDisplay = document.getElementById("userEmailDisplay");
   const signInBtn = document.getElementById("signInBtn");
@@ -674,26 +672,12 @@ function updateSettingsContent() {
   
   if (currentUser && !isGuest) {
     if (userSettings) userSettings.style.display = "flex";
-    if (colorSettings) colorSettings.style.display = "flex";
     if (userNameDisplay) userNameDisplay.textContent = currentUser.displayName || "No name";
     if (userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
     if (signInBtn) signInBtn.style.display = "none";
     if (signOutBtn) signOutBtn.style.display = "block";
-    
-    // Load user's saved color
-    const savedColor = localStorage.getItem('userColor') || getUserColor();
-    const colorPicker = document.getElementById('userColorPicker');
-    const colorPreview = document.getElementById('colorPreview');
-    
-    if (colorPicker) {
-      colorPicker.value = savedColor;
-    }
-    if (colorPreview) {
-      colorPreview.style.backgroundColor = savedColor;
-    }
   } else {
     if (userSettings) userSettings.style.display = "none";
-    if (colorSettings) colorSettings.style.display = "none";
     if (signInBtn) signInBtn.style.display = "block";
     if (signOutBtn) signOutBtn.style.display = "none";
   }
@@ -1539,7 +1523,6 @@ function setupRealtimeCollaboration(sharedId) {
       isReceivingUpdate = false;
       
       // Update collaborator presence indicators
-      console.log('Active users data:', sharedNote.activeUsers);
       updateCollaboratorPresence(sharedNote.activeUsers || {});
     }
   });
@@ -1578,9 +1561,6 @@ function cleanupRealtimeCollaboration(sharedId) {
   // Hide collaboration status indicator
   hideCollaborationStatus();
   
-  // Clear all cursor indicators
-  clearCursorIndicators();
-  
   collaborativeEditingEnabled = false;
 }
 
@@ -1591,45 +1571,28 @@ function updatePresence(sharedId, data) {
 }
 
 function trackUserActivity() {
-  // Track user typing activity and cursor position for presence indicators
+  // Track user typing activity for presence indicators
   const titleInput = document.getElementById("titleInput");
   const contentTextarea = document.getElementById("contentTextarea");
   
-  function updateActivityStatus(element) {
+  function updateActivityStatus() {
     if (currentNote && currentNote.isShared && currentNote.sharedId) {
-      const cursorPosition = element ? element.selectionStart : null;
-      const selectionEnd = element ? element.selectionEnd : null;
-      
       updatePresence(currentNote.sharedId, { 
         status: 'editing',
         lastActive: Date.now(),
-        currentField: element?.id || null,
-        cursorPosition: cursorPosition,
-        selectionEnd: selectionEnd,
-        hasSelection: cursorPosition !== selectionEnd,
-        userColor: getUserColor()
+        currentField: document.activeElement?.id || null
       });
     }
   }
   
-  function handleSelectionChange(element) {
-    return () => updateActivityStatus(element);
-  }
-  
   if (titleInput) {
-    titleInput.addEventListener('focus', () => updateActivityStatus(titleInput));
-    titleInput.addEventListener('input', () => updateActivityStatus(titleInput));
-    titleInput.addEventListener('selectionchange', handleSelectionChange(titleInput));
-    titleInput.addEventListener('mouseup', () => updateActivityStatus(titleInput));
-    titleInput.addEventListener('keyup', () => updateActivityStatus(titleInput));
+    titleInput.addEventListener('focus', updateActivityStatus);
+    titleInput.addEventListener('input', updateActivityStatus);
   }
   
   if (contentTextarea) {
-    contentTextarea.addEventListener('focus', () => updateActivityStatus(contentTextarea));
-    contentTextarea.addEventListener('input', () => updateActivityStatus(contentTextarea));
-    contentTextarea.addEventListener('selectionchange', handleSelectionChange(contentTextarea));
-    contentTextarea.addEventListener('mouseup', () => updateActivityStatus(contentTextarea));
-    contentTextarea.addEventListener('keyup', () => updateActivityStatus(contentTextarea));
+    contentTextarea.addEventListener('focus', updateActivityStatus);
+    contentTextarea.addEventListener('input', updateActivityStatus);
   }
 }
 
@@ -1694,7 +1657,6 @@ function updateCollaboratorPresence(activeUsers) {
     if (collaborationText) {
       collaborationText.textContent = 'Real-time collaboration active';
     }
-    clearCursorIndicators();
     return;
   }
   
@@ -1704,196 +1666,12 @@ function updateCollaboratorPresence(activeUsers) {
     collaborationText.textContent = `${count} other${count > 1 ? 's' : ''} editing`;
   }
   
-  // Use stored user colors or generate defaults
-  const defaultColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
-  
-  activeCollaborators.innerHTML = collaborators.map(([uid, userData], index) => {
+  activeCollaborators.innerHTML = collaborators.map(([uid, userData]) => {
     const initials = (userData.name || 'U').charAt(0).toUpperCase();
-    const color = userData.userColor || defaultColors[index % defaultColors.length];
-    const fieldName = userData.currentField === 'titleInput' ? 'title' : 
-                     userData.currentField === 'contentTextarea' ? 'content' : '';
-    return `<div class="collaborator-avatar" style="background-color: ${color}" title="${userData.name || 'Unknown'} editing ${fieldName}">${initials}</div>`;
+    const fieldIndicator = userData.currentField === 'titleInput' ? '📝' : 
+                          userData.currentField === 'contentTextarea' ? '✏️' : '';
+    return `<div class="collaborator-avatar" title="${userData.name || 'Unknown'} ${fieldIndicator}">${initials}</div>`;
   }).join('');
-  
-  // Update cursor indicators with user colors
-  const colors = collaborators.map(([uid, userData], index) => 
-    userData.userColor || defaultColors[index % defaultColors.length]
-  );
-  updateCursorIndicators(collaborators, colors);
-}
-
-function updateCursorIndicators(collaborators, colors) {
-  clearCursorIndicators();
-  
-  collaborators.forEach(([uid, userData], index) => {
-    if (userData.currentField && userData.cursorPosition !== null) {
-      console.log('Showing cursor for:', userData.name, 'at position:', userData.cursorPosition, 'in field:', userData.currentField);
-      showCursorIndicator(userData.currentField, userData.cursorPosition, userData.selectionEnd, colors[index % colors.length], userData.name || 'Unknown');
-    }
-  });
-}
-
-function showCursorIndicator(fieldId, cursorPosition, selectionEnd, color, userName) {
-  const field = document.getElementById(fieldId);
-  if (!field || cursorPosition === null) return;
-  
-  // Remove any existing cursor for this user
-  document.querySelectorAll(`[data-user="${userName}"]`).forEach(el => el.remove());
-  
-  // Create simple colored dot indicator
-  const cursor = document.createElement('div');
-  cursor.className = 'collaborative-cursor';
-  cursor.style.cssText = `
-    position: fixed;
-    right: 20px;
-    top: 80px;
-    width: 12px;
-    height: 12px;
-    background-color: ${color};
-    border-radius: 50%;
-    z-index: 1000;
-    pointer-events: none;
-    border: 2px solid white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    animation: pulse 2s infinite;
-  `;
-  cursor.setAttribute('data-user', userName);
-  
-  document.body.appendChild(cursor);
-}
-
-function getCursorCoordinates(element, position) {
-  try {
-    const elementRect = element.getBoundingClientRect();
-    const style = window.getComputedStyle(element);
-    
-    // For simple positioning, use a simpler approach
-    const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.2;
-    const fontSize = parseFloat(style.fontSize);
-    
-    // Get text up to cursor position
-    const textBeforeCursor = element.value.substring(0, position);
-    const lines = textBeforeCursor.split('\n');
-    const currentLineIndex = lines.length - 1;
-    const currentLineText = lines[currentLineIndex] || '';
-    
-    // Estimate character width (rough approximation)
-    const charWidth = fontSize * 0.6; // Approximate character width
-    const xOffset = currentLineText.length * charWidth;
-    const yOffset = currentLineIndex * lineHeight;
-    
-    // Add padding offsets
-    const paddingLeft = parseFloat(style.paddingLeft) || 0;
-    const paddingTop = parseFloat(style.paddingTop) || 0;
-    
-    console.log('Cursor calculation:', {
-      position,
-      currentLineIndex,
-      currentLineText: currentLineText.length,
-      xOffset,
-      yOffset,
-      elementRect: { left: elementRect.left, top: elementRect.top }
-    });
-    
-    return {
-      left: elementRect.left + paddingLeft + xOffset,
-      top: elementRect.top + paddingTop + yOffset,
-      height: lineHeight
-    };
-  } catch (error) {
-    console.error('Error calculating cursor position:', error);
-    return null;
-  }
-}
-
-function getTextMetrics(element, position) {
-  // For textarea, use a more accurate approach
-  const computedStyle = window.getComputedStyle(element);
-  const fontSize = parseFloat(computedStyle.fontSize);
-  const lineHeight = parseFloat(computedStyle.lineHeight) || fontSize * 1.2;
-  
-  // Create temporary element with same styling
-  const temp = document.createElement('div');
-  temp.style.cssText = `
-    position: absolute;
-    visibility: hidden;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    font-family: ${computedStyle.fontFamily};
-    font-size: ${computedStyle.fontSize};
-    line-height: ${computedStyle.lineHeight};
-    padding: ${computedStyle.padding};
-    border: ${computedStyle.border};
-    width: ${element.offsetWidth}px;
-    height: auto;
-  `;
-  
-  // Get text up to cursor position
-  const textBeforeCursor = element.value.substring(0, position);
-  temp.textContent = textBeforeCursor;
-  
-  document.body.appendChild(temp);
-  
-  // Calculate position
-  const lines = textBeforeCursor.split('\n');
-  const currentLine = lines.length - 1;
-  const lastLineText = lines[currentLine] || '';
-  
-  // Create span for last line to get horizontal position
-  const lineSpan = document.createElement('span');
-  lineSpan.style.font = computedStyle.font;
-  lineSpan.style.visibility = 'hidden';
-  lineSpan.style.position = 'absolute';
-  lineSpan.style.whiteSpace = 'pre';
-  lineSpan.textContent = lastLineText;
-  
-  document.body.appendChild(lineSpan);
-  const lineRect = lineSpan.getBoundingClientRect();
-  
-  document.body.removeChild(temp);
-  document.body.removeChild(lineSpan);
-  
-  return {
-    x: lineRect.width + parseInt(computedStyle.paddingLeft),
-    y: (currentLine * lineHeight) + parseInt(computedStyle.paddingTop),
-    height: lineHeight
-  };
-}
-
-function clearCursorIndicators() {
-  document.querySelectorAll('.collaborative-cursor, .collaborative-selection').forEach(el => el.remove());
-}
-
-function getUserColor() {
-  return localStorage.getItem('userColor') || '#FF6B6B';
-}
-
-function setUserColor(color) {
-  localStorage.setItem('userColor', color);
-  
-  // Update presence with new color if actively collaborating
-  if (currentNote && currentNote.isShared && currentNote.sharedId) {
-    updatePresence(currentNote.sharedId, { 
-      userColor: color,
-      status: 'editing'
-    });
-  }
-}
-
-function setupColorPicker() {
-  const colorPicker = document.getElementById('userColorPicker');
-  const colorPreview = document.getElementById('colorPreview');
-  
-  if (colorPicker) {
-    colorPicker.addEventListener('change', (event) => {
-      const newColor = event.target.value;
-      setUserColor(newColor);
-      
-      if (colorPreview) {
-        colorPreview.style.backgroundColor = newColor;
-      }
-    });
-  }
 }
 
 // Export for window global
