@@ -9,6 +9,7 @@ let currentListType = "bulleted";
 let sharedNoteListeners = new Map(); // Track Firebase listeners for shared notes
 let isReceivingUpdate = false; // Prevent infinite loops during real-time updates
 let collaborativeEditingEnabled = false;
+let autoSaveTimeout = null; // Define autoSaveTimeout globally
 
 // Translations
 const translations = {
@@ -1561,6 +1562,9 @@ function cleanupRealtimeCollaboration(sharedId) {
   // Hide collaboration status indicator
   hideCollaborationStatus();
   
+  // Clear all cursor indicators
+  clearCursorIndicators();
+  
   collaborativeEditingEnabled = false;
 }
 
@@ -1571,28 +1575,44 @@ function updatePresence(sharedId, data) {
 }
 
 function trackUserActivity() {
-  // Track user typing activity for presence indicators
+  // Track user typing activity and cursor position for presence indicators
   const titleInput = document.getElementById("titleInput");
   const contentTextarea = document.getElementById("contentTextarea");
   
-  function updateActivityStatus() {
+  function updateActivityStatus(element) {
     if (currentNote && currentNote.isShared && currentNote.sharedId) {
+      const cursorPosition = element ? element.selectionStart : null;
+      const selectionEnd = element ? element.selectionEnd : null;
+      
       updatePresence(currentNote.sharedId, { 
         status: 'editing',
         lastActive: Date.now(),
-        currentField: document.activeElement?.id || null
+        currentField: element?.id || null,
+        cursorPosition: cursorPosition,
+        selectionEnd: selectionEnd,
+        hasSelection: cursorPosition !== selectionEnd
       });
     }
   }
   
+  function handleSelectionChange(element) {
+    return () => updateActivityStatus(element);
+  }
+  
   if (titleInput) {
-    titleInput.addEventListener('focus', updateActivityStatus);
-    titleInput.addEventListener('input', updateActivityStatus);
+    titleInput.addEventListener('focus', () => updateActivityStatus(titleInput));
+    titleInput.addEventListener('input', () => updateActivityStatus(titleInput));
+    titleInput.addEventListener('selectionchange', handleSelectionChange(titleInput));
+    titleInput.addEventListener('mouseup', () => updateActivityStatus(titleInput));
+    titleInput.addEventListener('keyup', () => updateActivityStatus(titleInput));
   }
   
   if (contentTextarea) {
-    contentTextarea.addEventListener('focus', updateActivityStatus);
-    contentTextarea.addEventListener('input', updateActivityStatus);
+    contentTextarea.addEventListener('focus', () => updateActivityStatus(contentTextarea));
+    contentTextarea.addEventListener('input', () => updateActivityStatus(contentTextarea));
+    contentTextarea.addEventListener('selectionchange', handleSelectionChange(contentTextarea));
+    contentTextarea.addEventListener('mouseup', () => updateActivityStatus(contentTextarea));
+    contentTextarea.addEventListener('keyup', () => updateActivityStatus(contentTextarea));
   }
 }
 
@@ -1657,6 +1677,7 @@ function updateCollaboratorPresence(activeUsers) {
     if (collaborationText) {
       collaborationText.textContent = 'Real-time collaboration active';
     }
+    clearCursorIndicators();
     return;
   }
   
@@ -1666,12 +1687,96 @@ function updateCollaboratorPresence(activeUsers) {
     collaborationText.textContent = `${count} other${count > 1 ? 's' : ''} editing`;
   }
   
-  activeCollaborators.innerHTML = collaborators.map(([uid, userData]) => {
+  // Generate unique colors for each collaborator
+  const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+  
+  activeCollaborators.innerHTML = collaborators.map(([uid, userData], index) => {
     const initials = (userData.name || 'U').charAt(0).toUpperCase();
-    const fieldIndicator = userData.currentField === 'titleInput' ? '📝' : 
-                          userData.currentField === 'contentTextarea' ? '✏️' : '';
-    return `<div class="collaborator-avatar" title="${userData.name || 'Unknown'} ${fieldIndicator}">${initials}</div>`;
+    const color = colors[index % colors.length];
+    const fieldName = userData.currentField === 'titleInput' ? 'title' : 
+                     userData.currentField === 'contentTextarea' ? 'content' : '';
+    return `<div class="collaborator-avatar" style="background-color: ${color}" title="${userData.name || 'Unknown'} editing ${fieldName}">${initials}</div>`;
   }).join('');
+  
+  // Update cursor indicators
+  updateCursorIndicators(collaborators, colors);
+}
+
+function updateCursorIndicators(collaborators, colors) {
+  clearCursorIndicators();
+  
+  collaborators.forEach(([uid, userData], index) => {
+    if (userData.currentField && userData.cursorPosition !== null) {
+      showCursorIndicator(userData.currentField, userData.cursorPosition, userData.selectionEnd, colors[index % colors.length], userData.name || 'Unknown');
+    }
+  });
+}
+
+function showCursorIndicator(fieldId, cursorPosition, selectionEnd, color, userName) {
+  const field = document.getElementById(fieldId);
+  if (!field) return;
+  
+  // Create cursor indicator
+  const cursor = document.createElement('div');
+  cursor.className = 'collaborative-cursor';
+  cursor.style.backgroundColor = color;
+  cursor.setAttribute('data-user', userName);
+  
+  // Position cursor based on text position
+  const rect = field.getBoundingClientRect();
+  const textMetrics = getTextMetrics(field, cursorPosition);
+  
+  cursor.style.left = `${rect.left + textMetrics.x}px`;
+  cursor.style.top = `${rect.top + textMetrics.y}px`;
+  cursor.style.height = `${textMetrics.height}px`;
+  
+  // Add user name label
+  const label = document.createElement('div');
+  label.className = 'cursor-label';
+  label.textContent = userName;
+  label.style.backgroundColor = color;
+  cursor.appendChild(label);
+  
+  // Add selection highlight if user has text selected
+  if (selectionEnd !== cursorPosition) {
+    const selection = document.createElement('div');
+    selection.className = 'collaborative-selection';
+    selection.style.backgroundColor = color + '40'; // Semi-transparent
+    const selectionMetrics = getTextMetrics(field, selectionEnd);
+    selection.style.left = `${rect.left + Math.min(textMetrics.x, selectionMetrics.x)}px`;
+    selection.style.top = `${rect.top + textMetrics.y}px`;
+    selection.style.width = `${Math.abs(selectionMetrics.x - textMetrics.x)}px`;
+    selection.style.height = `${textMetrics.height}px`;
+    document.body.appendChild(selection);
+  }
+  
+  document.body.appendChild(cursor);
+}
+
+function getTextMetrics(element, position) {
+  // Create a temporary span to measure text
+  const span = document.createElement('span');
+  span.style.font = window.getComputedStyle(element).font;
+  span.style.visibility = 'hidden';
+  span.style.position = 'absolute';
+  span.style.whiteSpace = 'pre';
+  
+  const text = element.value.substring(0, position);
+  span.textContent = text;
+  
+  document.body.appendChild(span);
+  const rect = span.getBoundingClientRect();
+  document.body.removeChild(span);
+  
+  return {
+    x: rect.width,
+    y: 0,
+    height: parseFloat(window.getComputedStyle(element).lineHeight) || 20
+  };
+}
+
+function clearCursorIndicators() {
+  document.querySelectorAll('.collaborative-cursor, .collaborative-selection').forEach(el => el.remove());
 }
 
 // Export for window global
