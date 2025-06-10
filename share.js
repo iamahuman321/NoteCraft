@@ -121,6 +121,7 @@ function showSignInRequired() {
 }
 
 async function loadSharedContent() {
+  const currentUser = window.authFunctions?.getCurrentUser();
   if (!currentUser) return;
 
   try {
@@ -134,11 +135,12 @@ async function loadSharedContent() {
     
   } catch (error) {
     console.error("Error loading shared content:", error);
-    showToast(t("errorLoading"));
+    showToast(t("errorLoading"), "error");
   }
 }
 
 async function loadInvitations() {
+  const currentUser = window.authFunctions?.getCurrentUser();
   if (!currentUser) return;
 
   try {
@@ -162,6 +164,7 @@ async function loadInvitations() {
 }
 
 async function loadSharedNotes() {
+  const currentUser = window.authFunctions?.getCurrentUser();
   if (!currentUser) return;
 
   try {
@@ -170,8 +173,8 @@ async function loadSharedNotes() {
     
     sharedNotes = Object.entries(sharedNotesData)
       .filter(([id, note]) => 
-        note.ownerId === currentUser.uid || 
-        (note.collaborators && note.collaborators.includes(currentUser.uid))
+        note.owner === currentUser.uid || 
+        (note.collaborators && note.collaborators[currentUser.uid])
       )
       .map(([id, note]) => ({ id, ...note }));
     
