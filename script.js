@@ -1734,7 +1734,14 @@ function setupHomePageSync() {
         const sharedNoteData = snapshot.val();
         
         // Check if current user is involved in this shared note
-        if (!sharedNoteData || sharedNoteData.ownerId !== currentUser.uid) {
+        if (!sharedNoteData) {
+          return;
+        }
+        
+        // Check if user is owner
+        if (sharedNoteData.ownerId === currentUser.uid) {
+          // User is owner, continue with update
+        } else {
           // Check if user is a collaborator (handle both array and object formats)
           let isCollaborator = false;
           if (sharedNoteData.collaborators) {
