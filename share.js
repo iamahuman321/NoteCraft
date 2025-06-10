@@ -47,6 +47,9 @@ function initializePage() {
   waitForFirebase().then(() => {
     console.log("Firebase ready for share page");
     
+    // Always setup event listeners first
+    setupEventListeners();
+    
     const currentUser = window.authFunctions.getCurrentUser();
     const isGuest = window.authFunctions.isUserGuest();
     
@@ -55,7 +58,6 @@ function initializePage() {
       return;
     }
 
-    setupEventListeners();
     loadSharedContent();
     
     // Listen for auth state changes
@@ -131,16 +133,22 @@ function toggleSidebar() {
   const sidebar = document.getElementById("sidebar");
   const hamburgerBtn = document.getElementById("hamburgerBtn");
   
-  sidebar.classList.toggle("open");
-  hamburgerBtn.classList.toggle("active");
+  console.log("Toggle sidebar clicked"); // Debug log
+  
+  if (sidebar && hamburgerBtn) {
+    sidebar.classList.toggle("open");
+    hamburgerBtn.classList.toggle("active");
+  }
 }
 
 function closeSidebar() {
   const sidebar = document.getElementById("sidebar");
   const hamburgerBtn = document.getElementById("hamburgerBtn");
   
-  sidebar.classList.remove("open");
-  hamburgerBtn.classList.remove("active");
+  if (sidebar && hamburgerBtn) {
+    sidebar.classList.remove("open");
+    hamburgerBtn.classList.remove("active");
+  }
 }
 
 function showSignInRequired() {
