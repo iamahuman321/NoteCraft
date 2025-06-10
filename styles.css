@@ -88,7 +88,7 @@ body {
   right: 0;
   background: var(--background-color);
   border-bottom: 1px solid var(--border-color);
-  padding: 1rem;
+  padding: 0.75rem 1rem 0rem;
   z-index: 999;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -173,7 +173,7 @@ body {
 /* Mobile Search Responsiveness */
 @media (max-width: 768px) {
   .search-section {
-    padding: 0.75rem;
+    padding: 0.75rem 0.75rem 0rem;
   }
   
   .search-input {
@@ -181,9 +181,13 @@ body {
     padding: 10px 40px 10px 12px;
   }
   
+  .filter-chips {
+    padding: 0.5rem 0.75rem;
+  }
+  
   .main-content {
-    margin-top: calc(var(--header-height) + 70px);
-    min-height: calc(100vh - var(--header-height) - 70px);
+    margin-top: calc(var(--header-height) + 55px);
+    min-height: calc(100vh - var(--header-height) - 55px);
   }
 }
 
@@ -395,8 +399,8 @@ body {
 
 /* Main Content */
 .main-content {
-  margin-top: calc(var(--header-height) + 80px);
-  min-height: calc(100vh - var(--header-height) - 80px);
+  margin-top: calc(var(--header-height) + 60px);
+  min-height: calc(100vh - var(--header-height) - 60px);
   padding: 0;
   max-width: 100%;
   background: var(--background-light);
@@ -493,7 +497,7 @@ body {
 .filter-chips {
   display: flex;
   gap: 0.5rem;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   overflow-x: auto;
   background: var(--background-color);
   border-bottom: 1px solid var(--border-color);
