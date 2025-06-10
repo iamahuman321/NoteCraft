@@ -1187,6 +1187,181 @@ body {
   border-bottom: none;
 }
 
+/* Selected Users and Search Results */
+.selected-users {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.selected-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--light-color);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.user-username {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.remove-user {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: var(--danger-color);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition: var(--transition-fast);
+}
+
+.remove-user:hover {
+  background: #c82333;
+}
+
+.search-results {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: var(--shadow);
+}
+
+.search-results.show {
+  display: block;
+}
+
+.form-group {
+  position: relative;
+}
+
+/* List Item Styles */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 0.5rem;
+  background: var(--background-color);
+  transition: var(--transition-fast);
+}
+
+.list-item:hover {
+  background: var(--light-color);
+}
+
+.list-item input[type="text"] {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--text-color);
+  outline: none;
+}
+
+.list-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.list-item.completed {
+  opacity: 0.6;
+}
+
+.list-item.completed input[type="text"] {
+  text-decoration: line-through;
+}
+
+/* Shared Notes Styles */
+.shared-container {
+  padding: 1rem;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.invitation-item,
+.shared-note-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-bottom: 0.75rem;
+  transition: var(--transition-fast);
+}
+
+.invitation-item:hover,
+.shared-note-item:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.invitation-content,
+.shared-note-content {
+  flex: 1;
+}
+
+.invitation-title,
+.shared-note-title {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.invitation-from,
+.shared-note-owner {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.invitation-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 /* Responsive Design */
 @media (min-width: 768px) {
   .main-content {

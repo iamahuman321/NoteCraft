@@ -509,6 +509,9 @@ function showSettingsPage() {
   const backBtn = document.getElementById("backBtn");
   if (backBtn) backBtn.classList.remove("hidden");
   
+  const fab = document.getElementById("addNoteBtn");
+  if (fab) fab.classList.add("hidden");
+  
   updateSettingsContent();
 }
 
