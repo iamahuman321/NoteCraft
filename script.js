@@ -925,7 +925,12 @@ function deleteImage(index) {
 // Sharing functions
 async function searchUsers(query) {
   const searchResults = document.getElementById("searchResults");
-  if (!searchResults) return;
+  if (!searchResults) {
+    console.log("Search results element not found");
+    return;
+  }
+  
+  console.log("Searching for users with query:", query);
   
   if (query.length < 2) {
     searchResults.classList.remove("show");
@@ -934,26 +939,37 @@ async function searchUsers(query) {
   
   const currentUser = window.authFunctions?.getCurrentUser();
   if (!currentUser || !window.database) {
+    console.log("No current user or database");
     searchResults.innerHTML = "<div class='user-search-item'>Sign in required</div>";
+    searchResults.classList.add("show");
     return;
   }
   
   try {
+    console.log("Starting database search...");
+    
     // Search for users by username, name, and email
     const usersRef = window.database.ref('users');
     const snapshot = await usersRef.once('value');
     
+    console.log("Database snapshot received:", snapshot.exists());
+    
     const users = [];
     const queryLower = query.toLowerCase();
+    let totalUsers = 0;
     
     snapshot.forEach(childSnapshot => {
+      totalUsers++;
       const userData = childSnapshot.val();
+      console.log(`User ${totalUsers}:`, userData);
+      
       if (userData.uid !== currentUser.uid && userData.username) {
         const matchesUsername = userData.username && userData.username.toLowerCase().includes(queryLower);
         const matchesName = userData.name && userData.name.toLowerCase().includes(queryLower);
         const matchesEmail = userData.email && userData.email.toLowerCase().includes(queryLower);
         
         if (matchesUsername || matchesName || matchesEmail) {
+          console.log("Found matching user:", userData);
           users.push({
             uid: childSnapshot.key,
             username: userData.username,
@@ -963,6 +979,8 @@ async function searchUsers(query) {
         }
       }
     });
+    
+    console.log(`Searched ${totalUsers} users, found ${users.length} matches`);
     
     // Sort by relevance (exact matches first, then partial matches)
     users.sort((a, b) => {
