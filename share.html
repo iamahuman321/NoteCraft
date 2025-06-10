@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shared Notes - Notes App</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="index.html" class="back-btn" id="backBtn">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h1 class="header-title" id="headerTitle">SHARED NOTES</h1>
+            </div>
+            <div class="header-right">
+                <button class="settings-btn" id="settingsBtn" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="shared-container">
+            <!-- Invitations Section -->
+            <div class="section">
+                <h3 class="section-title">INVITATIONS</h3>
+                <div class="invitations-list" id="invitationsList">
+                    <div class="empty-state" id="invitationsEmpty">
+                        <i class="fas fa-envelope"></i>
+                        <p>No pending invitations</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shared Notes Section -->
+            <div class="section">
+                <h3 class="section-title">SHARED NOTES</h3>
+                <div class="shared-notes-list" id="sharedNotesList">
+                    <div class="empty-state" id="sharedNotesEmpty">
+                        <i class="fas fa-users"></i>
+                        <p>No shared notes yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Load Firebase config and share script -->
+    <script src="firebase-config.js"></script>
+    <script src="share.js"></script>
+</body>
+</html>
