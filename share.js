@@ -268,7 +268,7 @@ function renderInvitations() {
         <small class="text-muted">${new Date(invitation.createdAt).toLocaleDateString()}</small>
       </div>
       <div class="invitation-from">
-        <i class="fas fa-user"></i> From: ${invitation.senderName}
+        <i class="fas fa-user"></i> From: ${invitation.fromName || 'Unknown'}
       </div>
       <div class="invitation-actions">
         <button class="btn btn-success" onclick="acceptInvitation('${invitation.id}', '${invitation.sharedId}')" 
@@ -349,8 +349,11 @@ async function acceptInvitation(invitationId, sharedId) {
     const snapshot = await sharedNoteRef.once('value');
     const sharedNote = snapshot.val();
     
-    if (sharedNote && sharedNote.collaborators && !sharedNote.collaborators.includes(currentUser.uid)) {
-      sharedNote.collaborators.push(currentUser.uid);
+    if (sharedNote && sharedNote.collaborators && !sharedNote.collaborators[currentUser.uid]) {
+      sharedNote.collaborators[currentUser.uid] = {
+        role: 'editor',
+        joinedAt: Date.now()
+      };
       await sharedNoteRef.update({ collaborators: sharedNote.collaborators });
     }
     
