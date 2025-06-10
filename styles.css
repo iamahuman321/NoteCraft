@@ -496,6 +496,8 @@ body {
 
 /* Filter Chips */
 .filter-chips {
+  position: sticky;
+  top: 0;
   display: flex;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
@@ -504,6 +506,8 @@ body {
   border-bottom: 1px solid var(--border-color);
   -webkit-overflow-scrolling: touch;
   margin: 0;
+  z-index: 998;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .filter-chip {
