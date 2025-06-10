@@ -50,19 +50,10 @@ function initializePage() {
     // Always setup event listeners first
     setupEventListeners();
     
-    const currentUser = window.authFunctions.getCurrentUser();
-    const isGuest = window.authFunctions.isUserGuest();
-    
-    if (isGuest || !currentUser) {
-      showSignInRequired();
-      return;
-    }
-
-    loadSharedContent();
-    
-    // Listen for auth state changes
+    // Listen for auth state changes first, then check current state
     if (window.auth) {
       window.auth.onAuthStateChanged((user) => {
+        console.log("Share page auth state changed:", user);
         window.currentUser = user;
         const isGuest = window.authFunctions.isUserGuest();
         
@@ -73,6 +64,23 @@ function initializePage() {
         }
       });
     }
+    
+    // Check current auth state after a delay to ensure auth is loaded
+    setTimeout(() => {
+      const currentUser = window.auth?.currentUser || window.authFunctions?.getCurrentUser();
+      const isGuest = window.authFunctions?.isUserGuest();
+      
+      console.log("Share page delayed check - currentUser:", currentUser, "isGuest:", isGuest);
+      console.log("Firebase auth currentUser:", window.auth?.currentUser);
+      
+      if (currentUser && !isGuest) {
+        console.log("User is authenticated, loading shared content");
+        loadSharedContent();
+      } else {
+        console.log("User not authenticated, showing sign in required");
+        showSignInRequired();
+      }
+    }, 500);
   });
 }
 
