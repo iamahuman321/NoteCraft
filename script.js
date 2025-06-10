@@ -935,45 +935,77 @@ function updatePasswordButton() {
 
 function selectListType(event) {
   const listType = event.target.closest('.list-type-btn').dataset.type;
-  currentListType = listType;
   hideListTypeModal();
+  
+  // Create a new list section with the selected type
+  if (!currentNote.listSections) currentNote.listSections = [];
+  
+  const newListSection = {
+    id: generateId(),
+    type: listType,
+    items: [{ text: "", completed: false }]
+  };
+  
+  currentNote.listSections.push(newListSection);
   
   const listSection = document.getElementById("listSection");
   if (listSection) listSection.classList.remove("hidden");
   
   updateListSection();
+  saveCurrentNote();
 }
 
 function updateListSection() {
   const listItems = document.getElementById("listItems");
   if (!listItems || !currentNote) return;
   
-  if (!currentNote.list) currentNote.list = [];
+  // Handle migration from old single list to new multiple list sections
+  if (currentNote.list && !currentNote.listSections) {
+    currentNote.listSections = [{
+      id: generateId(),
+      type: currentNote.listType || 'bulleted',
+      items: currentNote.list
+    }];
+    delete currentNote.list;
+    delete currentNote.listType;
+  }
   
-  listItems.innerHTML = currentNote.list.map((item, index) => `
-    <div class="list-item ${item.completed ? 'completed' : ''}">
-      ${currentListType === 'checklist' ? `<input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleListItem(${index})" />` : ''}
-      <input type="text" value="${item.text || ''}" onchange="updateListItem(${index}, this.value)" />
-      <button class="btn-icon" onclick="deleteListItem(${index})">
-        <i class="fas fa-times"></i>
-      </button>
+  if (!currentNote.listSections) currentNote.listSections = [];
+  
+  listItems.innerHTML = currentNote.listSections.map((section, sectionIndex) => `
+    <div class="list-section" data-section-id="${section.id}">
+      <div class="list-section-header">
+        <span class="list-type-label">${section.type === 'checklist' ? 'Checklist' : 'Bulleted List'}</span>
+        <button class="btn-icon" onclick="deleteListSection('${section.id}')">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      ${section.items.map((item, itemIndex) => `
+        <div class="list-item ${item.completed ? 'completed' : ''}">
+          ${section.type === 'checklist' ? `<input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleListItemInSection('${section.id}', ${itemIndex})" />` : ''}
+          <input type="text" value="${item.text || ''}" onchange="updateListItemInSection('${section.id}', ${itemIndex}, this.value)" />
+          <button class="btn-icon" onclick="deleteListItemInSection('${section.id}', ${itemIndex})">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      `).join("")}
+      <div class="list-item">
+        <button class="btn-icon" onclick="addListItemToSection('${section.id}')">
+          <i class="fas fa-plus"></i>
+        </button>
+        <span>Add item</span>
+      </div>
     </div>
-  `).join("") + `
-    <div class="list-item">
-      <button class="btn-icon" onclick="addListItem()">
-        <i class="fas fa-plus"></i>
-      </button>
-      <span>Add item</span>
-    </div>
-  `;
+  `).join("");
 }
 
-function addListItem() {
-  if (!currentNote) return;
+function addListItemToSection(sectionId) {
+  if (!currentNote?.listSections) return;
   
-  if (!currentNote.list) currentNote.list = [];
+  const section = currentNote.listSections.find(s => s.id === sectionId);
+  if (!section) return;
   
-  currentNote.list.push({
+  section.items.push({
     text: "",
     completed: false
   });
@@ -990,10 +1022,13 @@ function addListItem() {
   }
 }
 
-function updateListItem(index, value) {
-  if (!currentNote?.list?.[index]) return;
+function updateListItemInSection(sectionId, itemIndex, value) {
+  if (!currentNote?.listSections) return;
   
-  currentNote.list[index].text = value;
+  const section = currentNote.listSections.find(s => s.id === sectionId);
+  if (!section?.items?.[itemIndex]) return;
+  
+  section.items[itemIndex].text = value;
   
   // Use collaborative auto-save for shared notes
   if (currentNote.isShared && collaborativeEditingEnabled) {
@@ -1002,38 +1037,104 @@ function updateListItem(index, value) {
     isAutoSave = false;
   } else {
     saveCurrentNote();
+  }
+}
+
+function toggleListItemInSection(sectionId, itemIndex) {
+  if (!currentNote?.listSections) return;
+  
+  const section = currentNote.listSections.find(s => s.id === sectionId);
+  if (!section?.items?.[itemIndex]) return;
+  
+  section.items[itemIndex].completed = !section.items[itemIndex].completed;
+  updateListSection();
+  
+  // Use collaborative auto-save for shared notes
+  if (currentNote.isShared && collaborativeEditingEnabled) {
+    isAutoSave = true;
+    saveCurrentNote();
+    isAutoSave = false;
+  } else {
+    saveCurrentNote();
+  }
+}
+
+function deleteListItemInSection(sectionId, itemIndex) {
+  if (!currentNote?.listSections) return;
+  
+  const section = currentNote.listSections.find(s => s.id === sectionId);
+  if (!section?.items) return;
+  
+  section.items.splice(itemIndex, 1);
+  
+  // Remove section if no items left
+  if (section.items.length === 0) {
+    deleteListSection(sectionId);
+    return;
+  }
+  
+  updateListSection();
+  
+  // Use collaborative auto-save for shared notes
+  if (currentNote.isShared && collaborativeEditingEnabled) {
+    isAutoSave = true;
+    saveCurrentNote();
+    isAutoSave = false;
+  } else {
+    saveCurrentNote();
+  }
+}
+
+function deleteListSection(sectionId) {
+  if (!currentNote?.listSections) return;
+  
+  const sectionIndex = currentNote.listSections.findIndex(s => s.id === sectionId);
+  if (sectionIndex === -1) return;
+  
+  currentNote.listSections.splice(sectionIndex, 1);
+  updateListSection();
+  
+  // Use collaborative auto-save for shared notes
+  if (currentNote.isShared && collaborativeEditingEnabled) {
+    isAutoSave = true;
+    saveCurrentNote();
+    isAutoSave = false;
+  } else {
+    saveCurrentNote();
+  }
+}
+
+// Legacy functions for backward compatibility
+function addListItem() {
+  // If no sections exist, create a bulleted list section
+  if (!currentNote.listSections || currentNote.listSections.length === 0) {
+    selectListType({ target: { closest: () => ({ dataset: { type: 'bulleted' } }) } });
+    return;
+  }
+  
+  // Add to the last section
+  const lastSection = currentNote.listSections[currentNote.listSections.length - 1];
+  addListItemToSection(lastSection.id);
+}
+
+function updateListItem(index, value) {
+  // Legacy support - use first section
+  if (currentNote.listSections?.[0]) {
+    updateListItemInSection(currentNote.listSections[0].id, index, value);
   }
 }
 
 function toggleListItem(index) {
-  if (!currentNote?.list?.[index]) return;
-  
-  currentNote.list[index].completed = !currentNote.list[index].completed;
-  updateListSection();
-  
-  // Use collaborative auto-save for shared notes
-  if (currentNote.isShared && collaborativeEditingEnabled) {
-    isAutoSave = true;
-    saveCurrentNote();
-    isAutoSave = false;
-  } else {
-    saveCurrentNote();
+  // Legacy support - use first section
+  if (currentNote.listSections?.[0]) {
+    toggleListItemInSection(currentNote.listSections[0].id, index);
   }
 }
 
 function deleteListItem(index) {
-  if (!currentNote?.list) return;
-  
-  currentNote.list.splice(index, 1);
-  updateListSection();
-  
-  // Use collaborative auto-save for shared notes
-  if (currentNote.isShared && collaborativeEditingEnabled) {
-    isAutoSave = true;
-    saveCurrentNote();
-    isAutoSave = false;
-  } else {
-    saveCurrentNote();
+  // Legacy support - use first section
+  if (currentNote.listSections?.[0]) {
+    deleteListItemInSection(currentNote.listSections[0].id, index);
   }
 }
 
@@ -1580,6 +1681,11 @@ window.toggleNoteCategory = toggleNoteCategory;
 window.toggleListItem = toggleListItem;
 window.updateListItem = updateListItem;
 window.deleteListItem = deleteListItem;
+window.addListItemToSection = addListItemToSection;
+window.updateListItemInSection = updateListItemInSection;
+window.toggleListItemInSection = toggleListItemInSection;
+window.deleteListItemInSection = deleteListItemInSection;
+window.deleteListSection = deleteListSection;
 window.deleteImage = deleteImage;
 window.selectUser = selectUser;
 window.removeSelectedUser = removeSelectedUser;
@@ -1610,8 +1716,15 @@ function setupRealtimeCollaboration(sharedId) {
       currentNote.content = sharedNote.content || '';
       currentNote.categories = sharedNote.categories || [];
       currentNote.images = sharedNote.images || [];
-      currentNote.list = sharedNote.list || [];
-      currentNote.listType = sharedNote.listType || 'bulleted';
+      currentNote.listSections = sharedNote.listSections || [];
+      // Handle legacy list format
+      if (sharedNote.list && !sharedNote.listSections) {
+        currentNote.listSections = [{
+          id: generateId(),
+          type: sharedNote.listType || 'bulleted',
+          items: sharedNote.list
+        }];
+      }
       currentNote.updatedAt = sharedNote.updatedAt;
       
       // Update current list type for UI
@@ -1823,8 +1936,7 @@ function setupHomePageSync() {
             lastModified: sharedNoteData.lastModified,
             categories: sharedNoteData.categories || [],
             images: sharedNoteData.images || [],
-            list: sharedNoteData.list || [],
-            listType: sharedNoteData.listType || 'bulleted'
+            listSections: sharedNoteData.listSections || []
           };
           
           // Re-render notes to show the update
