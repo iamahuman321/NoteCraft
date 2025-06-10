@@ -1003,10 +1003,20 @@ function updateListSection() {
 }
 
 function addListItemToSection(sectionId) {
-  if (!currentNote?.listSections) return;
+  console.log("addListItemToSection called with sectionId:", sectionId);
+  
+  if (!currentNote?.listSections) {
+    console.log("No listSections found");
+    return;
+  }
   
   const section = currentNote.listSections.find(s => s.id === sectionId);
-  if (!section) return;
+  if (!section) {
+    console.log("Section not found for id:", sectionId);
+    return;
+  }
+  
+  console.log("Adding item to section:", section);
   
   section.items.push({
     text: "",
