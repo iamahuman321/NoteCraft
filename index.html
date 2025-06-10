@@ -23,6 +23,17 @@
                 </button>
                 <h1 class="header-title" id="headerTitle">NOTES</h1>
             </div>
+            <div class="header-center">
+                <div class="search-container" id="searchContainer">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search notes..." />
+                    <button class="search-btn" id="searchBtn" title="Search">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="search-clear hidden" id="searchClear" title="Clear search">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
             <div class="header-right">
                 <button class="back-btn hidden" id="backBtn">
                     <i class="fas fa-arrow-left"></i>
@@ -72,19 +83,6 @@
         </div>
     </nav>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <!-- Search Section -->
-    <section class="search-section" id="searchSection">
-        <div class="search-container" id="searchContainer">
-            <input type="text" class="search-input" id="searchInput" placeholder="Search notes..." />
-            <button class="search-btn" id="searchBtn" title="Search">
-                <i class="fas fa-search"></i>
-            </button>
-            <button class="search-clear hidden" id="searchClear" title="Clear search">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    </section>
 
     <!-- Main Content -->
     <main class="main-content">
