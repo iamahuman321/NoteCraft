@@ -1524,6 +1524,7 @@ function setupRealtimeCollaboration(sharedId) {
       isReceivingUpdate = false;
       
       // Update collaborator presence indicators
+      console.log('Active users data:', sharedNote.activeUsers);
       updateCollaboratorPresence(sharedNote.activeUsers || {});
     }
   });
@@ -1583,6 +1584,12 @@ function trackUserActivity() {
     if (currentNote && currentNote.isShared && currentNote.sharedId) {
       const cursorPosition = element ? element.selectionStart : null;
       const selectionEnd = element ? element.selectionEnd : null;
+      
+      console.log('Updating activity status:', {
+        field: element?.id,
+        cursor: cursorPosition,
+        selection: selectionEnd
+      });
       
       updatePresence(currentNote.sharedId, { 
         status: 'editing',
@@ -1707,6 +1714,7 @@ function updateCursorIndicators(collaborators, colors) {
   
   collaborators.forEach(([uid, userData], index) => {
     if (userData.currentField && userData.cursorPosition !== null) {
+      console.log('Showing cursor for:', userData.name, 'at position:', userData.cursorPosition, 'in field:', userData.currentField);
       showCursorIndicator(userData.currentField, userData.cursorPosition, userData.selectionEnd, colors[index % colors.length], userData.name || 'Unknown');
     }
   });
@@ -1714,64 +1722,155 @@ function updateCursorIndicators(collaborators, colors) {
 
 function showCursorIndicator(fieldId, cursorPosition, selectionEnd, color, userName) {
   const field = document.getElementById(fieldId);
-  if (!field) return;
+  if (!field || cursorPosition === null) return;
   
-  // Create cursor indicator
+  // Remove any existing cursor for this user
+  document.querySelectorAll(`[data-user="${userName}"]`).forEach(el => el.remove());
+  
+  // Create floating indicator in top-right corner
   const cursor = document.createElement('div');
   cursor.className = 'collaborative-cursor';
-  cursor.style.backgroundColor = color;
+  cursor.style.cssText = `
+    position: fixed;
+    right: 20px;
+    top: 80px;
+    width: 40px;
+    height: 40px;
+    background-color: ${color};
+    border-radius: 50%;
+    z-index: 1000;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    border: 3px solid white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    animation: pulse 2s infinite;
+  `;
+  cursor.textContent = userName.charAt(0).toUpperCase();
   cursor.setAttribute('data-user', userName);
   
-  // Position cursor based on text position
-  const rect = field.getBoundingClientRect();
-  const textMetrics = getTextMetrics(field, cursorPosition);
-  
-  cursor.style.left = `${rect.left + textMetrics.x}px`;
-  cursor.style.top = `${rect.top + textMetrics.y}px`;
-  cursor.style.height = `${textMetrics.height}px`;
-  
-  // Add user name label
+  // Add floating label
   const label = document.createElement('div');
-  label.className = 'cursor-label';
-  label.textContent = userName;
-  label.style.backgroundColor = color;
+  label.style.cssText = `
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: ${color};
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    font-weight: 500;
+  `;
+  label.textContent = `${userName} editing ${fieldId === 'titleInput' ? 'title' : 'content'}`;
   cursor.appendChild(label);
   
-  // Add selection highlight if user has text selected
-  if (selectionEnd !== cursorPosition) {
-    const selection = document.createElement('div');
-    selection.className = 'collaborative-selection';
-    selection.style.backgroundColor = color + '40'; // Semi-transparent
-    const selectionMetrics = getTextMetrics(field, selectionEnd);
-    selection.style.left = `${rect.left + Math.min(textMetrics.x, selectionMetrics.x)}px`;
-    selection.style.top = `${rect.top + textMetrics.y}px`;
-    selection.style.width = `${Math.abs(selectionMetrics.x - textMetrics.x)}px`;
-    selection.style.height = `${textMetrics.height}px`;
-    document.body.appendChild(selection);
-  }
-  
   document.body.appendChild(cursor);
+  
+  console.log('Created floating cursor indicator for:', userName);
+}
+
+function getCursorCoordinates(element, position) {
+  try {
+    const elementRect = element.getBoundingClientRect();
+    const style = window.getComputedStyle(element);
+    
+    // For simple positioning, use a simpler approach
+    const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.2;
+    const fontSize = parseFloat(style.fontSize);
+    
+    // Get text up to cursor position
+    const textBeforeCursor = element.value.substring(0, position);
+    const lines = textBeforeCursor.split('\n');
+    const currentLineIndex = lines.length - 1;
+    const currentLineText = lines[currentLineIndex] || '';
+    
+    // Estimate character width (rough approximation)
+    const charWidth = fontSize * 0.6; // Approximate character width
+    const xOffset = currentLineText.length * charWidth;
+    const yOffset = currentLineIndex * lineHeight;
+    
+    // Add padding offsets
+    const paddingLeft = parseFloat(style.paddingLeft) || 0;
+    const paddingTop = parseFloat(style.paddingTop) || 0;
+    
+    console.log('Cursor calculation:', {
+      position,
+      currentLineIndex,
+      currentLineText: currentLineText.length,
+      xOffset,
+      yOffset,
+      elementRect: { left: elementRect.left, top: elementRect.top }
+    });
+    
+    return {
+      left: elementRect.left + paddingLeft + xOffset,
+      top: elementRect.top + paddingTop + yOffset,
+      height: lineHeight
+    };
+  } catch (error) {
+    console.error('Error calculating cursor position:', error);
+    return null;
+  }
 }
 
 function getTextMetrics(element, position) {
-  // Create a temporary span to measure text
-  const span = document.createElement('span');
-  span.style.font = window.getComputedStyle(element).font;
-  span.style.visibility = 'hidden';
-  span.style.position = 'absolute';
-  span.style.whiteSpace = 'pre';
+  // For textarea, use a more accurate approach
+  const computedStyle = window.getComputedStyle(element);
+  const fontSize = parseFloat(computedStyle.fontSize);
+  const lineHeight = parseFloat(computedStyle.lineHeight) || fontSize * 1.2;
   
-  const text = element.value.substring(0, position);
-  span.textContent = text;
+  // Create temporary element with same styling
+  const temp = document.createElement('div');
+  temp.style.cssText = `
+    position: absolute;
+    visibility: hidden;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: ${computedStyle.fontFamily};
+    font-size: ${computedStyle.fontSize};
+    line-height: ${computedStyle.lineHeight};
+    padding: ${computedStyle.padding};
+    border: ${computedStyle.border};
+    width: ${element.offsetWidth}px;
+    height: auto;
+  `;
   
-  document.body.appendChild(span);
-  const rect = span.getBoundingClientRect();
-  document.body.removeChild(span);
+  // Get text up to cursor position
+  const textBeforeCursor = element.value.substring(0, position);
+  temp.textContent = textBeforeCursor;
+  
+  document.body.appendChild(temp);
+  
+  // Calculate position
+  const lines = textBeforeCursor.split('\n');
+  const currentLine = lines.length - 1;
+  const lastLineText = lines[currentLine] || '';
+  
+  // Create span for last line to get horizontal position
+  const lineSpan = document.createElement('span');
+  lineSpan.style.font = computedStyle.font;
+  lineSpan.style.visibility = 'hidden';
+  lineSpan.style.position = 'absolute';
+  lineSpan.style.whiteSpace = 'pre';
+  lineSpan.textContent = lastLineText;
+  
+  document.body.appendChild(lineSpan);
+  const lineRect = lineSpan.getBoundingClientRect();
+  
+  document.body.removeChild(temp);
+  document.body.removeChild(lineSpan);
   
   return {
-    x: rect.width,
-    y: 0,
-    height: parseFloat(window.getComputedStyle(element).lineHeight) || 20
+    x: lineRect.width + parseInt(computedStyle.paddingLeft),
+    y: (currentLine * lineHeight) + parseInt(computedStyle.paddingTop),
+    height: lineHeight
   };
 }
 
