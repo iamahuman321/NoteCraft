@@ -171,6 +171,23 @@ function setupEventListeners() {
       showNotesPage();
     }
   });
+
+  // Search functionality
+  const searchInput = document.getElementById("searchInput");
+  const searchBtn = document.getElementById("searchBtn");
+  const searchClear = document.getElementById("searchClear");
+
+  if (searchInput) {
+    searchInput.addEventListener("input", handleSearch);
+    searchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSearch();
+      }
+    });
+  }
+  if (searchBtn) searchBtn.addEventListener("click", handleSearch);
+  if (searchClear) searchClear.addEventListener("click", clearSearch);
   if (navNotes) navNotes.addEventListener("click", (e) => {
     e.preventDefault();
     showNotesPage();
@@ -521,22 +538,18 @@ function renderNotes() {
   const notesContainer = document.getElementById("notesContainer");
   if (!notesContainer) return;
 
-  let filteredNotes = notes;
-  if (currentFilter === "shared") {
-    // Show notes that have collaborators (shared notes)
-    filteredNotes = notes.filter(note => 
-      note.sharedId || (note.collaborators && Object.keys(note.collaborators).length > 0)
-    );
-  } else if (currentFilter !== "all") {
-    filteredNotes = notes.filter(note => 
-      note.categories && note.categories.includes(currentFilter)
-    );
-  }
+  // Apply both search and filter
+  let filteredNotes = getFilteredNotes();
 
   if (filteredNotes.length === 0) {
-    const emptyMessage = currentFilter === "shared" 
-      ? { icon: "fas fa-users", title: "No shared notes", text: "Notes shared with others will appear here" }
-      : { icon: "fas fa-sticky-note", title: "No notes yet", text: "Tap the + button to create your first note" };
+    let emptyMessage;
+    if (searchQuery) {
+      emptyMessage = { icon: "fas fa-search", title: `No results for "${searchQuery}"`, text: "Try different search terms" };
+    } else if (currentFilter === "shared") {
+      emptyMessage = { icon: "fas fa-users", title: "No shared notes", text: "Notes shared with others will appear here" };
+    } else {
+      emptyMessage = { icon: "fas fa-sticky-note", title: "No notes yet", text: "Tap the + button to create your first note" };
+    }
     
     notesContainer.innerHTML = `
       <div class="empty-state">
@@ -562,13 +575,17 @@ function renderNotes() {
         const isShared = note.sharedId || (note.collaborators && Object.keys(note.collaborators).length > 0);
         const collaboratorCount = note.collaborators ? Object.keys(note.collaborators).length : 0;
 
+        // Highlight search terms
+        const highlightedTitle = highlightSearchTerms(note.title || "Untitled", searchQuery);
+        const highlightedPreview = highlightSearchTerms(preview, searchQuery);
+
         return `
           <div class="note-card" onclick="editNote(notes.find(n => n.id === '${note.id}'))">
             <div class="note-title">
-              ${note.title || "Untitled"}
+              ${highlightedTitle}
               ${isShared ? `<i class="fas fa-users share-icon" title="Shared with ${collaboratorCount} people"></i>` : ""}
             </div>
-            <div class="note-preview">${preview}</div>
+            <div class="note-preview">${highlightedPreview}</div>
             <div class="note-meta">
               <span>${dateStr}</span>
               ${note.categories && note.categories.length > 0 ? `<span>${note.categories.length} categories</span>` : ""}
@@ -2140,6 +2157,99 @@ window.showUsernameModal = showUsernameModal;
 window.updateShoppingItem = updateShoppingItem;
 window.toggleShoppingItem = toggleShoppingItem;
 window.deleteShoppingItem = deleteShoppingItem;
+
+// Search functionality
+function handleSearch() {
+  const searchInput = document.getElementById("searchInput");
+  const searchClear = document.getElementById("searchClear");
+  
+  if (!searchInput) return;
+  
+  searchQuery = searchInput.value.trim();
+  
+  if (searchQuery) {
+    searchClear.classList.remove("hidden");
+  } else {
+    searchClear.classList.add("hidden");
+  }
+  
+  renderNotes();
+}
+
+function clearSearch() {
+  const searchInput = document.getElementById("searchInput");
+  const searchClear = document.getElementById("searchClear");
+  
+  if (searchInput) searchInput.value = "";
+  searchQuery = "";
+  searchClear.classList.add("hidden");
+  
+  renderNotes();
+}
+
+function getFilteredNotes() {
+  let filteredNotes = notes;
+  
+  // Apply category filter first
+  if (currentFilter === "shared") {
+    filteredNotes = notes.filter(note => 
+      note.sharedId || (note.collaborators && Object.keys(note.collaborators).length > 0)
+    );
+  } else if (currentFilter !== "all") {
+    filteredNotes = notes.filter(note => 
+      note.categories && note.categories.includes(currentFilter)
+    );
+  }
+  
+  // Apply search filter
+  if (searchQuery) {
+    const query = searchQuery.toLowerCase();
+    filteredNotes = filteredNotes.filter(note => {
+      // Search in title
+      if (note.title && note.title.toLowerCase().includes(query)) return true;
+      
+      // Search in content
+      if (note.content && note.content.toLowerCase().includes(query)) return true;
+      
+      // Search in categories
+      if (note.categories) {
+        const categoryNames = note.categories.map(catId => {
+          const category = categories.find(c => c.id === catId);
+          return category ? category.name.toLowerCase() : catId.toLowerCase();
+        });
+        if (categoryNames.some(name => name.includes(query))) return true;
+      }
+      
+      // Search in list items
+      if (note.list && note.list.items) {
+        const listText = note.list.items.map(item => item.text || "").join(" ").toLowerCase();
+        if (listText.includes(query)) return true;
+      }
+      
+      // Search in list sections
+      if (note.listSections) {
+        const sectionsText = note.listSections.map(section => 
+          section.items ? section.items.map(item => item.text || "").join(" ") : ""
+        ).join(" ").toLowerCase();
+        if (sectionsText.includes(query)) return true;
+      }
+      
+      return false;
+    });
+  }
+  
+  return filteredNotes;
+}
+
+function highlightSearchTerms(text, query) {
+  if (!query || !text) return escapeHtml(text);
+  
+  const escapedText = escapeHtml(text);
+  const escapedQuery = escapeHtml(query);
+  const regex = new RegExp(`(${escapedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  
+  return escapedText.replace(regex, '<mark class="search-highlight">$1</mark>');
+}
 
 // Real-time collaborative editing functions
 function setupRealtimeCollaboration(sharedId) {
