@@ -710,6 +710,9 @@ function showShoppingPage() {
   // Clean up home page sync when leaving notes page
   cleanupHomePageSync();
   
+  // Force refresh shopping lists from Firebase to prevent stale data
+  loadSharedShoppingLists();
+  
   // Setup real-time shopping list sync
   setupShoppingListSync();
   
@@ -730,6 +733,25 @@ function showShoppingPage() {
 function showShoppingCategoryPage(category) {
   currentShoppingCategory = category;
   
+  // Force refresh from Firebase before showing category
+  if (window.database) {
+    window.database.ref('sharedNotes/family_shopping_lists').once('value')
+      .then((snapshot) => {
+        const data = snapshot.val();
+        if (data && data.shoppingLists) {
+          shoppingLists = data.shoppingLists;
+          localStorage.setItem("shoppingLists", JSON.stringify(shoppingLists));
+        }
+        renderShoppingList(category);
+      })
+      .catch((error) => {
+        console.error("Error refreshing shopping list:", error);
+        renderShoppingList(category);
+      });
+  } else {
+    renderShoppingList(category);
+  }
+  
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
   const shoppingCategoryPage = document.getElementById("shoppingCategoryPage");
   if (shoppingCategoryPage) shoppingCategoryPage.classList.add("active");
@@ -746,8 +768,6 @@ function showShoppingCategoryPage(category) {
   
   const fab = document.getElementById("addNoteBtn");
   if (fab) fab.classList.add("hidden");
-  
-  renderShoppingList(category);
 }
 
 function renderShoppingList(category) {
@@ -833,6 +853,10 @@ let shoppingSyncTimeout = null;
 function forceSyncShoppingLists(retryCount = 0) {
   const maxRetries = 3;
   
+  // Record timestamp of local change
+  const now = Date.now();
+  localStorage.setItem("lastShoppingListUpdate", now.toString());
+  
   // Always save to local storage first
   localStorage.setItem("shoppingLists", JSON.stringify(shoppingLists));
   
@@ -847,18 +871,18 @@ function forceSyncShoppingLists(retryCount = 0) {
   const delay = isTextUpdate ? 200 : 0;
   
   shoppingSyncTimeout = setTimeout(() => {
-    performShoppingSyncWithRetry(retryCount);
+    performShoppingSyncWithRetry(retryCount, now);
   }, delay);
 }
 
-function performShoppingSyncWithRetry(retryCount = 0) {
+function performShoppingSyncWithRetry(retryCount = 0, timestamp) {
   const maxRetries = 3;
   
   const currentUser = window.authFunctions?.getCurrentUser();
   if (!currentUser || !window.authFunctions?.updateSharedNote) {
     // If no user or Firebase not available, try again in 1 second
     if (retryCount < maxRetries) {
-      setTimeout(() => performShoppingSyncWithRetry(retryCount + 1), 1000);
+      setTimeout(() => performShoppingSyncWithRetry(retryCount + 1, timestamp), 1000);
     }
     return;
   }
@@ -867,7 +891,7 @@ function performShoppingSyncWithRetry(retryCount = 0) {
   const syncData = {
     shoppingLists: shoppingLists,
     type: 'shoppingList',
-    updatedAt: Date.now(),
+    updatedAt: timestamp || Date.now(),
     lastUpdatedBy: currentUser.displayName || currentUser.email,
     syncAttempt: retryCount + 1
   };
@@ -883,7 +907,7 @@ function performShoppingSyncWithRetry(retryCount = 0) {
       }).catch((error) => {
         console.error(`Shopping list sync failed (attempt ${retryCount + 1}):`, error);
         if (retryCount < maxRetries) {
-          setTimeout(() => performShoppingSyncWithRetry(retryCount + 1), 2000);
+          setTimeout(() => performShoppingSyncWithRetry(retryCount + 1, timestamp), 2000);
         }
       });
     }
@@ -891,7 +915,7 @@ function performShoppingSyncWithRetry(retryCount = 0) {
   } catch (error) {
     console.error(`Shopping list sync error (attempt ${retryCount + 1}):`, error);
     if (retryCount < maxRetries) {
-      setTimeout(() => performShoppingSyncWithRetry(retryCount + 1), 2000);
+      setTimeout(() => performShoppingSyncWithRetry(retryCount + 1, timestamp), 2000);
     }
   }
 }
@@ -914,21 +938,27 @@ function setupShoppingListSync() {
   
   shoppingListListener = shoppingListRef.on('value', (snapshot) => {
     const data = snapshot.val();
-    if (data && data.shoppingLists) {
-      // Only update if data is newer or different
-      const currentDataString = JSON.stringify(shoppingLists);
-      const newDataString = JSON.stringify(data.shoppingLists);
+    if (data && data.shoppingLists && data.updatedAt) {
+      // Only update if Firebase data is newer than our last local change
+      const lastLocalUpdate = localStorage.getItem("lastShoppingListUpdate");
+      const localUpdateTime = lastLocalUpdate ? parseInt(lastLocalUpdate) : 0;
       
-      if (currentDataString !== newDataString) {
-        shoppingLists = data.shoppingLists;
-        localStorage.setItem("shoppingLists", JSON.stringify(shoppingLists));
+      // If Firebase data is newer than our last local change, accept it
+      if (data.updatedAt > localUpdateTime + 500) { // 500ms buffer to prevent race conditions
+        const currentDataString = JSON.stringify(shoppingLists);
+        const newDataString = JSON.stringify(data.shoppingLists);
         
-        // Re-render current shopping category if user is viewing one
-        if (currentShoppingCategory) {
-          renderShoppingList(currentShoppingCategory);
+        if (currentDataString !== newDataString) {
+          shoppingLists = data.shoppingLists;
+          localStorage.setItem("shoppingLists", JSON.stringify(shoppingLists));
+          
+          // Re-render current shopping category if user is viewing one
+          if (currentShoppingCategory) {
+            renderShoppingList(currentShoppingCategory);
+          }
+          
+          console.log("Shopping lists updated from Firebase:", data.lastUpdatedBy || 'Unknown user');
         }
-        
-        console.log("Shopping lists updated from Firebase:", data.lastUpdatedBy || 'Unknown user');
       }
     } else if (!data) {
       // Initialize empty shopping lists if none exist
@@ -960,15 +990,20 @@ function cleanupShoppingListSync() {
   }
 }
 
-// Load shared shopping lists for all users
+// Load shared shopping lists for all users with forced refresh
 function loadSharedShoppingLists() {
   if (window.database) {
+    // Clear local timestamp to force accept of Firebase data
+    localStorage.removeItem("lastShoppingListUpdate");
+    
     window.database.ref('sharedNotes/family_shopping_lists').once('value')
       .then((snapshot) => {
         const data = snapshot.val();
         if (data && data.shoppingLists) {
+          // Always accept Firebase data on fresh load
           shoppingLists = data.shoppingLists;
           localStorage.setItem("shoppingLists", JSON.stringify(shoppingLists));
+          console.log("Fresh shopping lists loaded from Firebase");
         } else {
           // Initialize empty shopping lists if none exist
           const defaultShoppingLists = {
@@ -980,10 +1015,13 @@ function loadSharedShoppingLists() {
           // Save default lists to Firebase for all users to access
           const currentUser = window.authFunctions?.getCurrentUser();
           if (currentUser && window.authFunctions?.updateSharedNote) {
+            const now = Date.now();
+            localStorage.setItem("lastShoppingListUpdate", now.toString());
             window.authFunctions.updateSharedNote("family_shopping_lists", {
               shoppingLists: defaultShoppingLists,
               type: 'shoppingList',
-              createdAt: Date.now(),
+              createdAt: now,
+              updatedAt: now,
               createdBy: currentUser.displayName || currentUser.email
             });
           }
