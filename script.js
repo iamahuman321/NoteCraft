@@ -994,6 +994,7 @@ async function searchUsers(query) {
     if (users.length === 0) {
       searchResults.innerHTML = "<div class='user-search-item'>No users found</div>";
     } else {
+      console.log("Rendering users to UI:", users);
       searchResults.innerHTML = users.map(user => `
         <div class="user-search-item" onclick="selectUser('${user.uid}', '${escapeHtml(user.name)}', '${escapeHtml(user.username)}')">
           <div class="user-info">
@@ -1003,9 +1004,11 @@ async function searchUsers(query) {
           </div>
         </div>
       `).join("");
+      console.log("Search results HTML set:", searchResults.innerHTML);
     }
     
     searchResults.classList.add("show");
+    console.log("Search results classes:", searchResults.className);
   } catch (error) {
     console.error("Error searching users:", error);
     searchResults.innerHTML = "<div class='user-search-item'>Error searching users</div>";
