@@ -2,19 +2,19 @@
 const CACHE_NAME = 'notes-app-v1.2.0';
 const urlsToCache = [
   '/',
-  '/Note/index.html',
-  '/Note/styles.css',
-  '/Note/script.js',
-  '/Note/firebase-config.js',
-  '/Note/firebase-exports.js',
-  '/Note/category.html',
-  '/Note/category.js',
-  '/Note/share.html',
-  '/Note/share.js',
-  '/Note/signin.html',
-  '/Note/signup.html',
-  '/Note/login.html',
-  '/Note/manifest.json',
+  '/index.html',
+  '/styles.css',
+  '/script.js',
+  '/firebase-config.js',
+  '/firebase-exports.js',
+  '/category.html',
+  '/category.js',
+  '/share.html',
+  '/share.js',
+  '/signin.html',
+  '/signup.html',
+  '/login.html',
+  '/manifest.json',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
   'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
   'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js',
@@ -95,7 +95,7 @@ self.addEventListener('fetch', (event) => {
           return response;
         }).catch(() => {
           // If network fails, try to serve cached version
-          return caches.match('/Note/index.html');
+          return caches.match('/index.html');
         });
       })
   );
@@ -245,7 +245,7 @@ self.addEventListener('notificationclick', (event) => {
   if (data.type === 'shared_note') {
     url = `/?sharedNote=${data.sharedId}`;
   } else if (data.type === 'invitation') {
-    url = '/Note/share.html';
+    url = '/share.html';
   }
 
   event.waitUntil(

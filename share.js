@@ -102,14 +102,14 @@ function setupEventListeners() {
   if (navNotes) {
     navNotes.addEventListener("click", (e) => {
       e.preventDefault();
-      window.location.href = "Note/index.html";
+      window.location.href = "index.html";
     });
   }
 
   if (navCategories) {
     navCategories.addEventListener("click", (e) => {
       e.preventDefault();
-      window.location.href = "Note/category.html";
+      window.location.href = "category.html";
     });
   }
 
@@ -123,7 +123,7 @@ function setupEventListeners() {
   if (navSignIn) {
     navSignIn.addEventListener("click", (e) => {
       e.preventDefault();
-      window.location.href = "Note/login.html";
+      window.location.href = "login.html";
     });
   }
 }
@@ -157,7 +157,7 @@ function showSignInRequired() {
     <div class="empty-state">
       <i class="fas fa-sign-in-alt"></i>
       <p>${t("signInRequired")}</p>
-      <a href="Note/login.html" class="btn btn-primary" style="margin-top: 1rem;">Sign In</a>
+      <a href="login.html" class="btn btn-primary" style="margin-top: 1rem;">Sign In</a>
     </div>
   `;
 }
@@ -405,7 +405,7 @@ function openSharedNote(sharedId) {
   localStorage.setItem('openSharedNote', JSON.stringify(noteForEditor));
   
   // Navigate to main app
-  window.location.href = 'Note/index.html';
+  window.location.href = 'index.html';
 }
 
 function manageSharedNote(sharedId) {

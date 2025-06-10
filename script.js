@@ -128,7 +128,7 @@ function setupEventListeners() {
     }
     closeSidebar();
   });
-  if (signInBtn) signInBtn.addEventListener("click", () => window.location.href = "Note/login.html");
+  if (signInBtn) signInBtn.addEventListener("click", () => window.location.href = "login.html");
 
   // Editor
   const titleInput = document.getElementById("titleInput");
