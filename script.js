@@ -1100,13 +1100,32 @@ async function saveUsername() {
   
   const username = usernameInput.value.trim();
   if (!validateUsername(username)) {
-    showToast(t("usernameInvalid"), "error");
+    showToast("Username must be 4-20 characters, letters, numbers, and _ only", "error");
     return;
   }
   
-  // Implementation for saving username
-  hideUsernameModal();
-  showToast("Username saved", "success");
+  const currentUser = window.authFunctions?.getCurrentUser();
+  if (!currentUser || !window.database) return;
+  
+  try {
+    // Save username to Firebase
+    await window.database.ref(`users/${currentUser.uid}`).update({
+      username: username,
+      name: currentUser.displayName || currentUser.email.split('@')[0],
+      email: currentUser.email,
+      uid: currentUser.uid,
+      updatedAt: Date.now()
+    });
+    
+    // Save username to localStorage to prevent future prompts
+    localStorage.setItem(`username_${currentUser.uid}`, username);
+    
+    hideUsernameModal();
+    showToast("Username saved successfully", "success");
+  } catch (error) {
+    console.error("Error saving username:", error);
+    showToast("Error saving username", "error");
+  }
 }
 
 function validateUsername(username) {

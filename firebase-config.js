@@ -38,6 +38,13 @@ let currentUser = null
 let isGuest = false
 
 function initializeAuth() {
+  // Set auth persistence to LOCAL (stays logged in until explicit logout)
+  window.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
+    console.log("Auth persistence set to LOCAL")
+  }).catch((error) => {
+    console.error("Error setting auth persistence:", error)
+  })
+
   // Check if user was in guest mode
   if (localStorage.getItem("isGuest") === "true") {
     isGuest = true
@@ -76,6 +83,13 @@ function initializeAuth() {
 
 async function checkUsernameRequired(user) {
   try {
+    // Check if username is already saved in localStorage
+    const savedUsername = localStorage.getItem(`username_${user.uid}`)
+    if (savedUsername) {
+      console.log("Username already saved, skipping modal")
+      return
+    }
+
     const userSnapshot = await window.database.ref(`users/${user.uid}`).once('value')
     const userData = userSnapshot.val()
     
@@ -84,6 +98,9 @@ async function checkUsernameRequired(user) {
       if (typeof window.showUsernameModal === 'function') {
         window.showUsernameModal()
       }
+    } else {
+      // Save username to localStorage to avoid future prompts
+      localStorage.setItem(`username_${user.uid}`, userData.username)
     }
   } catch (error) {
     console.error("Error checking username:", error)
@@ -327,6 +344,17 @@ function signOutUser() {
     localStorage.removeItem("categories")
     localStorage.removeItem("cachedInvitations")
     localStorage.removeItem("cachedSharedNotes")
+    
+    // Clear all username cache to prevent future prompts
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('username_')) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
     console.log("User signed out successfully")
     window.location.href = "index.html"
   })
