@@ -962,8 +962,11 @@ function updateListSection() {
   const listItems = document.getElementById("listItems");
   if (!listItems || !currentNote) return;
   
+  console.log("updateListSection called, currentNote:", currentNote);
+  
   // Handle migration from old single list to new multiple list sections
   if (currentNote.list && !currentNote.listSections) {
+    console.log("Migrating old list format to new listSections");
     currentNote.listSections = [{
       id: generateId(),
       type: currentNote.listType || 'bulleted',
@@ -974,6 +977,8 @@ function updateListSection() {
   }
   
   if (!currentNote.listSections) currentNote.listSections = [];
+  
+  console.log("Current listSections:", currentNote.listSections);
   
   listItems.innerHTML = currentNote.listSections.map((section, sectionIndex) => `
     <div class="list-section" data-section-id="${section.id}">
@@ -993,7 +998,7 @@ function updateListSection() {
         </div>
       `).join("")}
       <div class="list-item">
-        <button class="btn-icon" onclick="addListItemToSection('${section.id}')">
+        <button class="btn-icon" onclick="console.log('Add button clicked for section: ${section.id}'); addListItemToSection('${section.id}')">
           <i class="fas fa-plus"></i>
         </button>
         <span>Add item</span>
