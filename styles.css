@@ -89,10 +89,13 @@ body {
 
 /* Search Section */
 .search-section {
+  position: sticky;
+  top: 0;
   background: var(--background-color);
   border-bottom: 1px solid var(--border-color);
   padding: 0.75rem 1rem;
   margin: 0;
+  z-index: 999;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -493,7 +496,7 @@ body {
 /* Filter Chips */
 .filter-chips {
   position: sticky;
-  top: 0;
+  top: 64px; /* Height of search section */
   display: flex;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
