@@ -6,6 +6,7 @@ let currentNote = null;
 let currentFilter = "all";
 let currentListType = "bulleted";
 let autoSaveTimeout = null; // Define autoSaveTimeout variable
+let isAutoSave = false; // Flag to distinguish auto-save from manual save
 // currentUser is managed by firebase-config.js
 let sharedNoteListeners = new Map(); // Track Firebase listeners for shared notes
 let isReceivingUpdate = false; // Prevent infinite loops during real-time updates
@@ -390,13 +391,13 @@ function saveLocalNote() {
   
   if (existingIndex >= 0) {
     notes[existingIndex] = currentNote;
-    // Only show toast for manual saves, not auto-saves during collaboration
-    if (!collaborativeEditingEnabled) {
+    // Only show toast for manual saves, not auto-saves
+    if (!isAutoSave && !collaborativeEditingEnabled) {
       showToast(t("noteUpdated"), "success");
     }
   } else {
     notes.push(currentNote);
-    if (!collaborativeEditingEnabled) {
+    if (!isAutoSave && !collaborativeEditingEnabled) {
       showToast(t("noteAdded"), "success");
     }
   }
@@ -570,6 +571,11 @@ function showNotesPage() {
     cleanupRealtimeCollaboration(currentNote.sharedId);
   }
   
+  // Save current note before leaving editor
+  if (currentNote) {
+    saveCurrentNote();
+  }
+  
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
   const notesPage = document.getElementById("notesPage");
   if (notesPage) notesPage.classList.add("active");
@@ -582,6 +588,12 @@ function showNotesPage() {
   
   const fab = document.getElementById("addNoteBtn");
   if (fab) fab.classList.remove("hidden");
+  
+  // Force refresh the notes view to show latest changes
+  setTimeout(() => {
+    renderNotes();
+    updateFilterChips();
+  }, 100);
 }
 
 function showEditorPage() {
@@ -1651,7 +1663,9 @@ function setupFastAutoSave() {
   
   function fastSave() {
     if (collaborativeEditingEnabled && !isReceivingUpdate) {
+      isAutoSave = true;
       saveCurrentNote();
+      isAutoSave = false;
     }
   }
   
