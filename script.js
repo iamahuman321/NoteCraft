@@ -1249,11 +1249,26 @@ async function sendInvitations() {
       console.log("Saved invitation to database:", invitation.id);
     }
     
-    // Mark current note as shared
+    // Mark current note as shared and add collaborators data
     currentNote.isShared = true;
     currentNote.sharedId = sharedId;
+    currentNote.collaborators = sharedNoteData.collaborators;
     saveCurrentNote();
     console.log("Note marked as shared and saved");
+    
+    // Also update the note in the notes array to reflect shared status
+    const noteIndex = notes.findIndex(n => n.id === currentNote.id);
+    if (noteIndex !== -1) {
+      notes[noteIndex].isShared = true;
+      notes[noteIndex].sharedId = sharedId;
+      notes[noteIndex].collaborators = sharedNoteData.collaborators;
+      localStorage.setItem("notes", JSON.stringify(notes));
+      
+      // Save to Firebase if user is authenticated
+      if (window.authFunctions && typeof window.authFunctions.saveUserData === 'function') {
+        window.authFunctions.saveUserData();
+      }
+    }
     
     showToast(`Sent ${invitations.length} invitation(s)`, "success");
     hideShareModal();

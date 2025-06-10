@@ -313,13 +313,49 @@ async function acceptInvitation(invitationId, sharedId) {
         await sharedNoteRef.update({ collaborators: sharedNote.collaborators });
         console.log("User added to collaborators successfully");
       }
+      
+      // Add shared note to user's local notes collection
+      console.log("Adding shared note to user's notes...");
+      const localNote = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        title: sharedNote.title,
+        content: sharedNote.content,
+        categories: sharedNote.categories || [],
+        images: sharedNote.images || [],
+        list: sharedNote.list || [],
+        createdAt: sharedNote.createdAt,
+        updatedAt: sharedNote.updatedAt,
+        sharedId: sharedId,
+        isShared: true,
+        collaborators: sharedNote.collaborators,
+        owner: sharedNote.owner
+      };
+      
+      // Add to user's notes in Firebase
+      const userNotesRef = window.database.ref(`users/${currentUser.uid}/notes`);
+      const userNotesSnapshot = await userNotesRef.once('value');
+      const userNotes = userNotesSnapshot.val() || [];
+      
+      // Check if note already exists
+      const noteExists = userNotes.find(note => note.sharedId === sharedId);
+      if (!noteExists) {
+        userNotes.push(localNote);
+        await userNotesRef.set(userNotes);
+        console.log("Shared note added to user's notes collection");
+      }
+      
     } else {
       console.error("Shared note not found:", sharedId);
     }
     
-    // Refresh the page to remove accepted invitation
-    console.log("Refreshing invitation list...");
+    // Refresh the page to remove accepted invitation and reload notes
+    console.log("Refreshing invitation list and reloading user data...");
     await loadSharedContent();
+    
+    // Reload user data to get the new shared note
+    if (window.authFunctions && typeof window.authFunctions.loadUserData === 'function') {
+      await window.authFunctions.loadUserData(currentUser);
+    }
     
     showToast("Invitation accepted! You can now collaborate on this note.");
     
