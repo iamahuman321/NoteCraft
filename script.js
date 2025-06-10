@@ -1522,10 +1522,8 @@ function setupRealtimeCollaboration(sharedId) {
       
       isReceivingUpdate = false;
       
-      // Show who made the last edit (if not current user)
-      if (sharedNote.lastEditedBy && sharedNote.lastEditedBy !== window.authFunctions?.getCurrentUser()?.uid) {
-        showCollaboratorActivity(sharedNote.lastEditedBy, 'edited');
-      }
+      // Update collaborator presence indicators
+      updateCollaboratorPresence(sharedNote.activeUsers || {});
     }
   });
   
@@ -1537,6 +1535,9 @@ function setupRealtimeCollaboration(sharedId) {
   
   // Show collaboration status indicator
   showCollaborationStatus();
+  
+  // Setup faster auto-save for collaborative editing
+  setupFastAutoSave();
   
   collaborativeEditingEnabled = true;
   console.log('Real-time collaboration enabled for shared note:', sharedId);
@@ -1566,16 +1567,29 @@ function updatePresence(sharedId, data) {
   }
 }
 
-function showCollaboratorActivity(userId, action) {
-  // Get user info and show a subtle notification
-  if (window.database) {
-    window.database.ref(`users/${userId}`).once('value').then(snapshot => {
-      const userData = snapshot.val();
-      if (userData) {
-        const userName = userData.name || userData.displayName || userData.email?.split('@')[0] || 'Someone';
-        showToast(`${userName} ${action} this note`, 'info');
-      }
-    });
+function trackUserActivity() {
+  // Track user typing activity for presence indicators
+  const titleInput = document.getElementById("titleInput");
+  const contentTextarea = document.getElementById("contentTextarea");
+  
+  function updateActivityStatus() {
+    if (currentNote && currentNote.isShared && currentNote.sharedId) {
+      updatePresence(currentNote.sharedId, { 
+        status: 'editing',
+        lastActive: Date.now(),
+        currentField: document.activeElement?.id || null
+      });
+    }
+  }
+  
+  if (titleInput) {
+    titleInput.addEventListener('focus', updateActivityStatus);
+    titleInput.addEventListener('input', updateActivityStatus);
+  }
+  
+  if (contentTextarea) {
+    contentTextarea.addEventListener('focus', updateActivityStatus);
+    contentTextarea.addEventListener('input', updateActivityStatus);
   }
 }
 
@@ -1591,6 +1605,58 @@ function hideCollaborationStatus() {
   if (collaborationStatus) {
     collaborationStatus.style.display = 'none';
   }
+}
+
+function setupFastAutoSave() {
+  // Clear existing auto-save timeout
+  if (autoSaveTimeout) {
+    clearTimeout(autoSaveTimeout);
+  }
+  
+  const titleInput = document.getElementById("titleInput");
+  const contentTextarea = document.getElementById("contentTextarea");
+  
+  function fastSave() {
+    if (collaborativeEditingEnabled && !isReceivingUpdate) {
+      saveCurrentNote();
+    }
+  }
+  
+  // Save every 200ms for near real-time collaborative editing
+  const fastAutoSave = debounce(fastSave, 200);
+  
+  if (titleInput) {
+    titleInput.removeEventListener('input', fastAutoSave);
+    titleInput.addEventListener('input', fastAutoSave);
+  }
+  
+  if (contentTextarea) {
+    contentTextarea.removeEventListener('input', fastAutoSave);
+    contentTextarea.addEventListener('input', fastAutoSave);
+  }
+}
+
+function updateCollaboratorPresence(activeUsers) {
+  const activeCollaborators = document.getElementById('activeCollaborators');
+  if (!activeCollaborators) return;
+  
+  const currentUser = window.authFunctions?.getCurrentUser();
+  if (!currentUser) return;
+  
+  // Filter out current user and get only active collaborators
+  const collaborators = Object.entries(activeUsers)
+    .filter(([uid, userData]) => uid !== currentUser.uid && userData.status === 'editing')
+    .slice(0, 3); // Show max 3 collaborators
+  
+  if (collaborators.length === 0) {
+    activeCollaborators.innerHTML = '';
+    return;
+  }
+  
+  activeCollaborators.innerHTML = collaborators.map(([uid, userData]) => {
+    const initials = (userData.name || 'U').charAt(0).toUpperCase();
+    return `<div class="collaborator-avatar" title="${userData.name || 'Unknown'}">${initials}</div>`;
+  }).join('');
 }
 
 // Export for window global

@@ -482,13 +482,20 @@ async function updatePresence(sharedId, data) {
   const presenceRef = window.database.ref(`sharedNotes/${sharedId}/activeUsers/${currentUser.uid}`)
   
   await presenceRef.set({
-    name: currentUser.displayName || currentUser.email,
+    name: currentUser.displayName || currentUser.email.split('@')[0],
     lastActive: Date.now(),
+    status: 'editing',
     ...data
   })
 
   // Remove presence on disconnect
   presenceRef.onDisconnect().remove()
+  
+  // Clean up any existing interval
+  if (window.presenceInterval) {
+    clearInterval(window.presenceInterval);
+    window.presenceInterval = null;
+  }
 }
 
 // Utility functions
