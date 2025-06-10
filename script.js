@@ -11,6 +11,7 @@ let isAutoSave = false; // Flag to distinguish auto-save from manual save
 let sharedNoteListeners = new Map(); // Track Firebase listeners for shared notes
 let isReceivingUpdate = false; // Prevent infinite loops during real-time updates
 let collaborativeEditingEnabled = false;
+let homePageSyncInterval = null; // Track home page sync interval
 
 // Translations
 const translations = {
@@ -580,7 +581,15 @@ function showNotesPage() {
   
   // Save current note before leaving editor
   if (currentNote) {
+    // Don't set isAutoSave for manual save when leaving editor
     saveCurrentNote();
+    
+    // Show toast notification for manual save when leaving editor
+    if (currentNote.isShared) {
+      showToast("Shared note saved", "success");
+    } else {
+      showToast("Note saved", "success");
+    }
   }
   
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
@@ -601,9 +610,15 @@ function showNotesPage() {
     renderNotes();
     updateFilterChips();
   }, 100);
+  
+  // Setup real-time sync for home page to show shared note updates
+  setupHomePageSync();
 }
 
 function showEditorPage() {
+  // Clean up home page sync when leaving notes page
+  cleanupHomePageSync();
+  
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
   const editorPage = document.getElementById("editorPage");
   if (editorPage) editorPage.classList.add("active");
@@ -624,6 +639,9 @@ function showEditorPage() {
 }
 
 function showSettingsPage() {
+  // Clean up home page sync when leaving notes page
+  cleanupHomePageSync();
+  
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
   const settingsPage = document.getElementById("settingsPage");
   if (settingsPage) settingsPage.classList.add("active");
@@ -1687,6 +1705,72 @@ function setupFastAutoSave() {
   if (contentTextarea) {
     contentTextarea.removeEventListener('input', fastAutoSave);
     contentTextarea.addEventListener('input', fastAutoSave);
+  }
+}
+
+function setupHomePageSync() {
+  // Clear any existing sync interval
+  if (homePageSyncInterval) {
+    clearInterval(homePageSyncInterval);
+  }
+  
+  // Only sync if we're on the notes page and user is signed in
+  const notesPage = document.getElementById("notesPage");
+  if (!notesPage || !notesPage.classList.contains("active") || !getCurrentUser() || isUserGuest()) {
+    return;
+  }
+  
+  // Sync shared notes every 1000ms (1 second) when on home page
+  homePageSyncInterval = setInterval(async () => {
+    try {
+      // Only sync if we're still on the notes page
+      const currentNotesPage = document.getElementById("notesPage");
+      if (!currentNotesPage || !currentNotesPage.classList.contains("active")) {
+        clearInterval(homePageSyncInterval);
+        return;
+      }
+      
+      // Get latest shared notes from Firebase
+      const sharedNotes = await getSharedNotes();
+      if (sharedNotes && sharedNotes.length > 0) {
+        // Update local notes with shared note data
+        let notesUpdated = false;
+        
+        sharedNotes.forEach(sharedNote => {
+          const existingIndex = notes.findIndex(n => n.sharedId === sharedNote.id);
+          if (existingIndex !== -1) {
+            // Update existing shared note
+            const existingNote = notes[existingIndex];
+            if (existingNote.lastModified !== sharedNote.lastModified) {
+              notes[existingIndex] = {
+                ...existingNote,
+                title: sharedNote.title || '',
+                content: sharedNote.content || '',
+                lastModified: sharedNote.lastModified,
+                categories: sharedNote.categories || [],
+                images: sharedNote.images || [],
+                list: sharedNote.list || []
+              };
+              notesUpdated = true;
+            }
+          }
+        });
+        
+        // Re-render notes if any updates occurred
+        if (notesUpdated) {
+          renderNotes();
+        }
+      }
+    } catch (error) {
+      console.error("Error syncing home page:", error);
+    }
+  }, 1000);
+}
+
+function cleanupHomePageSync() {
+  if (homePageSyncInterval) {
+    clearInterval(homePageSyncInterval);
+    homePageSyncInterval = null;
   }
 }
 
