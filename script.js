@@ -676,13 +676,9 @@ function showNotesPage() {
   const searchSection = document.getElementById("searchSection");
   if (searchSection) searchSection.style.display = "block";
   
-  // Show filter chips on notes page
-  const filterChips = document.getElementById("filterChips");
-  if (filterChips) filterChips.style.display = "flex";
-  
-  // Update main content margin for search section + filter chips
+  // Update main content margin for search section
   const mainContent = document.querySelector(".main-content");
-  if (mainContent) mainContent.style.marginTop = "calc(var(--header-height) + 64px + 64px)";
+  if (mainContent) mainContent.style.marginTop = "calc(var(--header-height) + 64px)";
   
   // Force refresh the notes view to show latest changes
   setTimeout(() => {
@@ -715,10 +711,6 @@ function showEditorPage() {
   const searchSection = document.getElementById("searchSection");
   if (searchSection) searchSection.style.display = "none";
   
-  // Hide filter chips on editor page
-  const filterChips = document.getElementById("filterChips");
-  if (filterChips) filterChips.style.display = "none";
-  
   // Update main content margin without search section
   const mainContent = document.querySelector(".main-content");
   if (mainContent) mainContent.style.marginTop = "var(--header-height)";
@@ -746,18 +738,6 @@ function showSettingsPage() {
   const fab = document.getElementById("addNoteBtn");
   if (fab) fab.classList.add("hidden");
   
-  // Hide search section on settings page
-  const searchSection = document.getElementById("searchSection");
-  if (searchSection) searchSection.style.display = "none";
-  
-  // Hide filter chips on settings page
-  const filterChips = document.getElementById("filterChips");
-  if (filterChips) filterChips.style.display = "none";
-  
-  // Update main content margin without search section
-  const mainContent = document.querySelector(".main-content");
-  if (mainContent) mainContent.style.marginTop = "var(--header-height)";
-  
   updateSettingsContent();
 }
 
@@ -783,18 +763,6 @@ function showShoppingPage() {
   
   const fab = document.getElementById("addNoteBtn");
   if (fab) fab.classList.add("hidden");
-  
-  // Hide search section on shopping page
-  const searchSection = document.getElementById("searchSection");
-  if (searchSection) searchSection.style.display = "none";
-  
-  // Hide filter chips on shopping page
-  const filterChips = document.getElementById("filterChips");
-  if (filterChips) filterChips.style.display = "none";
-  
-  // Update main content margin without search section
-  const mainContent = document.querySelector(".main-content");
-  if (mainContent) mainContent.style.marginTop = "var(--header-height)";
 }
 
 function showShoppingCategoryPage(category) {
@@ -835,18 +803,6 @@ function showShoppingCategoryPage(category) {
   
   const fab = document.getElementById("addNoteBtn");
   if (fab) fab.classList.add("hidden");
-  
-  // Hide search section on shopping category page
-  const searchSection = document.getElementById("searchSection");
-  if (searchSection) searchSection.style.display = "none";
-  
-  // Hide filter chips on shopping category page
-  const filterChips = document.getElementById("filterChips");
-  if (filterChips) filterChips.style.display = "none";
-  
-  // Update main content margin without search section
-  const mainContent = document.querySelector(".main-content");
-  if (mainContent) mainContent.style.marginTop = "var(--header-height)";
 }
 
 function renderShoppingList(category) {
