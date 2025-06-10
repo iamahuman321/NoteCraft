@@ -213,12 +213,23 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label>Search Users</label>
-                    <input type="text" id="userSearchInput" class="form-input" placeholder="Search by username or email..." />
+                <!-- Current Access Section -->
+                <div class="current-access-section">
+                    <h3>People with access</h3>
+                    <div class="current-collaborators" id="currentCollaborators">
+                        <!-- Current collaborators will be displayed here -->
+                    </div>
                 </div>
-                <div class="search-results" id="searchResults"></div>
-                <div class="selected-users" id="selectedUsers"></div>
+                
+                <!-- Add People Section -->
+                <div class="add-people-section">
+                    <h3>Add people</h3>
+                    <div class="form-group">
+                        <input type="text" id="userSearchInput" class="form-input" placeholder="Search by username, name, or email..." />
+                    </div>
+                    <div class="search-results" id="searchResults"></div>
+                    <div class="selected-users" id="selectedUsers"></div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" id="cancelShareBtn">Cancel</button>

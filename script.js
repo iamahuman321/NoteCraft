@@ -609,13 +609,16 @@ function showShareModal() {
   const isGuest = window.authFunctions?.isUserGuest();
   
   if (isGuest || !currentUser) {
-    showToast(t("guestCannotShare"), "warning");
+    showToast("Sign in required to share notes", "warning");
     return;
   }
   
   const shareModal = document.getElementById("shareModal");
   if (shareModal) {
     shareModal.classList.add("show");
+    
+    // Load current collaborators
+    loadCurrentCollaborators();
     
     // Clear previous selections
     const selectedUsers = document.getElementById("selectedUsers");
@@ -920,6 +923,89 @@ function deleteImage(index) {
   currentNote.images.splice(index, 1);
   updateImagesSection();
   saveCurrentNote();
+}
+
+// Collaborator functions
+async function loadCurrentCollaborators() {
+  const currentCollaborators = document.getElementById("currentCollaborators");
+  if (!currentCollaborators || !currentNote) return;
+  
+  const currentUser = window.authFunctions?.getCurrentUser();
+  if (!currentUser) return;
+  
+  try {
+    // Show current user as owner
+    const collaborators = [];
+    
+    // Add current user as owner
+    collaborators.push({
+      uid: currentUser.uid,
+      name: currentUser.displayName || currentUser.email.split('@')[0],
+      email: currentUser.email,
+      role: 'owner'
+    });
+    
+    // If note is shared, load collaborators from shared note
+    if (currentNote.isShared && currentNote.sharedId && window.database) {
+      const sharedNoteRef = window.database.ref(`sharedNotes/${currentNote.sharedId}`);
+      const snapshot = await sharedNoteRef.once('value');
+      const sharedNote = snapshot.val();
+      
+      if (sharedNote && sharedNote.collaborators) {
+        // Get user details for each collaborator
+        for (const [uid, collab] of Object.entries(sharedNote.collaborators)) {
+          if (uid !== currentUser.uid) {
+            const userRef = window.database.ref(`users/${uid}`);
+            const userSnapshot = await userRef.once('value');
+            const userData = userSnapshot.val();
+            
+            if (userData) {
+              collaborators.push({
+                uid: uid,
+                name: userData.name || userData.displayName || userData.email.split('@')[0],
+                email: userData.email,
+                role: collab.role || 'editor'
+              });
+            }
+          }
+        }
+      }
+    }
+    
+    // Render collaborators
+    renderCollaborators(collaborators);
+    
+  } catch (error) {
+    console.error("Error loading collaborators:", error);
+    currentCollaborators.innerHTML = "<div class='collaborator-item'>Error loading collaborators</div>";
+  }
+}
+
+function renderCollaborators(collaborators) {
+  const currentCollaborators = document.getElementById("currentCollaborators");
+  if (!currentCollaborators) return;
+  
+  if (collaborators.length === 0) {
+    currentCollaborators.innerHTML = "<div class='collaborator-item'>Only you have access</div>";
+    return;
+  }
+  
+  currentCollaborators.innerHTML = collaborators.map(collaborator => {
+    const initials = collaborator.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    
+    return `
+      <div class="collaborator-item">
+        <div class="collaborator-info">
+          <div class="collaborator-avatar">${initials}</div>
+          <div class="collaborator-details">
+            <div class="collaborator-name">${escapeHtml(collaborator.name)}</div>
+            <div class="collaborator-email">${escapeHtml(collaborator.email)}</div>
+          </div>
+        </div>
+        <div class="collaborator-role ${collaborator.role}">${collaborator.role}</div>
+      </div>
+    `;
+  }).join("");
 }
 
 // Sharing functions

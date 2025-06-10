@@ -1883,6 +1883,95 @@ body {
   color: white;
 }
 
+/* Current Access Section */
+.current-access-section {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.current-access-section h3,
+.add-people-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-color);
+}
+
+.current-collaborators {
+  min-height: 40px;
+}
+
+.collaborator-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.collaborator-item:last-child {
+  border-bottom: none;
+}
+
+.collaborator-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.collaborator-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.collaborator-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.collaborator-name {
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.collaborator-email {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.collaborator-role {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+.collaborator-role.owner {
+  background: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.collaborator-role.editor {
+  background: var(--success-light);
+  color: var(--success-color);
+}
+
+.add-people-section {
+  margin-top: 16px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
