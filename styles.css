@@ -1200,6 +1200,31 @@ body {
   overflow: hidden;
 }
 
+/* List Type Indicators */
+.list-number {
+  min-width: 2rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  text-align: right;
+  margin-right: 0.5rem;
+}
+
+.list-bullet {
+  min-width: 1.5rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+.list-item-numbered {
+  padding-left: 0.5rem;
+}
+
+.list-item-bulleted {
+  padding-left: 0.5rem;
+}
+
 .list-section-header {
   display: flex;
   justify-content: space-between;

@@ -953,8 +953,7 @@ function selectListType(event) {
   };
   
   currentNote.listSections.push(newListSection);
-  console.log("Created new list section:", newListSection);
-  console.log("Current listSections after creation:", currentNote.listSections);
+
   
   const listSection = document.getElementById("listSection");
   if (listSection) listSection.classList.remove("hidden");
@@ -967,7 +966,7 @@ function updateListSection() {
   const listItems = document.getElementById("listItems");
   if (!listItems || !currentNote) return;
   
-  console.log('updateListSection called - listSections:', currentNote.listSections?.length || 0);
+
   
   // Handle migration from old single list to new multiple list sections
   if (currentNote.list && !currentNote.listSections) {
@@ -985,14 +984,16 @@ function updateListSection() {
   listItems.innerHTML = currentNote.listSections.map((section, sectionIndex) => `
     <div class="list-section" data-section-id="${section.id}">
       <div class="list-section-header">
-        <span class="list-type-label">${section.type === 'checklist' ? 'Checklist' : 'Bulleted List'}</span>
+        <span class="list-type-label">${section.type === 'checklist' ? 'Checklist' : section.type === 'numbered' ? 'Numbered List' : 'Bulleted List'}</span>
         <button class="btn-icon delete-section-btn" data-section-id="${section.id}">
           <i class="fas fa-times"></i>
         </button>
       </div>
       ${section.items.map((item, itemIndex) => `
-        <div class="list-item ${item.completed ? 'completed' : ''}">
+        <div class="list-item ${item.completed ? 'completed' : ''} list-item-${section.type}">
           ${section.type === 'checklist' ? `<input type="checkbox" ${item.completed ? 'checked' : ''} class="item-checkbox" data-section-id="${section.id}" data-item-index="${itemIndex}" />` : ''}
+          ${section.type === 'numbered' ? `<span class="list-number">${itemIndex + 1}.</span>` : ''}
+          ${section.type === 'bulleted' ? `<span class="list-bullet">•</span>` : ''}
           <input type="text" value="${escapeHtml(item.text || '')}" class="item-input" data-section-id="${section.id}" data-item-index="${itemIndex}" />
           <button class="btn-icon delete-item-btn" data-section-id="${section.id}" data-item-index="${itemIndex}">
             <i class="fas fa-times"></i>
@@ -1013,19 +1014,14 @@ function updateListSection() {
 }
 
 function setupListEventListeners() {
-  console.log('Setting up list event listeners...');
-  
   // Add item buttons
   const addButtons = document.querySelectorAll('.add-item-btn');
-  console.log('Found add buttons:', addButtons.length);
   
   addButtons.forEach(btn => {
-    console.log('Adding listener to button:', btn.dataset.sectionId);
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       const sectionId = e.target.closest('.add-item-btn').dataset.sectionId;
-      console.log('Add button clicked for section:', sectionId);
       addListItemToSection(sectionId);
     });
   });
