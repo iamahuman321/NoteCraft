@@ -1008,9 +1008,17 @@ function updateListSection() {
 }
 
 function setupListEventListeners() {
+  console.log('Setting up list event listeners...');
+  
   // Add item buttons
-  document.querySelectorAll('.add-item-btn').forEach(btn => {
+  const addButtons = document.querySelectorAll('.add-item-btn');
+  console.log('Found add buttons:', addButtons.length);
+  
+  addButtons.forEach(btn => {
+    console.log('Adding listener to button:', btn.dataset.sectionId);
     btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const sectionId = e.target.closest('.add-item-btn').dataset.sectionId;
       console.log('Add button clicked for section:', sectionId);
       addListItemToSection(sectionId);
