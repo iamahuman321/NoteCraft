@@ -376,9 +376,11 @@ function saveCurrentNote() {
   
   currentNote.updatedAt = Date.now();
   
-  if (currentNote.isShared) {
+  if (currentNote.isShared && currentNote.sharedId) {
+    console.log("Saving shared note:", currentNote.sharedId);
     saveSharedNote();
   } else {
+    console.log("Saving local note:", currentNote.id);
     saveLocalNote();
   }
 }
@@ -388,10 +390,15 @@ function saveLocalNote() {
   
   if (existingIndex >= 0) {
     notes[existingIndex] = currentNote;
-    showToast(t("noteUpdated"), "success");
+    // Only show toast for manual saves, not auto-saves during collaboration
+    if (!collaborativeEditingEnabled) {
+      showToast(t("noteUpdated"), "success");
+    }
   } else {
     notes.push(currentNote);
-    showToast(t("noteAdded"), "success");
+    if (!collaborativeEditingEnabled) {
+      showToast(t("noteAdded"), "success");
+    }
   }
   
   localStorage.setItem("notes", JSON.stringify(notes));
@@ -407,13 +414,24 @@ function saveSharedNote() {
   
   const currentUser = window.authFunctions?.getCurrentUser();
   if (currentUser && window.authFunctions?.updateSharedNote) {
-    window.authFunctions.updateSharedNote(currentNote.sharedId, {
-      title: currentNote.title,
-      content: currentNote.content,
-      categories: currentNote.categories,
-      images: currentNote.images,
-      list: currentNote.list
-    });
+    try {
+      window.authFunctions.updateSharedNote(currentNote.sharedId, {
+        title: currentNote.title,
+        content: currentNote.content,
+        categories: currentNote.categories || [],
+        images: currentNote.images || [],
+        list: currentNote.list || []
+      });
+      
+      // Also update local note
+      const existingIndex = notes.findIndex(n => n.id === currentNote.id);
+      if (existingIndex >= 0) {
+        notes[existingIndex] = currentNote;
+        localStorage.setItem("notes", JSON.stringify(notes));
+      }
+    } catch (error) {
+      console.error("Error saving shared note:", error);
+    }
   }
 }
 
