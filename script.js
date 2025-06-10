@@ -434,7 +434,10 @@ function saveSharedNote() {
         content: currentNote.content,
         categories: currentNote.categories || [],
         images: currentNote.images || [],
-        list: currentNote.list || []
+        listSections: currentNote.listSections || [],
+        // Keep legacy list support for backwards compatibility
+        list: currentNote.list || [],
+        listType: currentNote.listType || 'bulleted'
       });
       
       // Also update local note
@@ -963,6 +966,8 @@ function selectListType(event) {
 function updateListSection() {
   const listItems = document.getElementById("listItems");
   if (!listItems || !currentNote) return;
+  
+  console.log('updateListSection called - listSections:', currentNote.listSections?.length || 0);
   
   // Handle migration from old single list to new multiple list sections
   if (currentNote.list && !currentNote.listSections) {
