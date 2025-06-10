@@ -61,10 +61,10 @@ function initializePage() {
     // Listen for auth state changes
     if (window.auth) {
       window.auth.onAuthStateChanged((user) => {
-        currentUser = user;
-        isGuest = window.authFunctions.isUserGuest();
+        window.currentUser = user;
+        const isGuest = window.authFunctions.isUserGuest();
         
-        if (isGuest || !currentUser) {
+        if (isGuest || !user) {
           showSignInRequired();
         } else {
           loadSharedContent();
@@ -75,13 +75,38 @@ function initializePage() {
 }
 
 function setupEventListeners() {
-  // Settings button to go back
-  const settingsBtn = document.getElementById("settingsBtn");
-  if (settingsBtn) {
-    settingsBtn.addEventListener("click", () => {
-      window.location.href = "index.html";
-    });
+  // Hamburger menu
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const sidebar = document.getElementById("sidebar");
+  const sidebarClose = document.getElementById("sidebarClose");
+  const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+  if (hamburgerBtn) {
+    hamburgerBtn.addEventListener("click", toggleSidebar);
   }
+  if (sidebarClose) {
+    sidebarClose.addEventListener("click", closeSidebar);
+  }
+  if (sidebarOverlay) {
+    sidebarOverlay.addEventListener("click", closeSidebar);
+  }
+}
+
+// Sidebar functions
+function toggleSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  
+  sidebar.classList.toggle("open");
+  hamburgerBtn.classList.toggle("active");
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  
+  sidebar.classList.remove("open");
+  hamburgerBtn.classList.remove("active");
 }
 
 function showSignInRequired() {
