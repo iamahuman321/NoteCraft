@@ -68,26 +68,56 @@ function initializeApp() {
   waitForFirebase().then(() => {
     console.log("Firebase ready for main app");
     
-    // Get current user from firebase-config
-    window.currentUser = window.authFunctions.getCurrentUser();
-    
-    // Initialize UI
+    // Initialize UI first
     setupEventListeners();
-    renderNotes();
-    renderCategories();
-    updateFilterChips();
     loadSettings();
-    updateShareButtonVisibility();
     
-    // Listen for auth state changes
+    // Listen for auth state changes and load data accordingly
     if (window.auth) {
       window.auth.onAuthStateChanged((user) => {
         window.currentUser = user;
+        
+        // Load data after auth state is determined
+        if (user && !window.authFunctions.isUserGuest()) {
+          // Authenticated user - data will be loaded by firebase-config
+          setTimeout(() => {
+            renderNotes();
+            renderCategories();
+            updateFilterChips();
+          }, 100);
+        } else {
+          // Guest user - load local data
+          loadLocalData();
+          renderNotes();
+          renderCategories();
+          updateFilterChips();
+        }
+        
         updateShareButtonVisibility();
         updateSidebarAuth();
       });
     }
   });
+}
+
+function loadLocalData() {
+  // Load notes from localStorage
+  const savedNotes = localStorage.getItem("notes");
+  if (savedNotes) {
+    notes = JSON.parse(savedNotes);
+  }
+  
+  // Load categories from localStorage
+  const savedCategories = localStorage.getItem("categories");
+  if (savedCategories) {
+    categories = JSON.parse(savedCategories);
+  }
+  
+  // Load settings from localStorage
+  const savedFilter = localStorage.getItem("currentFilter");
+  if (savedFilter) {
+    currentFilter = savedFilter;
+  }
 }
 
 function setupEventListeners() {
@@ -406,18 +436,27 @@ function renderNotes() {
   if (!notesContainer) return;
 
   let filteredNotes = notes;
-  if (currentFilter !== "all") {
+  if (currentFilter === "shared") {
+    // Show notes that have collaborators (shared notes)
+    filteredNotes = notes.filter(note => 
+      note.sharedId || (note.collaborators && Object.keys(note.collaborators).length > 0)
+    );
+  } else if (currentFilter !== "all") {
     filteredNotes = notes.filter(note => 
       note.categories && note.categories.includes(currentFilter)
     );
   }
 
   if (filteredNotes.length === 0) {
+    const emptyMessage = currentFilter === "shared" 
+      ? { icon: "fas fa-users", title: "No shared notes", text: "Notes shared with others will appear here" }
+      : { icon: "fas fa-sticky-note", title: "No notes yet", text: "Tap the + button to create your first note" };
+    
     notesContainer.innerHTML = `
       <div class="empty-state">
-        <i class="fas fa-sticky-note"></i>
-        <h3>No notes yet</h3>
-        <p>Tap the + button to create your first note</p>
+        <i class="${emptyMessage.icon}"></i>
+        <h3>${emptyMessage.title}</h3>
+        <p>${emptyMessage.text}</p>
       </div>
     `;
     return;
@@ -434,13 +473,20 @@ function renderNotes() {
           return category ? `<span class="category-chip">${category.name}</span>` : "";
         }).join("") || "";
 
+        const isShared = note.sharedId || (note.collaborators && Object.keys(note.collaborators).length > 0);
+        const collaboratorCount = note.collaborators ? Object.keys(note.collaborators).length : 0;
+
         return `
           <div class="note-card" onclick="editNote(notes.find(n => n.id === '${note.id}'))">
-            <div class="note-title">${note.title || "Untitled"}</div>
+            <div class="note-title">
+              ${note.title || "Untitled"}
+              ${isShared ? `<i class="fas fa-users share-icon" title="Shared with ${collaboratorCount} people"></i>` : ""}
+            </div>
             <div class="note-preview">${preview}</div>
             <div class="note-meta">
               <span>${dateStr}</span>
               ${note.categories && note.categories.length > 0 ? `<span>${note.categories.length} categories</span>` : ""}
+              ${isShared ? `<span class="shared-indicator"><i class="fas fa-share-alt"></i> Shared</span>` : ""}
             </div>
             ${categoryTags ? `<div class="category-chips">${categoryTags}</div>` : ""}
           </div>
