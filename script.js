@@ -678,14 +678,17 @@ function updateEditorContent() {
     dateInfo.textContent = `Created: ${created} | Updated: ${updated}`;
   }
   
-  // Restore the list type if the note has one saved
-  if (currentNote.listType) {
-    currentListType = currentNote.listType;
-  } else if (currentNote.list && currentNote.list.length > 0) {
-    // Auto-detect list type if not saved - check if any items have completed property
+  // Handle migration from old single list to new multiple list sections
+  if (currentNote.list && !currentNote.listSections) {
     const hasCheckboxes = currentNote.list.some(item => item.hasOwnProperty('completed'));
-    currentListType = hasCheckboxes ? 'checklist' : 'bulleted';
-    currentNote.listType = currentListType; // Save for future
+    currentNote.listSections = [{
+      id: generateId(),
+      type: hasCheckboxes ? 'checklist' : 'bulleted',
+      items: currentNote.list
+    }];
+    delete currentNote.list;
+    delete currentNote.listType;
+    saveCurrentNote(); // Save the migration
   }
   
   updateCategoryChips();
