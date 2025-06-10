@@ -57,7 +57,7 @@ function openNoteEditor(noteId) {
   } else {
     // Navigate to main page with note ID
     localStorage.setItem('openNoteId', noteId)
-    window.location.href = 'index.html'
+    window.location.href = 'Note/index.html'
   }
 }
 

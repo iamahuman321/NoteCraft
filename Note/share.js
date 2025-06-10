@@ -102,14 +102,14 @@ function setupEventListeners() {
   if (navNotes) {
     navNotes.addEventListener("click", (e) => {
       e.preventDefault();
-      window.location.href = "index.html";
+      window.location.href = "Note/index.html";
     });
   }
 
   if (navCategories) {
     navCategories.addEventListener("click", (e) => {
       e.preventDefault();
-      window.location.href = "category.html";
+      window.location.href = "Note/category.html";
     });
   }
 
@@ -123,7 +123,7 @@ function setupEventListeners() {
   if (navSignIn) {
     navSignIn.addEventListener("click", (e) => {
       e.preventDefault();
-      window.location.href = "login.html";
+      window.location.href = "Note/login.html";
     });
   }
 }
@@ -405,7 +405,7 @@ function openSharedNote(sharedId) {
   localStorage.setItem('openSharedNote', JSON.stringify(noteForEditor));
   
   // Navigate to main app
-  window.location.href = 'index.html';
+  window.location.href = 'Note/index.html';
 }
 
 function manageSharedNote(sharedId) {

@@ -256,7 +256,7 @@ function continueAsGuest() {
   isGuest = true
   localStorage.setItem("isGuest", "true")
   updateUIForGuest()
-  window.location.href = "index.html"
+  window.location.href = "Note/index.html"
 }
 
 function signInWithGoogle() {
@@ -328,7 +328,7 @@ function signOutUser() {
     localStorage.removeItem("cachedInvitations")
     localStorage.removeItem("cachedSharedNotes")
     console.log("User signed out successfully")
-    window.location.href = "index.html"
+    window.location.href = "Note/index.html"
   })
 }
 
