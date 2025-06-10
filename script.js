@@ -961,14 +961,30 @@ function addListItem() {
   });
   
   updateListSection();
-  saveCurrentNote();
+  
+  // Use collaborative auto-save for shared notes
+  if (currentNote.isShared && collaborativeEditingEnabled) {
+    isAutoSave = true;
+    saveCurrentNote();
+    isAutoSave = false;
+  } else {
+    saveCurrentNote();
+  }
 }
 
 function updateListItem(index, value) {
   if (!currentNote?.list?.[index]) return;
   
   currentNote.list[index].text = value;
-  saveCurrentNote();
+  
+  // Use collaborative auto-save for shared notes
+  if (currentNote.isShared && collaborativeEditingEnabled) {
+    isAutoSave = true;
+    saveCurrentNote();
+    isAutoSave = false;
+  } else {
+    saveCurrentNote();
+  }
 }
 
 function toggleListItem(index) {
@@ -976,7 +992,15 @@ function toggleListItem(index) {
   
   currentNote.list[index].completed = !currentNote.list[index].completed;
   updateListSection();
-  saveCurrentNote();
+  
+  // Use collaborative auto-save for shared notes
+  if (currentNote.isShared && collaborativeEditingEnabled) {
+    isAutoSave = true;
+    saveCurrentNote();
+    isAutoSave = false;
+  } else {
+    saveCurrentNote();
+  }
 }
 
 function deleteListItem(index) {
@@ -984,7 +1008,15 @@ function deleteListItem(index) {
   
   currentNote.list.splice(index, 1);
   updateListSection();
-  saveCurrentNote();
+  
+  // Use collaborative auto-save for shared notes
+  if (currentNote.isShared && collaborativeEditingEnabled) {
+    isAutoSave = true;
+    saveCurrentNote();
+    isAutoSave = false;
+  } else {
+    saveCurrentNote();
+  }
 }
 
 function confirmDelete() {
