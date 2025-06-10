@@ -1720,56 +1720,63 @@ function setupHomePageSync() {
     return;
   }
   
-  // Sync shared notes every 1000ms (1 second) when on home page
-  homePageSyncInterval = setInterval(async () => {
-    try {
-      // Only sync if we're still on the notes page
-      const currentNotesPage = document.getElementById("notesPage");
-      if (!currentNotesPage || !currentNotesPage.classList.contains("active")) {
-        clearInterval(homePageSyncInterval);
-        return;
-      }
-      
-      // Get latest shared notes from Firebase
-      const sharedNotes = await getSharedNotes();
-      if (sharedNotes && sharedNotes.length > 0) {
-        // Update local notes with shared note data
-        let notesUpdated = false;
+  // Use Firebase real-time listener for shared notes updates
+  const currentUser = getCurrentUser();
+  if (!currentUser || !window.database) return;
+  
+  try {
+    // Listen for changes to shared notes where user is owner or collaborator
+    const sharedNotesRef = window.database.ref('sharedNotes');
+    
+    homePageSyncInterval = sharedNotesRef.on('child_changed', (snapshot) => {
+      try {
+        const sharedNoteId = snapshot.key;
+        const sharedNoteData = snapshot.val();
         
-        sharedNotes.forEach(sharedNote => {
-          const existingIndex = notes.findIndex(n => n.sharedId === sharedNote.id);
-          if (existingIndex !== -1) {
-            // Update existing shared note
-            const existingNote = notes[existingIndex];
-            if (existingNote.lastModified !== sharedNote.lastModified) {
-              notes[existingIndex] = {
-                ...existingNote,
-                title: sharedNote.title || '',
-                content: sharedNote.content || '',
-                lastModified: sharedNote.lastModified,
-                categories: sharedNote.categories || [],
-                images: sharedNote.images || [],
-                list: sharedNote.list || []
-              };
-              notesUpdated = true;
-            }
-          }
-        });
+        // Check if current user is involved in this shared note
+        if (!sharedNoteData || 
+            (sharedNoteData.ownerId !== currentUser.uid && 
+             (!sharedNoteData.collaborators || !sharedNoteData.collaborators.includes(currentUser.uid)))) {
+          return;
+        }
         
-        // Re-render notes if any updates occurred
-        if (notesUpdated) {
+        // Update local notes with the changed shared note
+        const existingIndex = notes.findIndex(n => n.sharedId === sharedNoteId);
+        if (existingIndex !== -1) {
+          notes[existingIndex] = {
+            ...notes[existingIndex],
+            title: sharedNoteData.title || '',
+            content: sharedNoteData.content || '',
+            lastModified: sharedNoteData.lastModified,
+            categories: sharedNoteData.categories || [],
+            images: sharedNoteData.images || [],
+            list: sharedNoteData.list || []
+          };
+          
+          // Re-render notes to show the update
           renderNotes();
         }
+      } catch (error) {
+        console.error("Error processing shared note update:", error);
       }
-    } catch (error) {
-      console.error("Error syncing home page:", error);
-    }
-  }, 1000);
+    });
+    
+    console.log("Home page real-time sync enabled");
+  } catch (error) {
+    console.error("Error setting up home page sync:", error);
+  }
 }
 
 function cleanupHomePageSync() {
-  if (homePageSyncInterval) {
-    clearInterval(homePageSyncInterval);
+  if (homePageSyncInterval && window.database) {
+    try {
+      // Remove Firebase listener
+      const sharedNotesRef = window.database.ref('sharedNotes');
+      sharedNotesRef.off('child_changed', homePageSyncInterval);
+      console.log("Home page sync listener removed");
+    } catch (error) {
+      console.error("Error removing sync listener:", error);
+    }
     homePageSyncInterval = null;
   }
 }
