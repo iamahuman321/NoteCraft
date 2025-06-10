@@ -699,6 +699,12 @@ function updateEditorContent() {
   updateListSection();
   updateImagesSection();
   updatePasswordButton();
+  
+  // Ensure list section is visible if there are list sections
+  const listSection = document.getElementById("listSection");
+  if (listSection && currentNote.listSections && currentNote.listSections.length > 0) {
+    listSection.classList.remove("hidden");
+  }
 }
 
 function updateCategoryChips() {
