@@ -7,6 +7,8 @@ let currentFilter = "all";
 let currentListType = "bulleted";
 // currentUser is managed by firebase-config.js
 let sharedNoteListeners = new Map(); // Track Firebase listeners for shared notes
+let isReceivingUpdate = false; // Prevent infinite loops during real-time updates
+let collaborativeEditingEnabled = false;
 
 // Translations
 const translations = {
@@ -571,6 +573,11 @@ function showEditorPage() {
   
   const fab = document.getElementById("addNoteBtn");
   if (fab) fab.classList.add("hidden");
+  
+  // Setup real-time collaboration if note is shared
+  if (currentNote && currentNote.isShared && currentNote.sharedId) {
+    setupRealtimeCollaboration(currentNote.sharedId);
+  }
 }
 
 function showSettingsPage() {

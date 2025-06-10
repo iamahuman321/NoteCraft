@@ -448,8 +448,27 @@ async function getSharedNotes() {
 async function updateSharedNote(sharedId, updates) {
   if (!currentUser) throw new Error("No user logged in")
 
+  // Clean undefined values from updates to prevent Firebase validation errors
+  function cleanObject(obj) {
+    if (obj === null || obj === undefined) return null;
+    if (Array.isArray(obj)) {
+      return obj.filter(item => item !== undefined && item !== null);
+    }
+    if (typeof obj === 'object') {
+      const cleaned = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined && value !== null) {
+          cleaned[key] = cleanObject(value);
+        }
+      }
+      return cleaned;
+    }
+    return obj;
+  }
+
+  const cleanedUpdates = cleanObject(updates);
   const updateData = {
-    ...updates,
+    ...cleanedUpdates,
     lastEditedBy: currentUser.uid,
     updatedAt: Date.now()
   }
