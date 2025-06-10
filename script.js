@@ -738,6 +738,14 @@ function showSettingsPage() {
   const fab = document.getElementById("addNoteBtn");
   if (fab) fab.classList.add("hidden");
   
+  // Hide search section on settings page
+  const searchSection = document.getElementById("searchSection");
+  if (searchSection) searchSection.style.display = "none";
+  
+  // Update main content margin without search section
+  const mainContent = document.querySelector(".main-content");
+  if (mainContent) mainContent.style.marginTop = "var(--header-height)";
+  
   updateSettingsContent();
 }
 
@@ -763,6 +771,14 @@ function showShoppingPage() {
   
   const fab = document.getElementById("addNoteBtn");
   if (fab) fab.classList.add("hidden");
+  
+  // Hide search section on shopping page
+  const searchSection = document.getElementById("searchSection");
+  if (searchSection) searchSection.style.display = "none";
+  
+  // Update main content margin without search section
+  const mainContent = document.querySelector(".main-content");
+  if (mainContent) mainContent.style.marginTop = "var(--header-height)";
 }
 
 function showShoppingCategoryPage(category) {
@@ -803,6 +819,14 @@ function showShoppingCategoryPage(category) {
   
   const fab = document.getElementById("addNoteBtn");
   if (fab) fab.classList.add("hidden");
+  
+  // Hide search section on shopping category page
+  const searchSection = document.getElementById("searchSection");
+  if (searchSection) searchSection.style.display = "none";
+  
+  // Update main content margin without search section
+  const mainContent = document.querySelector(".main-content");
+  if (mainContent) mainContent.style.marginTop = "var(--header-height)";
 }
 
 function renderShoppingList(category) {
