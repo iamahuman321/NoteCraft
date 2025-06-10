@@ -1734,10 +1734,20 @@ function setupHomePageSync() {
         const sharedNoteData = snapshot.val();
         
         // Check if current user is involved in this shared note
-        if (!sharedNoteData || 
-            (sharedNoteData.ownerId !== currentUser.uid && 
-             (!sharedNoteData.collaborators || !sharedNoteData.collaborators.includes(currentUser.uid)))) {
-          return;
+        if (!sharedNoteData || sharedNoteData.ownerId !== currentUser.uid) {
+          // Check if user is a collaborator (handle both array and object formats)
+          let isCollaborator = false;
+          if (sharedNoteData.collaborators) {
+            if (Array.isArray(sharedNoteData.collaborators)) {
+              isCollaborator = sharedNoteData.collaborators.includes(currentUser.uid);
+            } else if (typeof sharedNoteData.collaborators === 'object') {
+              isCollaborator = sharedNoteData.collaborators[currentUser.uid] === true;
+            }
+          }
+          
+          if (!isCollaborator) {
+            return;
+          }
         }
         
         // Update local notes with the changed shared note
