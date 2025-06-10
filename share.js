@@ -228,7 +228,7 @@ function renderInvitations() {
   
   if (!invitations || invitations.length === 0) {
     invitationsList.innerHTML = '';
-    invitationsEmpty.style.display = 'block';
+    invitationsEmpty.style.display = 'flex';
     return;
   }
   
@@ -237,20 +237,26 @@ function renderInvitations() {
   invitationsList.innerHTML = invitations.map(invitation => `
     <div class="invitation-card">
       <div class="invitation-header">
-        <div class="invitation-title">${invitation.noteTitle || 'Untitled Note'}</div>
-        <small class="text-muted">${new Date(invitation.createdAt).toLocaleDateString()}</small>
+        <div class="invitation-title">
+          <i class="fas fa-sticky-note"></i>
+          ${invitation.noteTitle || 'Untitled Note'}
+        </div>
+        <div class="invitation-date">${new Date(invitation.createdAt).toLocaleDateString()}</div>
       </div>
       <div class="invitation-from">
-        <i class="fas fa-user"></i> From: ${invitation.fromName || 'Unknown'}
+        <i class="fas fa-user-circle"></i>
+        <span><strong>From:</strong> ${invitation.fromName || 'Unknown'}</span>
       </div>
       <div class="invitation-actions">
         <button class="btn btn-success" onclick="acceptInvitation('${invitation.id}', '${invitation.sharedId}')" 
                 ${!navigator.onLine ? 'disabled title="Requires internet connection"' : ''}>
-          <i class="fas fa-check"></i> ${t("accept")}
+          <i class="fas fa-check"></i>
+          Accept
         </button>
         <button class="btn btn-secondary" onclick="declineInvitation('${invitation.id}')"
                 ${!navigator.onLine ? 'disabled title="Requires internet connection"' : ''}>
-          <i class="fas fa-times"></i> ${t("decline")}
+          <i class="fas fa-times"></i>
+          Decline
         </button>
       </div>
     </div>

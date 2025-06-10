@@ -68,20 +68,33 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        <div class="invitations-container">
-            <!-- Invitations Section -->
-            <div class="section">
-                <div class="section-header">
-                    <h3 class="section-title">Pending Invitations</h3>
-                    <small class="section-subtitle">Accept or decline note sharing invitations</small>
+        <div class="invitations-page">
+            <div class="page-header">
+                <div class="page-title">
+                    <i class="fas fa-envelope"></i>
+                    <h2>Note Invitations</h2>
                 </div>
+                <p class="page-description">Collaborate on notes shared by family members</p>
+            </div>
+
+            <div class="invitations-section">
                 <div class="invitations-list" id="invitationsList">
-                    <div class="empty-state" id="invitationsEmpty">
-                        <div class="empty-icon">
-                            <i class="fas fa-envelope-open"></i>
+                    <!-- Invitations will be rendered here -->
+                </div>
+                
+                <div class="empty-invitations" id="invitationsEmpty">
+                    <div class="empty-card">
+                        <div class="empty-illustration">
+                            <i class="fas fa-envelope-open-text"></i>
                         </div>
-                        <h4>No pending invitations</h4>
-                        <p>When someone shares a note with you, invitations will appear here</p>
+                        <h3>No invitations yet</h3>
+                        <p>When family members share notes with you, they'll appear here for you to accept or decline</p>
+                        <div class="empty-actions">
+                            <a href="index.html" class="btn btn-primary">
+                                <i class="fas fa-plus"></i>
+                                Create New Note
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

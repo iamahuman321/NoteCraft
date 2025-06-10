@@ -220,12 +220,18 @@ function loadUserData(user) {
           window.categories = userData.categories
         }
 
-        // Refresh UI if we're on the main page
+        // Set data loaded flag and refresh UI
+        window.dataLoaded = true;
+        
+        // Trigger UI refresh for the main app
         if (typeof window.renderNotes === "function") {
           window.renderNotes()
         }
         if (typeof window.renderCategories === "function") {
           window.renderCategories()
+        }
+        if (typeof window.updateFilterChips === "function") {
+          window.updateFilterChips()
         }
 
         console.log("User data loaded successfully")

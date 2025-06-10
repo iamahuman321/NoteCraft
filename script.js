@@ -80,11 +80,17 @@ function initializeApp() {
         // Load data after auth state is determined
         if (user && !window.authFunctions.isUserGuest()) {
           // Authenticated user - data will be loaded by firebase-config
-          setTimeout(() => {
-            renderNotes();
-            renderCategories();
-            updateFilterChips();
-          }, 100);
+          // Wait for data to be loaded, then render
+          const checkDataLoaded = () => {
+            if (window.dataLoaded || notes.length > 0) {
+              renderNotes();
+              renderCategories();
+              updateFilterChips();
+            } else {
+              setTimeout(checkDataLoaded, 50);
+            }
+          };
+          setTimeout(checkDataLoaded, 100);
         } else {
           // Guest user - load local data
           loadLocalData();
@@ -504,17 +510,33 @@ function updateFilterChips() {
   const filterChips = document.getElementById("filterChips");
   if (!filterChips) return;
   
-  filterChips.innerHTML = categories.map(category => `
-    <button class="filter-chip ${currentFilter === category.id ? 'active' : ''}" 
-            data-filter="${category.id}">
-      ${category.name}
+  // Always include "All" and "Shared" filters
+  let chips = [
+    { id: 'all', name: 'All' },
+    { id: 'shared', name: 'Shared' }
+  ];
+  
+  // Add category filters (excluding "All" to avoid duplication)
+  const categoryFilters = categories.filter(cat => cat.id !== 'all');
+  chips = chips.concat(categoryFilters);
+  
+  filterChips.innerHTML = chips.map(chip => `
+    <button class="filter-chip ${currentFilter === chip.id ? 'active' : ''}" 
+            data-filter="${chip.id}">
+      ${chip.name}
     </button>
   `).join("");
   
   // Add event listeners to filter chips
-  filterChips.querySelectorAll('.filter-chip').forEach(chip => {
-    chip.addEventListener('click', (e) => {
+  filterChips.querySelectorAll('.filter-chip').forEach(chipEl => {
+    chipEl.addEventListener('click', (e) => {
       currentFilter = e.target.dataset.filter;
+      localStorage.setItem("currentFilter", currentFilter);
+      
+      // Update active state
+      filterChips.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      e.target.classList.add('active');
+      
       renderNotes();
     });
   });
