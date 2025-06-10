@@ -5,7 +5,6 @@ let categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all",
 let currentNote = null;
 let currentFilter = "all";
 let currentListType = "bulleted";
-let isGuest = false;
 let currentUser = null;
 let sharedNoteListeners = new Map(); // Track Firebase listeners for shared notes
 
@@ -71,7 +70,6 @@ function initializeApp() {
     
     // Set current user and guest status
     currentUser = window.authFunctions.getCurrentUser();
-    isGuest = window.authFunctions.isUserGuest();
     
     // Initialize UI
     setupEventListeners();
@@ -85,7 +83,6 @@ function initializeApp() {
     if (window.auth) {
       window.auth.onAuthStateChanged((user) => {
         currentUser = user;
-        isGuest = window.authFunctions.isUserGuest();
         updateShareButtonVisibility();
       });
     }

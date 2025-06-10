@@ -16,42 +16,64 @@
     <header class="header">
         <div class="header-content">
             <div class="header-left">
-                <button class="back-btn hidden" id="backBtn">
-                    <i class="fas fa-arrow-left"></i>
+                <button class="hamburger-btn" id="hamburgerBtn" title="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </button>
                 <h1 class="header-title" id="headerTitle">NOTES</h1>
             </div>
             <div class="header-right">
-                <button class="signin-btn" id="signInBtn" title="Sign In">
-                    <i class="fas fa-sign-in-alt"></i>
-                </button>
-                <button class="category-btn" id="categoryBtn" title="Categories">
-                    <i class="fas fa-folder"></i>
-                </button>
-                <button class="settings-btn" id="settingsBtn" title="Settings">
-                    <i class="fas fa-cog"></i>
+                <button class="back-btn hidden" id="backBtn">
+                    <i class="fas fa-arrow-left"></i>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        <div class="sidebar-content">
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-page="notes">
-                    <i class="fas fa-file-text"></i>
-                    <span>NOTES</span>
-                </a>
-                <a href="category.html" class="nav-item" data-page="categories">
-                    <i class="fas fa-folder"></i>
-                    <span>CATEGORIES</span>
-                </a>
-                <a href="share.html" class="nav-item" data-page="shared">
-                    <i class="fas fa-users"></i>
-                    <span>SHARED</span>
-                </a>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Notes App</h2>
+            <button class="sidebar-close" id="sidebarClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="sidebar-nav">
+            <a href="#" class="nav-item active" id="navNotes">
+                <i class="fas fa-sticky-note"></i>
+                All Notes
+            </a>
+            <a href="category.html" class="nav-item" id="navCategories">
+                <i class="fas fa-folder"></i>
+                Categories
+            </a>
+            <a href="share.html" class="nav-item" id="navShared">
+                <i class="fas fa-share-alt"></i>
+                Shared Notes
+            </a>
+            <div class="nav-divider"></div>
+            <a href="#" class="nav-item" id="navSettings">
+                <i class="fas fa-cog"></i>
+                Settings
+            </a>
+            <a href="login.html" class="nav-item" id="navSignIn">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In
+            </a>
+            <a href="#" class="nav-item hidden" id="navSignOut">
+                <i class="fas fa-sign-out-alt"></i>
+                Sign Out
+            </a>
+        </div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Floating Action Button -->
+    <button class="fab" id="addNoteBtn" title="Add Note">
+        <i class="fas fa-plus"></i>
+    </button>
+
             </nav>
         </div>
     </aside>
