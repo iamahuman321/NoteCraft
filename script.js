@@ -18,6 +18,8 @@ let shoppingLists = JSON.parse(localStorage.getItem("shoppingLists")) || {
   other: []
 };
 let currentShoppingCategory = null;
+let searchQuery = "";
+let filteredNotes = [];
 
 // Translations
 const translations = {
