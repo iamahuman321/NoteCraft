@@ -1526,8 +1526,19 @@ function setupRealtimeCollaboration(sharedId) {
       currentNote.list = sharedNote.list || [];
       currentNote.updatedAt = sharedNote.updatedAt;
       
-      // Update UI elements
-      updateEditorContent();
+      // Update UI elements only if user is not actively typing
+      const titleInput = document.getElementById("titleInput");
+      const contentTextarea = document.getElementById("contentTextarea");
+      
+      // Only update fields that user is not currently editing
+      if (titleInput && document.activeElement !== titleInput) {
+        titleInput.value = currentNote.title || '';
+      }
+      
+      if (contentTextarea && document.activeElement !== contentTextarea) {
+        contentTextarea.value = currentNote.content || '';
+      }
+      
       updateCategoryChips();
       updateListSection();
       updateImagesSection();
