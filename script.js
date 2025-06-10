@@ -950,6 +950,8 @@ function selectListType(event) {
   };
   
   currentNote.listSections.push(newListSection);
+  console.log("Created new list section:", newListSection);
+  console.log("Current listSections after creation:", currentNote.listSections);
   
   const listSection = document.getElementById("listSection");
   if (listSection) listSection.classList.remove("hidden");
@@ -993,7 +995,7 @@ function updateListSection() {
         </div>
       `).join("")}
       <div class="list-item">
-        <button class="btn-icon" onclick="addListItemToSection('${section.id}')">
+        <button class="btn-icon" onclick="console.log('Button clicked for section:', '${section.id}'); addListItemToSection('${section.id}')">
           <i class="fas fa-plus"></i>
         </button>
         <span>Add item</span>
