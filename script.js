@@ -97,42 +97,64 @@ function setupEventListeners() {
   const sidebarClose = document.getElementById("sidebarClose");
   const sidebarOverlay = document.getElementById("sidebarOverlay");
 
-  hamburgerBtn.addEventListener("click", toggleSidebar);
-  sidebarClose.addEventListener("click", closeSidebar);
-  sidebarOverlay.addEventListener("click", closeSidebar);
+  if (hamburgerBtn) hamburgerBtn.addEventListener("click", toggleSidebar);
+  if (sidebarClose) sidebarClose.addEventListener("click", closeSidebar);
+  if (sidebarOverlay) sidebarOverlay.addEventListener("click", closeSidebar);
 
   // Navigation
-  document.getElementById("addNoteBtn").addEventListener("click", createNewNote);
-  document.getElementById("backBtn").addEventListener("click", showNotesPage);
-  document.getElementById("navNotes").addEventListener("click", (e) => {
+  const addNoteBtn = document.getElementById("addNoteBtn");
+  const backBtn = document.getElementById("backBtn");
+  const navNotes = document.getElementById("navNotes");
+  const navSettings = document.getElementById("navSettings");
+  const navSignOut = document.getElementById("navSignOut");
+  const signInBtn = document.getElementById("signInBtn");
+
+  if (addNoteBtn) addNoteBtn.addEventListener("click", createNewNote);
+  if (backBtn) backBtn.addEventListener("click", showNotesPage);
+  if (navNotes) navNotes.addEventListener("click", (e) => {
     e.preventDefault();
     showNotesPage();
     closeSidebar();
   });
-  document.getElementById("navSettings").addEventListener("click", (e) => {
+  if (navSettings) navSettings.addEventListener("click", (e) => {
     e.preventDefault();
     showSettingsPage();
     closeSidebar();
   });
-  document.getElementById("navSignOut").addEventListener("click", (e) => {
+  if (navSignOut) navSignOut.addEventListener("click", (e) => {
     e.preventDefault();
     if (window.authFunctions) {
       window.authFunctions.signOutUser();
     }
     closeSidebar();
   });
-  document.getElementById("signInBtn").addEventListener("click", () => window.location.href = "signin.html");
+  if (signInBtn) signInBtn.addEventListener("click", () => window.location.href = "login.html");
 
   // Editor
-  document.getElementById("titleInput").addEventListener("input", debounce(saveCurrentNote, 500));
-  document.getElementById("contentTextarea").addEventListener("input", debounce(saveCurrentNote, 500));
-  document.getElementById("imageBtn").addEventListener("click", handleImageUpload);
-  document.getElementById("listBtn").addEventListener("click", showListTypeModal);
-  document.getElementById("passwordBtn").addEventListener("click", showPasswordModal);
-  document.getElementById("shareBtn").addEventListener("click", showShareModal);
+  const titleInput = document.getElementById("titleInput");
+  const contentTextarea = document.getElementById("contentTextarea");
+  
+  if (titleInput) titleInput.addEventListener("input", debounce(saveCurrentNote, 500));
+  if (contentTextarea) contentTextarea.addEventListener("input", debounce(saveCurrentNote, 500));
+  
+  // Toolbar buttons
+  const imageBtn = document.getElementById("imageBtn");
+  const listBtn = document.getElementById("listBtn");
+  const passwordBtn = document.getElementById("passwordBtn");
+  const shareBtn = document.getElementById("shareBtn");
+  const deleteBtn = document.getElementById("deleteBtn");
+  
+  if (imageBtn) imageBtn.addEventListener("click", handleImageUpload);
+  if (listBtn) listBtn.addEventListener("click", showListTypeModal);
+  if (passwordBtn) passwordBtn.addEventListener("click", showPasswordModal);
+  if (shareBtn) shareBtn.addEventListener("click", showShareModal);
+  if (deleteBtn) deleteBtn.addEventListener("click", () => {
+    if (currentNote) showDeleteModal(currentNote);
+  });
 
   // Categories
-  document.getElementById("addCategoryBtn").addEventListener("click", showCategoryModal);
+  const addCategoryBtn = document.getElementById("addCategoryBtn");
+  if (addCategoryBtn) addCategoryBtn.addEventListener("click", showCategoryModal);
 
   // Modals
   setupModalEventListeners();
@@ -786,7 +808,7 @@ function updateCategoryChips() {
 // Rendering functions
 function renderNotes() {
   const notesContainer = document.getElementById("notesContainer");
-  const emptyState = document.getElementById("emptyState");
+  if (!notesContainer) return;
 
   let filteredNotes = notes;
   if (currentFilter !== "all") {
@@ -796,14 +818,19 @@ function renderNotes() {
   }
 
   if (filteredNotes.length === 0) {
-    notesContainer.innerHTML = "";
-    notesContainer.appendChild(emptyState);
+    notesContainer.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-sticky-note"></i>
+        <h3>No notes yet</h3>
+        <p>Tap the + button to create your first note</p>
+      </div>
+    `;
     return;
   }
-
-  emptyState.style.display = "none";
   
-  notesContainer.innerHTML = filteredNotes.map(note => {
+  notesContainer.innerHTML = `
+    <div class="notes-grid">
+      ${filteredNotes.map(note => {
     const preview = note.content.length > 100 ? note.content.substring(0, 100) + "..." : note.content;
     const dateStr = new Date(note.updatedAt).toLocaleDateString();
     
