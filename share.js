@@ -249,12 +249,14 @@ function renderInvitations() {
       </div>
       <div class="invitation-actions">
         <button class="btn btn-success" onclick="acceptInvitation('${invitation.id}', '${invitation.sharedId}')" 
-                ${!navigator.onLine ? 'disabled title="Requires internet connection"' : ''}>
+                ${!navigator.onLine ? 'disabled title="Requires internet connection"' : ''}
+                data-invitation-id="${invitation.id}" data-shared-id="${invitation.sharedId}">
           <i class="fas fa-check"></i>
           Accept
         </button>
         <button class="btn btn-secondary" onclick="declineInvitation('${invitation.id}')"
-                ${!navigator.onLine ? 'disabled title="Requires internet connection"' : ''}>
+                ${!navigator.onLine ? 'disabled title="Requires internet connection"' : ''}
+                data-invitation-id="${invitation.id}">
           <i class="fas fa-times"></i>
           Decline
         </button>
@@ -267,69 +269,115 @@ function renderInvitations() {
 
 async function acceptInvitation(invitationId, sharedId) {
   if (!navigator.onLine) {
-    showToast(t("offlineWarning"));
+    showToast("Internet connection required");
     return;
   }
 
-  if (!currentUser) return;
+  if (!currentUser) {
+    showToast("Please sign in to accept invitations");
+    return;
+  }
 
   try {
+    console.log("Accepting invitation:", invitationId, "for shared note:", sharedId);
+    
     const button = event.target.closest('button');
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Accepting...';
 
-    // Remove invitation from user's invitations
-    await window.database.ref(`users/${currentUser.uid}/invitations/${invitationId}`).remove();
+    // Update invitation status to 'accepted' in main invitations collection
+    console.log("Updating invitation status to accepted...");
+    await window.database.ref(`invitations/${invitationId}`).update({ 
+      status: 'accepted',
+      acceptedAt: Date.now()
+    });
+    console.log("Invitation status updated successfully");
     
     // Add user to shared note collaborators if not already there
+    console.log("Adding user to shared note collaborators...");
     const sharedNoteRef = window.database.ref(`sharedNotes/${sharedId}`);
     const snapshot = await sharedNoteRef.once('value');
     const sharedNote = snapshot.val();
     
-    if (sharedNote && sharedNote.collaborators && !sharedNote.collaborators[currentUser.uid]) {
-      sharedNote.collaborators[currentUser.uid] = {
-        role: 'editor',
-        joinedAt: Date.now()
-      };
-      await sharedNoteRef.update({ collaborators: sharedNote.collaborators });
+    if (sharedNote) {
+      if (!sharedNote.collaborators) {
+        sharedNote.collaborators = {};
+      }
+      
+      if (!sharedNote.collaborators[currentUser.uid]) {
+        sharedNote.collaborators[currentUser.uid] = {
+          role: 'editor',
+          joinedAt: Date.now(),
+          name: currentUser.displayName || currentUser.email.split('@')[0]
+        };
+        await sharedNoteRef.update({ collaborators: sharedNote.collaborators });
+        console.log("User added to collaborators successfully");
+      }
+    } else {
+      console.error("Shared note not found:", sharedId);
     }
     
-    // Refresh the page
+    // Refresh the page to remove accepted invitation
+    console.log("Refreshing invitation list...");
     await loadSharedContent();
     
-    showToast(t("invitationAccepted"));
+    showToast("Invitation accepted! You can now collaborate on this note.");
     
   } catch (error) {
     console.error("Error accepting invitation:", error);
-    showToast(t("errorAccepting"));
+    showToast("Error accepting invitation. Please try again.");
+    
+    // Re-enable button on error
+    const button = event.target.closest('button');
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = '<i class="fas fa-check"></i> Accept';
+    }
   }
 }
 
 async function declineInvitation(invitationId) {
   if (!navigator.onLine) {
-    showToast(t("offlineWarning"));
+    showToast("Internet connection required");
     return;
   }
 
-  if (!currentUser) return;
+  if (!currentUser) {
+    showToast("Please sign in to decline invitations");
+    return;
+  }
 
   try {
+    console.log("Declining invitation:", invitationId);
+    
     const button = event.target.closest('button');
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Declining...';
 
-    // Remove invitation from user's invitations
-    await window.database.ref(`users/${currentUser.uid}/invitations/${invitationId}`).remove();
+    // Update invitation status to 'declined' in main invitations collection
+    console.log("Updating invitation status to declined...");
+    await window.database.ref(`invitations/${invitationId}`).update({ 
+      status: 'declined',
+      declinedAt: Date.now()
+    });
+    console.log("Invitation status updated successfully");
     
-    // Refresh invitations
-    await loadInvitations();
-    renderInvitations();
+    // Refresh invitations to remove declined invitation
+    console.log("Refreshing invitation list...");
+    await loadSharedContent();
     
-    showToast(t("invitationDeclined"));
+    showToast("Invitation declined.");
     
   } catch (error) {
     console.error("Error declining invitation:", error);
-    showToast(t("errorDeclining"));
+    showToast("Error declining invitation. Please try again.");
+    
+    // Re-enable button on error
+    const button = event.target.closest('button');
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = '<i class="fas fa-times"></i> Decline';
+    }
   }
 }
 
