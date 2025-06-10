@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login - Notes App</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Load Firebase config after Firebase SDK -->
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="index.html" class="back-btn" id="backBtn">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h1 class="header-title" id="headerTitle">LOGIN</h1>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="auth-container">
+            <div class="auth-form">
+                <div class="auth-header">
+                    <h2>Welcome Back</h2>
+                    <p>Sign in to sync your notes across devices</p>
+                </div>
+
+                <form class="auth-form-content" id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required placeholder="Enter your email" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="password-input-container">
+                            <input type="password" id="password" name="password" required placeholder="Enter your password" />
+                            <button type="button" class="password-toggle" id="passwordToggle">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="auth-btn primary" id="loginBtn">
+                        <span>Sign In</span>
+                    </button>
+                </form>
+
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+
+                <button class="auth-btn google" id="googleSignInBtn">
+                    <i class="fab fa-google"></i>
+                    <span>Continue with Google</span>
+                </button>
+
+                <div class="auth-footer">
+                    <p>Don't have an account? <a href="signup.html">Sign up</a></p>
+                    <p><a href="#" id="guestLink">Continue as Guest</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+    </div>
+    
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for Firebase to be ready
+    function waitForFirebase() {
+        return new Promise((resolve) => {
+            const checkFirebase = () => {
+                if (window.auth && window.database && window.googleProvider) {
+                    resolve();
+                } else {
+                    setTimeout(checkFirebase, 100);
+                }
+            };
+            checkFirebase();
+        });
+    }
+
+    waitForFirebase().then(function() {
+        console.log("Firebase ready for login");
+
+        // Show toast function
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            const toastMessage = document.getElementById("toastMessage");
+            toastMessage.textContent = message;
+            toast.classList.add("show");
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 3000);
+        }
+
+        // Password toggle
+        document.getElementById("passwordToggle").addEventListener("click", function() {
+            const input = document.getElementById("password");
+            const icon = this.querySelector("i");
+
+            if (input.type === "password") {
+                input.type = "text";
+                icon.className = "fas fa-eye-slash";
+            } else {
+                input.type = "password";
+                icon.className = "fas fa-eye";
+            }
+        });
+
+        // Login form
+        document.getElementById("loginForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+            const loginBtn = document.getElementById("loginBtn");
+
+            if (!email || !password) {
+                showToast("Please fill in all fields");
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+
+            try {
+                await window.authFunctions.signInWithEmail(email, password);
+                showToast("Signed in successfully!");
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 1000);
+            } catch (error) {
+                console.error("Login error:", error);
+                let errorMessage = "Failed to sign in";
+
+                if (error.code === "auth/user-not-found") {
+                    errorMessage = "No account found with this email";
+                } else if (error.code === "auth/wrong-password") {
+                    errorMessage = "Incorrect password";
+                } else if (error.code === "auth/invalid-email") {
+                    errorMessage = "Invalid email address";
+                }
+
+                showToast(errorMessage);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = "<span>Sign In</span>";
+            }
+        });
+
+        // Google sign in
+        document.getElementById("googleSignInBtn").addEventListener("click", async function() {
+            const googleBtn = this;
+            googleBtn.disabled = true;
+            googleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+
+            try {
+                await window.authFunctions.signInWithGoogle();
+                showToast("Signed in successfully!");
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 1000);
+            } catch (error) {
+                console.error("Google sign-in error:", error);
+                showToast("Failed to sign in with Google");
+            } finally {
+                googleBtn.disabled = false;
+                googleBtn.innerHTML = '<i class="fab fa-google"></i> <span>Continue with Google</span>';
+            }
+        });
+
+        // Guest mode
+        document.getElementById("guestLink").addEventListener("click", function(e) {
+            e.preventDefault();
+            window.authFunctions.continueAsGuest();
+        });
+    });
+});
+</script>
+</body>
+</html>

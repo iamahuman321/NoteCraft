@@ -1,0 +1,325 @@
+Updated Prompt for Implementing Sharing and Collaboration Feature in Notes App
+Objective
+Enhance the Notes Progressive Web App (PWA) by adding a sharing and collaboration feature that allows users to share notes with others, collaborate in real-time, and manage shared note invitations. The feature must integrate with the existing Firebase backend for user management, real-time data synchronization, and note storage, while maintaining compatibility with the app’s PWA architecture (offline support via sw.js), UI/UX (styles.css), and existing functionality (script.js, firebase-config.js). The implementation should update the service worker (sw.js) and manifest (manifest.json) to include new assets and ensure offline functionality for shared notes where feasible.
+Feature Requirements
+1. Username Creation During Sign-Up
+
+Context: After a user creates an account (via email/password or Google sign-in), prompt them to create a unique username and provide their full name.
+Implementation:
+Update signup.html to include:
+A required Full Name text input.
+A required Username text input, validated for uniqueness.
+
+
+Modify firebase-config.js to:
+Check for username availability in the Firebase Realtime Database under usernames/{username} (mapping to user ID).
+Store username and full name in users/{uid} node.
+Update signUpWithEmail to include these fields in the user creation process.
+For Google sign-in (signInWithGoogle), prompt for a username if not set, using a modal post-authentication.
+
+
+If the username is taken, show an error toast (using showToast from script.js) and prompt for a new username.
+Ensure offline compatibility by storing temporary user data in localStorage if Firebase is unavailable, syncing later when online.
+
+
+UI Updates:
+Add a username and name input form in signup.html, styled with .auth-form classes from styles.css.
+Create a modal for Google sign-in users to input username, styled like .modal in styles.css.
+Add translations for username prompts (e.g., "usernameTaken", "enterUsername") in script.js (translations object).
+
+
+PWA Integration:
+Update sw.js to cache signup.html in urlsToCache for offline access.
+Ensure username input form is accessible offline, with a warning toast if Firebase validation requires connectivity.
+
+
+
+2. Share Icon and Sharing Modal
+
+Context: Add a share icon in the note editor to allow users to share notes with others via a modal.
+Implementation:
+Add a share icon button (Font Awesome fa-share) in the editor toolbar (.bottom-toolbar in index.html), beside the lock icon.
+Create a shareModal in index.html to:
+Allow searching for users by email, full name, or username.
+Display matching users from Firebase users node (using partial match queries).
+Support selecting multiple users (unlimited collaborators).
+
+
+Update script.js to include:
+A showShareModal function to display the modal and handle user search.
+Firebase queries to fetch users based on search input.
+Logic to create a shared note entry in sharedNotes/{noteId} with:
+ownerId: User ID of the note owner.
+collaborators: Array of user IDs with access.
+noteId: Reference to the original note.
+status: Invitation status (pending, accepted, declined).
+
+
+Send invitations to recipients by adding entries to users/{uid}/invitations.
+
+
+Handle offline scenarios:
+Store sharing requests in localStorage if offline, syncing to Firebase when connectivity is restored (using navigator.onLine).
+Show a toast notification for pending sync when offline.
+
+
+
+
+UI Updates:
+Style the share modal in styles.css using .modal and .modal-content classes.
+Add a search input and user list with checkboxes, styled like .category-checkbox.
+Update translations in script.js for sharing-related text (e.g., "shareNote", "searchUsers").
+
+
+PWA Integration:
+Cache the share modal’s static assets (e.g., icons, styles) in sw.js.
+Ensure the modal displays a fallback message if user search requires online connectivity.
+
+
+
+3. Share.html Page for Shared Notes and Invitations
+
+Context: Create a new share.html page to manage shared notes and invitations.
+Implementation:
+Create share.html with two sections:
+Invitations: Lists pending invitations with accept/decline buttons.
+Shared Notes: Displays notes the user has shared or received access to.
+
+
+Add a share icon (Font Awesome fa-users) in the sidebar (.sidebar-nav in index.html), linking to share.html.
+Update script.js to include a renderSharedContent function that:
+Fetches invitations from users/{uid}/invitations using Firebase.
+Fetches shared notes from sharedNotes where the user is a collaborator or owner.
+Handles accept/decline actions by updating sharedNotes/{noteId}/status and removing from invitations.
+
+
+Update firebase-config.js to add:
+getInvitations: Fetch pending invitations for the current user.
+acceptInvitation: Update shared note status and add to user’s notes.
+declineInvitation: Remove invitation from users/{uid}/invitations.
+getSharedNotes: Fetch shared notes for the user.
+
+
+Handle offline access:
+Cache shared notes and invitations in localStorage for offline viewing.
+Disable accept/decline actions when offline, showing a toast notification.
+
+
+Redirect to the editor (editorPage) for editing shared notes, ensuring real-time collaboration.
+
+
+UI Updates:
+Design share.html with a layout similar to category.html, using .categories-container and .note-card styles.
+Style invitation cards with accept/decline buttons, using .btn-primary and .btn-secondary from styles.css.
+Add translations for invitation actions (e.g., "accept", "decline") in script.js.
+
+
+PWA Integration:
+Add share.html to urlsToCache in sw.js for offline access.
+Update manifest.json to include share.html in the start_url scope if it becomes a primary entry point.
+Cache invitation card styles and icons in sw.js.
+
+
+
+4. Real-Time Collaboration
+
+Context: Enable real-time editing for shared notes, showing active collaborators and syncing changes.
+Implementation:
+Use Firebase Realtime Database for synchronization:
+Store shared note content in sharedNotes/{noteId}/content.
+Listen for changes using Firebase’s on method in script.js (editNote function).
+Update titleInput, contentTextarea, listItems, and imageGrid in real-time.
+
+
+Display active collaborators:
+Store presence data in sharedNotes/{noteId}/activeUsers (user ID, name, cursor position, last active timestamp).
+Show collaborator names and cursor positions in the editor (e.g., colored cursors or badges).
+
+
+Update saveCurrentNote in script.js to:
+Save changes to sharedNotes/{noteId}/content for shared notes.
+Use Firebase transactions to handle concurrent edits.
+
+
+Handle conflicts:
+Implement basic Operational Transformation (OT) or Conflict-free Replicated Data Types (CRDT) for text and list edits.
+Show a toast notification for unresolved conflicts.
+
+
+Handle offline edits:
+Queue changes in localStorage when offline, syncing to Firebase when online.
+Show a toast notification for pending sync status.
+
+
+Update firebase-config.js to include:
+updateSharedNote: Save changes to shared note content.
+updatePresence: Manage active user status.
+
+
+
+
+UI Updates:
+Add a collaborator status bar in .editor-container (in index.html) to display active users.
+Style cursors or badges for collaborators in styles.css (e.g., .collaborator-badge).
+Add translations for collaboration messages (e.g., "userEditing") in script.js.
+
+
+PWA Integration:
+Cache collaborator UI assets in sw.js.
+Display a fallback UI for offline collaboration (e.g., read-only mode with a warning).
+
+
+
+5. Security and Permissions
+
+Implementation:
+Update Firebase Security Rules in a new firestore.rules file (or equivalent for Realtime Database):rules_version = '2';
+service firebase.database {
+  match /databases/{database}/documents {
+    match /sharedNotes/{noteId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == resource.data.ownerId ||
+        resource.data.collaborators.hasAny([request.auth.uid])
+      );
+    }
+    match /users/{uid}/invitations/{invitationId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /usernames/{username} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && !exists(/databases/$(database)/documents/usernames/$(username));
+    }
+  }
+}
+
+
+Validate note ownership in script.js before allowing sharing.
+Prevent guest users from sharing notes (check isUserGuest in firebase-config.js).
+Ensure only authenticated users can access shared notes and invitations.
+
+
+UI Updates:
+Show a toast notification if a guest user attempts to share a note.
+Disable the share icon for guest users in the editor toolbar.
+
+
+
+6. PWA and Offline Support
+
+Implementation:
+Update sw.js to cache:
+share.html
+Updated signup.html
+New assets (e.g., share icon, modal styles).
+
+
+Modify sw.js to handle offline requests for shared notes:
+Serve cached shared notes from localStorage if available.
+Queue sharing actions and invitation responses in localStorage for syncing when online.
+
+
+Update manifest.json to:
+Ensure scope includes share.html.
+Verify start_url remains / or update to support shared notes as an entry point if needed.
+
+
+Add a sync event in sw.js to handle queued actions:self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-shared-notes') {
+    event.waitUntil(syncSharedNotes());
+  }
+});
+async function syncSharedNotes() {
+  // Logic to sync queued sharing actions and invitations from localStorage to Firebase
+}
+
+
+
+
+UI Updates:
+Show toast notifications for offline actions (e.g., “Changes will sync when online”).
+Style offline warnings consistently with .toast in styles.css.
+
+
+
+7. Additional Considerations
+
+Error Handling:
+Handle Firebase errors (e.g., network issues, permission denied) with toasts (showToast).
+Validate usernames (4-20 characters, alphanumeric and underscores only).
+Show errors for failed invitation sends or sync issues.
+
+
+Performance:
+Limit Firebase queries for user search (e.g., max 10 results).
+Cache shared note metadata in localStorage to reduce database calls.
+Use Firebase indices for efficient queries on usernames and sharedNotes.
+
+
+Accessibility:
+Add ARIA labels to share modal, invitation cards, and collaborator UI.
+Ensure keyboard navigation for accept/decline buttons and search input.
+Test real-time collaboration UI with screen readers.
+
+
+Testing:
+Test username uniqueness across email and Google sign-in.
+Simulate multiple users editing a shared note simultaneously.
+Verify offline behavior for shared notes and invitations.
+Test service worker caching for share.html and related assets.
+
+
+
+8. Integration with Existing Code
+
+Files to Modify:
+signup.html: Add username and name fields to the sign-up form.
+index.html: Add share icon in sidebar (.sidebar-nav) and editor toolbar (.bottom-toolbar), include share modal.
+styles.css: Add styles for share modal, invitation cards, and collaborator UI.
+script.js: Add sharing logic, real-time collaboration, and invitation management functions.
+firebase-config.js: Add username management, invitation handling, and shared note functions.
+sw.js: Update urlsToCache to include share.html and new assets, add sync event for offline actions.
+manifest.json: Update scope if needed to include share.html.
+firebase-exports.js: Update mock implementations for sharing-related functions (e.g., shareNote, getInvitations).
+
+
+New Files:
+share.html: Page for shared notes and invitations.
+share.js: JavaScript for share.html to handle rendering and interactions.
+
+
+Firebase Structure:
+usernames/{username}: Maps usernames to user IDs.
+users/{uid}/invitations/{invitationId}: Stores pending invitations with noteId, senderId, status.
+sharedNotes/{noteId}: Stores shared note metadata (ownerId, collaborators, content, activeUsers).
+
+
+Service Worker Updates:
+Add share.html and related assets to urlsToCache.
+Implement background sync for sharing actions and invitation responses.
+
+
+
+9. Gaps Addressed from Original Description
+
+Username Uniqueness: Added Firebase-based validation for unique usernames.
+Invitation Management: Created a dedicated share.html page with accept/decline functionality.
+Real-Time Collaboration: Implemented Firebase-based real-time editing with collaborator presence.
+Offline Support: Integrated with sw.js for caching and background sync of sharing actions.
+Security: Added Firebase Security Rules to protect shared data.
+Guest Users: Restricted sharing for guest users to maintain data integrity.
+PWA Compatibility: Ensured all new assets are cached and offline functionality is supported.
+
+Deliverables
+
+Updated signup.html, index.html, styles.css, script.js, firebase-config.js, sw.js, and manifest.json.
+New share.html and share.js files for the shared notes interface.
+Firebase Security Rules for sharedNotes, usernames, and invitations.
+Documentation in script.js and firebase-config.js for the new feature.
+Test cases for:
+Username creation and validation.
+Note sharing and invitation management.
+Real-time collaboration with multiple users.
+Offline behavior and sync.
+
+
+

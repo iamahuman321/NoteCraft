@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Categories - Notes App</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="index.html" class="back-btn" id="backBtn">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+    <h1 class="header-title" id="headerTitle">CATEGORIES</h1>
+    </div>
+    <div class="header-right">
+        <button class="settings-btn" id="settingsBtn">
+            <i class="fas fa-cog"></i>
+        </button>
+    </div>
+</div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="categories-container">
+            <div class="add-category-form">
+                <input type="text" class="category-input" id="categoryInput" placeholder="New category..." />
+                <button class="add-category-btn" id="addCategoryFormBtn">ADD</button>
+            </div>
+            <div class="categories-list" id="categoriesList">
+                <div class="empty-state">
+                    <i class="fas fa-folder"></i>
+                    <p>You don't have any categories yet</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script src="category.js"></script>
+</body>
+</html>

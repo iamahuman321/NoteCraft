@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Notes App</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="back-btn hidden" id="backBtn">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="header-title" id="headerTitle">NOTES</h1>
+            </div>
+            <div class="header-right">
+                <button class="signin-btn" id="signInBtn" title="Sign In">
+                    <i class="fas fa-sign-in-alt"></i>
+                </button>
+                <button class="category-btn" id="categoryBtn" title="Categories">
+                    <i class="fas fa-folder"></i>
+                </button>
+                <button class="settings-btn" id="settingsBtn" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <div class="sidebar-content">
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="notes">
+                    <i class="fas fa-file-text"></i>
+                    <span>NOTES</span>
+                </a>
+                <a href="category.html" class="nav-item" data-page="categories">
+                    <i class="fas fa-folder"></i>
+                    <span>CATEGORIES</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Notes Page -->
+        <div class="page active" id="notesPage">
+            <!-- Filter Carousel -->
+            <div class="filter-carousel">
+                <div class="filter-chips" id="filterChips">
+                    <button class="chip active" data-filter="all">All</button>
+                </div>
+            </div>
+
+            <!-- Notes Container -->
+            <div class="notes-container" id="notesContainer">
+                <div class="empty-state" id="emptyState">
+                    <i class="fas fa-file-text"></i>
+                    <p>You don't have any notes yet</p>
+                </div>
+            </div>
+
+            <!-- Floating Add Button -->
+            <button class="floating-btn" id="addNoteBtn">
+                <i class="fas fa-plus"></i>
+                <span>ADD NOTE</span>
+            </button>
+        </div>
+
+        <!-- Note Editor Page -->
+        <div class="page" id="editorPage">
+            <div class="editor-container">
+                <!-- Title Input -->
+                <input type="text" class="title-input" id="titleInput" placeholder="Your title..." />
+
+                <!-- Date Info -->
+                <div class="date-info" id="dateInfo"></div>
+
+                <!-- Categories Section -->
+                <div class="section">
+                    <h3 class="section-title">CATEGORIES</h3>
+                    <div class="category-chips" id="categoryChips">
+                        <button class="chip outline" id="addCategoryBtn">
+                            <i class="fas fa-plus"></i>
+                            ADD
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content Textarea -->
+                <textarea class="content-textarea" id="contentTextarea" placeholder="Type your note here..."></textarea>
+
+                <!-- List Section -->
+                <div class="list-section hidden" id="listSection">
+                    <div class="list-items" id="listItems"></div>
+                    <button class="add-list-item-btn" id="addListItemBtn">
+                        <i class="fas fa-plus"></i>
+                        Add item
+                    </button>
+                </div>
+
+                <!-- Images Section -->
+                <div class="images-section hidden" id="imagesSection">
+                    <div class="image-grid" id="imageGrid"></div>
+                </div>
+            </div>
+
+            <!-- Bottom Toolbar -->
+            <div class="bottom-toolbar">
+                <div class="toolbar-left">
+                    <button class="toolbar-btn" id="imageBtn">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <button class="toolbar-btn" id="listBtn">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+                <div class="toolbar-right">
+                    <button class="toolbar-btn" id="passwordBtn">
+                        <i class="fas fa-unlock" id="passwordIcon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Page -->
+        <div class="page" id="categoriesPage">
+            <div class="categories-container">
+                <div class="add-category-form">
+                    <input type="text" class="category-input" id="categoryInput" placeholder="New category..." />
+                    <button class="add-category-btn" id="addCategoryFormBtn">ADD</button>
+                </div>
+                <div class="categories-list" id="categoriesList">
+                    <div class="empty-state">
+                        <i class="fas fa-folder"></i>
+                        <p>You don't have any categories yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div class="page" id="settingsPage">
+            <div class="settings-container">
+                <div class="settings-section">
+                    <div class="setting-item" id="themeToggle">
+                        <div class="setting-info">
+                            <h3>THEME</h3>
+                            <p>Choose your preferred theme</p>
+                        </div>
+                        <select class="theme-select" id="themeSelect">
+                            <option value="system">System</option>
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                    </div>
+                    <div class="setting-item" id="languageToggle">
+                        <div class="setting-info">
+                            <h3>LANGUAGE</h3>
+                            <p>Select your language</p>
+                        </div>
+                        <select class="language-select" id="languageSelect">
+                            <option value="en">English</option>
+                            <option value="es">Español</option>
+                            <option value="fr">Français</option>
+                            <option value="de">Deutsch</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- User Settings Section (only show if logged in) -->
+                <div class="settings-section" id="userSettings" style="display: none;">
+                    <h3 class="section-title">USER ACCOUNT</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>SIGNED IN AS</h3>
+                            <p id="userNameDisplay">Loading...</p>
+                        </div>
+                    </div>
+                    <div class="setting-item user-setting" onclick="showNameModal()">
+                        <div class="setting-info">
+                            <h3>CHANGE NAME</h3>
+                            <p>Update your display name</p>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <button class="logout-btn" onclick="logoutUser()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        LOGOUT
+                    </button>
+                </div>
+                <div class="settings-section">
+                    <h3 class="section-title">ABOUT THE APP</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>VERSION</h3>
+                            <p>1.0.0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- Password Modal -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>ADD PASSWORD</h3>
+                <button class="modal-close" id="passwordModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="password-input-container">
+                    <input type="password" class="password-input" id="passwordInput" placeholder="Enter password..." maxlength="8" />
+                    <button class="password-toggle" id="passwordToggle">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <p class="password-hint">Password must be at least 4 characters</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="savePasswordBtn">SAVE</button>
+                <button class="btn btn-secondary" id="removePasswordBtn">REMOVE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div class="modal" id="categoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>YOUR CATEGORIES</h3>
+                <button class="modal-close" id="categoryModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-categories-list" id="modalCategoriesList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>DELETE NOTE</h3>
+                <button class="modal-close" id="deleteModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this note?</p>
+                <div class="password-input-container hidden" id="deletePasswordContainer">
+                    <input type="password" class="password-input" id="deletePasswordInput" placeholder="Enter password..." />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="confirmDeleteBtn">DELETE</button>
+                <button class="btn btn-secondary" id="cancelDeleteBtn">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- List Type Modal -->
+    <div class="modal" id="listTypeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>LIST TYPE</h3>
+                <button class="modal-close" id="listTypeModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <button class="list-type-btn" data-type="bulleted">
+                    <i class="fas fa-list-ul"></i>
+                    <span>Bulleted List</span>
+                </button>
+                <button class="list-type-btn" data-type="numbered">
+                    <i class="fas fa-list-ol"></i>
+                    <span>Numbered List</span>
+                </button>
+                <button class="list-type-btn" data-type="checklist">
+                    <i class="fas fa-check-square"></i>
+                    <span>Checklist</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Hidden file input for images -->
+    <input type="file" id="imageInput" accept="image/*" multiple style="display: none" />
+
+    <!-- Auth Popup -->
+    <div class="modal" id="authPopup">
+        <div class="modal-content auth-popup-content">
+            <div class="modal-header">
+                <h3>Welcome to Notes</h3>
+            </div>
+            <div class="modal-body">
+                <p>Choose how you'd like to continue:</p>
+                <div class="auth-popup-buttons">
+                    <a href="login.html" class="auth-popup-btn primary">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Login</span>
+                    </a>
+                    <a href="signup.html" class="auth-popup-btn secondary">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Sign Up</span>
+                    </a>
+                    <button class="auth-popup-btn guest" onclick="window.authFunctions?.continueAsGuest()">
+                        <i class="fas fa-user"></i>
+                        <span>Continue as Guest</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Name Change Modal -->
+    <div class="modal" id="nameModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>CHANGE NAME</h3>
+                <button class="modal-close" id="nameModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="newName">New Name</label>
+                    <input type="text" class="name-input" id="newName" placeholder="Enter your new name..." />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="saveNameBtn">SAVE</button>
+                <button class="btn btn-secondary" id="cancelNameBtn">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <!-- Load Firebase config -->
+    <script src="firebase-config.js"></script>
+    <script>
+    // Wait for Firebase to be ready
+    function waitForFirebase() {
+        return new Promise((resolve) => {
+            if (window.auth && window.database) {
+                resolve();
+            } else {
+                window.addEventListener('firebaseReady', resolve, { once: true });
+            }
+        });
+    }
+
+    // Sign in button
+    document.getElementById("signInBtn").addEventListener("click", () => {
+        window.location.href = "in.html";
+    });
+
+    // Initialize after Firebase is ready
+    waitForFirebase().then(function() {
+        console.log("Firebase ready in index.html");
+
+        // Check if user is in guest mode
+        if (localStorage.getItem("isGuest") === "true") {
+            document.getElementById("signInBtn").style.display = "none";
+            document.getElementById("headerTitle").textContent = "NOTES (Guest)";
+            return;
+        }
+
+        // Listen for auth state changes
+        window.auth.onAuthStateChanged(function(user) {
+            if (user) {
+                // User is signed in
+                document.getElementById("signInBtn").style.display = "none";
+                document.getElementById("headerTitle").textContent = "Hello, " + (user.displayName || "User");
+                
+                // Show user settings in settings page
+                const userSettings = document.getElementById("userSettings");
+                if (userSettings) {
+                    userSettings.style.display = "block";
+                }
+            } else {
+                // No user is signed in
+                document.getElementById("signInBtn").style.display = "block";
+                document.getElementById("headerTitle").textContent = "NOTES";
+                
+                // Hide user settings in settings page
+                const userSettings = document.getElementById("userSettings");
+                if (userSettings) {
+                    userSettings.style.display = "none";
+                }
+            }
+        });
+    });
+
+    // Logout function
+    function logoutUser() {
+        waitForFirebase().then(function() {
+            window.auth.signOut().then(function() {
+                // Sign-out successful
+                localStorage.removeItem("isGuest");
+                window.location.href = "index.html";
+            }).catch(function(error) {
+                // An error happened
+                alert("Error signing out: " + error.message);
+            });
+        });
+    }
+
+    // Change name function
+    function showNameModal() {
+        const modal = document.getElementById("nameModal");
+        const nameInput = document.getElementById("newName");
+        
+        waitForFirebase().then(function() {
+            const user = window.auth.currentUser;
+            if (user) {
+                nameInput.value = user.displayName || "";
+            }
+            modal.classList.add("open");
+        });
+    }
+
+    // Save name function
+    document.getElementById("saveNameBtn").addEventListener("click", async () => {
+  const newName = document.getElementById("newName").value.trim()
+  if (!newName) {
+    showToast("Please enter a name")
+    return
+  }
+
+  const saveBtn = document.getElementById("saveNameBtn")
+  saveBtn.disabled = true
+  saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'
+
+  try {
+    if (window.authFunctions) {
+      await window.authFunctions.updateUserName(newName)
+      closeModal("nameModal")
+    }
+  } catch (error) {
+    console.error("Error updating name:", error)
+    showToast("Failed to update name: " + error.message)
+  } finally {
+    saveBtn.disabled = false
+    saveBtn.innerHTML = "SAVE"
+  }
+})
+
+    // Cancel name change
+    document.getElementById("cancelNameBtn").addEventListener("click", function() {
+        document.getElementById("nameModal").classList.remove("open");
+    });
+
+    // Close name modal
+    document.getElementById("nameModalClose").addEventListener("click", function() {
+        document.getElementById("nameModal").classList.remove("open");
+    });
+</script>
+</body>
+</html>
