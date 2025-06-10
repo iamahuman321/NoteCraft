@@ -174,8 +174,15 @@ function setupEventListeners() {
   const titleInput = document.getElementById("titleInput");
   const contentTextarea = document.getElementById("contentTextarea");
   
-  if (titleInput) titleInput.addEventListener("input", debounce(saveCurrentNote, 500));
-  if (contentTextarea) contentTextarea.addEventListener("input", debounce(saveCurrentNote, 500));
+  // Auto-save with debounce for regular editing
+  function autoSaveWrapper() {
+    isAutoSave = true;
+    saveCurrentNote();
+    isAutoSave = false;
+  }
+  
+  if (titleInput) titleInput.addEventListener("input", debounce(autoSaveWrapper, 500));
+  if (contentTextarea) contentTextarea.addEventListener("input", debounce(autoSaveWrapper, 500));
   
   // Toolbar buttons
   const imageBtn = document.getElementById("imageBtn");
