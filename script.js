@@ -666,6 +666,7 @@ function updateSettingsContent() {
   const isGuest = window.authFunctions?.isUserGuest();
   
   const userSettings = document.getElementById("userSettings");
+  const colorSettings = document.getElementById("colorSettings");
   const userNameDisplay = document.getElementById("userNameDisplay");
   const userEmailDisplay = document.getElementById("userEmailDisplay");
   const signInBtn = document.getElementById("signInBtn");
@@ -673,12 +674,26 @@ function updateSettingsContent() {
   
   if (currentUser && !isGuest) {
     if (userSettings) userSettings.style.display = "flex";
+    if (colorSettings) colorSettings.style.display = "flex";
     if (userNameDisplay) userNameDisplay.textContent = currentUser.displayName || "No name";
     if (userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
     if (signInBtn) signInBtn.style.display = "none";
     if (signOutBtn) signOutBtn.style.display = "block";
+    
+    // Load user's saved color
+    const savedColor = localStorage.getItem('userColor') || getUserColor();
+    const colorPicker = document.getElementById('userColorPicker');
+    const colorPreview = document.getElementById('colorPreview');
+    
+    if (colorPicker) {
+      colorPicker.value = savedColor;
+    }
+    if (colorPreview) {
+      colorPreview.style.backgroundColor = savedColor;
+    }
   } else {
     if (userSettings) userSettings.style.display = "none";
+    if (colorSettings) colorSettings.style.display = "none";
     if (signInBtn) signInBtn.style.display = "block";
     if (signOutBtn) signOutBtn.style.display = "none";
   }
@@ -1585,19 +1600,14 @@ function trackUserActivity() {
       const cursorPosition = element ? element.selectionStart : null;
       const selectionEnd = element ? element.selectionEnd : null;
       
-      console.log('Updating activity status:', {
-        field: element?.id,
-        cursor: cursorPosition,
-        selection: selectionEnd
-      });
-      
       updatePresence(currentNote.sharedId, { 
         status: 'editing',
         lastActive: Date.now(),
         currentField: element?.id || null,
         cursorPosition: cursorPosition,
         selectionEnd: selectionEnd,
-        hasSelection: cursorPosition !== selectionEnd
+        hasSelection: cursorPosition !== selectionEnd,
+        userColor: getUserColor()
       });
     }
   }
@@ -1694,18 +1704,21 @@ function updateCollaboratorPresence(activeUsers) {
     collaborationText.textContent = `${count} other${count > 1 ? 's' : ''} editing`;
   }
   
-  // Generate unique colors for each collaborator
-  const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+  // Use stored user colors or generate defaults
+  const defaultColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
   
   activeCollaborators.innerHTML = collaborators.map(([uid, userData], index) => {
     const initials = (userData.name || 'U').charAt(0).toUpperCase();
-    const color = colors[index % colors.length];
+    const color = userData.userColor || defaultColors[index % defaultColors.length];
     const fieldName = userData.currentField === 'titleInput' ? 'title' : 
                      userData.currentField === 'contentTextarea' ? 'content' : '';
     return `<div class="collaborator-avatar" style="background-color: ${color}" title="${userData.name || 'Unknown'} editing ${fieldName}">${initials}</div>`;
   }).join('');
   
-  // Update cursor indicators
+  // Update cursor indicators with user colors
+  const colors = collaborators.map(([uid, userData], index) => 
+    userData.userColor || defaultColors[index % defaultColors.length]
+  );
   updateCursorIndicators(collaborators, colors);
 }
 
@@ -1727,53 +1740,26 @@ function showCursorIndicator(fieldId, cursorPosition, selectionEnd, color, userN
   // Remove any existing cursor for this user
   document.querySelectorAll(`[data-user="${userName}"]`).forEach(el => el.remove());
   
-  // Create floating indicator in top-right corner
+  // Create simple colored dot indicator
   const cursor = document.createElement('div');
   cursor.className = 'collaborative-cursor';
   cursor.style.cssText = `
     position: fixed;
     right: 20px;
     top: 80px;
-    width: 40px;
-    height: 40px;
+    width: 12px;
+    height: 12px;
     background-color: ${color};
     border-radius: 50%;
     z-index: 1000;
     pointer-events: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 14px;
-    font-weight: bold;
-    border: 3px solid white;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     animation: pulse 2s infinite;
   `;
-  cursor.textContent = userName.charAt(0).toUpperCase();
   cursor.setAttribute('data-user', userName);
   
-  // Add floating label
-  const label = document.createElement('div');
-  label.style.cssText = `
-    position: absolute;
-    top: -30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: ${color};
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: nowrap;
-    font-weight: 500;
-  `;
-  label.textContent = `${userName} editing ${fieldId === 'titleInput' ? 'title' : 'content'}`;
-  cursor.appendChild(label);
-  
   document.body.appendChild(cursor);
-  
-  console.log('Created floating cursor indicator for:', userName);
 }
 
 function getCursorCoordinates(element, position) {
@@ -1876,6 +1862,38 @@ function getTextMetrics(element, position) {
 
 function clearCursorIndicators() {
   document.querySelectorAll('.collaborative-cursor, .collaborative-selection').forEach(el => el.remove());
+}
+
+function getUserColor() {
+  return localStorage.getItem('userColor') || '#FF6B6B';
+}
+
+function setUserColor(color) {
+  localStorage.setItem('userColor', color);
+  
+  // Update presence with new color if actively collaborating
+  if (currentNote && currentNote.isShared && currentNote.sharedId) {
+    updatePresence(currentNote.sharedId, { 
+      userColor: color,
+      status: 'editing'
+    });
+  }
+}
+
+function setupColorPicker() {
+  const colorPicker = document.getElementById('userColorPicker');
+  const colorPreview = document.getElementById('colorPreview');
+  
+  if (colorPicker) {
+    colorPicker.addEventListener('change', (event) => {
+      const newColor = event.target.value;
+      setUserColor(newColor);
+      
+      if (colorPreview) {
+        colorPreview.style.backgroundColor = newColor;
+      }
+    });
+  }
 }
 
 // Export for window global
