@@ -383,6 +383,11 @@ function saveCurrentNote() {
   if (titleInput) currentNote.title = titleInput.value;
   if (contentTextarea) currentNote.content = contentTextarea.value;
   
+  // Save the current list type with the note
+  if (currentNote.list && currentNote.list.length > 0) {
+    currentNote.listType = currentListType;
+  }
+  
   currentNote.updatedAt = Date.now();
   
   if (currentNote.isShared && currentNote.sharedId) {
@@ -673,8 +678,21 @@ function updateEditorContent() {
     dateInfo.textContent = `Created: ${created} | Updated: ${updated}`;
   }
   
+  // Restore the list type if the note has one saved
+  if (currentNote.listType) {
+    currentListType = currentNote.listType;
+  } else if (currentNote.list && currentNote.list.length > 0) {
+    // Auto-detect list type if not saved - check if any items have completed property
+    const hasCheckboxes = currentNote.list.some(item => item.hasOwnProperty('completed'));
+    currentListType = hasCheckboxes ? 'checklist' : 'bulleted';
+    currentNote.listType = currentListType; // Save for future
+  }
+  
   updateCategoryChips();
   updateShareButtonVisibility();
+  updateListSection();
+  updateImagesSection();
+  updatePasswordButton();
 }
 
 function updateCategoryChips() {
@@ -1593,7 +1611,13 @@ function setupRealtimeCollaboration(sharedId) {
       currentNote.categories = sharedNote.categories || [];
       currentNote.images = sharedNote.images || [];
       currentNote.list = sharedNote.list || [];
+      currentNote.listType = sharedNote.listType || 'bulleted';
       currentNote.updatedAt = sharedNote.updatedAt;
+      
+      // Update current list type for UI
+      if (sharedNote.listType) {
+        currentListType = sharedNote.listType;
+      }
       
       // Update UI elements only if user is not actively typing
       const titleInput = document.getElementById("titleInput");
@@ -1799,7 +1823,8 @@ function setupHomePageSync() {
             lastModified: sharedNoteData.lastModified,
             categories: sharedNoteData.categories || [],
             images: sharedNoteData.images || [],
-            list: sharedNoteData.list || []
+            list: sharedNoteData.list || [],
+            listType: sharedNoteData.listType || 'bulleted'
           };
           
           // Re-render notes to show the update
