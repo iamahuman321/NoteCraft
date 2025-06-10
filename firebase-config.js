@@ -168,33 +168,54 @@ function updateUIForSignedOut() {
 
 // Data migration and synchronization
 function migrateGuestDataToUser(user) {
+  // Check if migration has already been done for this user
+  const migrationKey = `migrated_${user.uid}`;
+  if (localStorage.getItem(migrationKey)) {
+    return; // Already migrated, skip
+  }
+
   const guestNotes = JSON.parse(localStorage.getItem("notes")) || []
   const guestCategories = JSON.parse(localStorage.getItem("categories")) || []
 
+  // Only migrate if there's actual guest data and user doesn't have Firebase data
   if (guestNotes.length > 0 || guestCategories.length > 1) {
-    // More than just "All" category
-    console.log("Migrating guest data to user account...")
-
-    // Save guest data to Firebase
     const userRef = window.database.ref(`users/${user.uid}`)
+    
+    // Check if user already has data in Firebase
+    userRef.once('value').then(snapshot => {
+      const userData = snapshot.val();
+      
+      // Only migrate if user has no data in Firebase
+      if (!userData || (!userData.notes && !userData.categories)) {
+        console.log("Migrating guest data to user account...")
 
-    userRef
-      .update({
-        notes: guestNotes,
-        categories: guestCategories,
-        migratedAt: Date.now(),
-      })
-      .then(() => {
-        console.log("Guest data migrated successfully")
-        // Clear local storage after successful migration
+        userRef
+          .update({
+            notes: guestNotes,
+            categories: guestCategories,
+            migratedAt: Date.now(),
+          })
+          .then(() => {
+            console.log("Guest data migrated successfully")
+            // Mark migration as complete
+            localStorage.setItem(migrationKey, 'true');
+            // Clear local storage after successful migration
+            localStorage.removeItem("notes")
+            localStorage.removeItem("categories")
+          })
+          .catch((error) => {
+            console.error("Error migrating data:", error)
+          })
+      } else {
+        // User already has Firebase data, just mark migration as done
+        localStorage.setItem(migrationKey, 'true');
         localStorage.removeItem("notes")
         localStorage.removeItem("categories")
-        showToast("Your guest data has been saved to your account!")
-      })
-      .catch((error) => {
-        console.error("Error migrating data:", error)
-        showToast("Error saving your data. Please try again.")
-      })
+      }
+    });
+  } else {
+    // No guest data to migrate, mark as done
+    localStorage.setItem(migrationKey, 'true');
   }
 }
 
@@ -209,30 +230,44 @@ function loadUserData(user) {
       const userData = snapshot.val()
 
       if (userData) {
-        // Load notes and categories from Firebase
-        if (userData.notes) {
-          localStorage.setItem("notes", JSON.stringify(userData.notes))
-          window.notes = userData.notes
+        // Always ensure arrays exist and are properly populated
+        const userNotes = userData.notes || [];
+        const userCategories = userData.categories || [{ id: "all", name: "All" }];
+
+        // Force update global arrays
+        if (window.notes) {
+          window.notes.length = 0;
+          window.notes.push(...userNotes);
+        } else {
+          window.notes = userNotes;
         }
 
-        if (userData.categories) {
-          localStorage.setItem("categories", JSON.stringify(userData.categories))
-          window.categories = userData.categories
+        if (window.categories) {
+          window.categories.length = 0;
+          window.categories.push(...userCategories);
+        } else {
+          window.categories = userCategories;
         }
 
-        // Set data loaded flag and refresh UI
+        // Update localStorage
+        localStorage.setItem("notes", JSON.stringify(userNotes));
+        localStorage.setItem("categories", JSON.stringify(userCategories));
+
+        // Set data loaded flag
         window.dataLoaded = true;
         
-        // Trigger UI refresh for the main app
-        if (typeof window.renderNotes === "function") {
-          window.renderNotes()
-        }
-        if (typeof window.renderCategories === "function") {
-          window.renderCategories()
-        }
-        if (typeof window.updateFilterChips === "function") {
-          window.updateFilterChips()
-        }
+        // Force UI refresh with delay to ensure DOM is ready
+        setTimeout(() => {
+          if (typeof window.renderNotes === "function") {
+            window.renderNotes()
+          }
+          if (typeof window.renderCategories === "function") {
+            window.renderCategories()
+          }
+          if (typeof window.updateFilterChips === "function") {
+            window.updateFilterChips()
+          }
+        }, 50);
 
         console.log("User data loaded successfully")
       } else {

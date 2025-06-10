@@ -5,6 +5,7 @@ let categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all",
 let currentNote = null;
 let currentFilter = "all";
 let currentListType = "bulleted";
+let autoSaveTimeout = null; // Define autoSaveTimeout variable
 // currentUser is managed by firebase-config.js
 let sharedNoteListeners = new Map(); // Track Firebase listeners for shared notes
 let isReceivingUpdate = false; // Prevent infinite loops during real-time updates
