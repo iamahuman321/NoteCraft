@@ -157,7 +157,15 @@ function setupEventListeners() {
   const signInBtn = document.getElementById("signInBtn");
 
   if (addNoteBtn) addNoteBtn.addEventListener("click", createNewNote);
-  if (backBtn) backBtn.addEventListener("click", showNotesPage);
+  if (backBtn) backBtn.addEventListener("click", () => {
+    // Handle different back navigation contexts
+    const shoppingCategoryPage = document.getElementById("shoppingCategoryPage");
+    if (shoppingCategoryPage && shoppingCategoryPage.classList.contains("active")) {
+      showShoppingPage();
+    } else {
+      showNotesPage();
+    }
+  });
   if (navNotes) navNotes.addEventListener("click", (e) => {
     e.preventDefault();
     showNotesPage();
@@ -166,6 +174,14 @@ function setupEventListeners() {
   if (navSettings) navSettings.addEventListener("click", (e) => {
     e.preventDefault();
     showSettingsPage();
+    closeSidebar();
+  });
+  
+  // Shopping Lists Navigation
+  const navShopping = document.getElementById("navShopping");
+  if (navShopping) navShopping.addEventListener("click", (e) => {
+    e.preventDefault();
+    showShoppingPage();
     closeSidebar();
   });
   if (navSignOut) navSignOut.addEventListener("click", (e) => {
@@ -298,6 +314,21 @@ function setupModalEventListeners() {
   if (deleteModalClose) deleteModalClose.addEventListener("click", hideDeleteModal);
   if (confirmDeleteBtn) confirmDeleteBtn.addEventListener("click", confirmDelete);
   if (cancelDeleteBtn) cancelDeleteBtn.addEventListener("click", hideDeleteModal);
+
+  // Shopping Lists
+  const groceryBtn = document.getElementById("groceryBtn");
+  const pharmacyBtn = document.getElementById("pharmacyBtn");
+  const otherBtn = document.getElementById("otherBtn");
+  const addShoppingItemBtn = document.getElementById("addShoppingItemBtn");
+
+  if (groceryBtn) groceryBtn.addEventListener("click", () => showShoppingCategoryPage("grocery"));
+  if (pharmacyBtn) pharmacyBtn.addEventListener("click", () => showShoppingCategoryPage("pharmacy"));
+  if (otherBtn) otherBtn.addEventListener("click", () => showShoppingCategoryPage("other"));
+  if (addShoppingItemBtn) addShoppingItemBtn.addEventListener("click", () => {
+    if (currentShoppingCategory) {
+      addShoppingItem(currentShoppingCategory);
+    }
+  });
 
   // Close modals on overlay click
   document.querySelectorAll(".modal").forEach(modal => {
@@ -711,6 +742,81 @@ function showShoppingCategoryPage(category) {
   if (fab) fab.classList.add("hidden");
   
   renderShoppingList(category);
+}
+
+function renderShoppingList(category) {
+  const shoppingListItems = document.getElementById("shoppingListItems");
+  if (!shoppingListItems) return;
+  
+  const items = shoppingLists[category] || [];
+  
+  shoppingListItems.innerHTML = items.map((item, index) => `
+    <div class="shopping-item ${item.completed ? 'completed' : ''}">
+      <input type="checkbox" ${item.completed ? 'checked' : ''} 
+             onchange="toggleShoppingItem('${category}', ${index})" />
+      <input type="text" value="${escapeHtml(item.text)}" 
+             onchange="updateShoppingItem('${category}', ${index}, this.value)" 
+             placeholder="Add item..." />
+      <button class="btn-icon" onclick="deleteShoppingItem('${category}', ${index})">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+function addShoppingItem(category) {
+  if (!shoppingLists[category]) shoppingLists[category] = [];
+  
+  shoppingLists[category].push({
+    text: "",
+    completed: false
+  });
+  
+  saveShoppingLists();
+  renderShoppingList(category);
+}
+
+function updateShoppingItem(category, index, text) {
+  if (shoppingLists[category] && shoppingLists[category][index]) {
+    shoppingLists[category][index].text = text;
+    saveShoppingLists();
+  }
+}
+
+function toggleShoppingItem(category, index) {
+  if (shoppingLists[category] && shoppingLists[category][index]) {
+    shoppingLists[category][index].completed = !shoppingLists[category][index].completed;
+    saveShoppingLists();
+    renderShoppingList(category);
+  }
+}
+
+function deleteShoppingItem(category, index) {
+  if (shoppingLists[category]) {
+    shoppingLists[category].splice(index, 1);
+    saveShoppingLists();
+    renderShoppingList(category);
+  }
+}
+
+function saveShoppingLists() {
+  localStorage.setItem("shoppingLists", JSON.stringify(shoppingLists));
+  
+  // Save to Firebase if user is signed in
+  const currentUser = window.authFunctions?.getCurrentUser();
+  if (currentUser && window.authFunctions?.updateSharedNote) {
+    try {
+      // Use a shared shopping list ID for all family members
+      const shoppingListId = `shopping_${currentUser.uid.substring(0, 8)}`;
+      window.authFunctions.updateSharedNote(shoppingListId, {
+        shoppingLists: shoppingLists,
+        type: 'shoppingList',
+        updatedAt: Date.now()
+      });
+    } catch (error) {
+      console.error("Error saving shopping lists to Firebase:", error);
+    }
+  }
 }
 
 function updateEditorContent() {
@@ -1807,6 +1913,9 @@ window.deleteImage = deleteImage;
 window.selectUser = selectUser;
 window.removeSelectedUser = removeSelectedUser;
 window.showUsernameModal = showUsernameModal;
+window.updateShoppingItem = updateShoppingItem;
+window.toggleShoppingItem = toggleShoppingItem;
+window.deleteShoppingItem = deleteShoppingItem;
 
 // Real-time collaborative editing functions
 function setupRealtimeCollaboration(sharedId) {
