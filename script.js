@@ -5,7 +5,7 @@ let categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all",
 let currentNote = null;
 let currentFilter = "all";
 let currentListType = "bulleted";
-let currentUser = null;
+// currentUser is managed by firebase-config.js
 let sharedNoteListeners = new Map(); // Track Firebase listeners for shared notes
 
 // Translations
@@ -68,8 +68,8 @@ function initializeApp() {
   waitForFirebase().then(() => {
     console.log("Firebase ready for main app");
     
-    // Set current user and guest status
-    currentUser = window.authFunctions.getCurrentUser();
+    // Get current user from firebase-config
+    window.currentUser = window.authFunctions.getCurrentUser();
     
     // Initialize UI
     setupEventListeners();
@@ -82,19 +82,45 @@ function initializeApp() {
     // Listen for auth state changes
     if (window.auth) {
       window.auth.onAuthStateChanged((user) => {
-        currentUser = user;
+        window.currentUser = user;
         updateShareButtonVisibility();
+        updateSidebarAuth();
       });
     }
   });
 }
 
 function setupEventListeners() {
+  // Hamburger menu
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const sidebar = document.getElementById("sidebar");
+  const sidebarClose = document.getElementById("sidebarClose");
+  const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+  hamburgerBtn.addEventListener("click", toggleSidebar);
+  sidebarClose.addEventListener("click", closeSidebar);
+  sidebarOverlay.addEventListener("click", closeSidebar);
+
   // Navigation
   document.getElementById("addNoteBtn").addEventListener("click", createNewNote);
   document.getElementById("backBtn").addEventListener("click", showNotesPage);
-  document.getElementById("categoryBtn").addEventListener("click", () => window.location.href = "category.html");
-  document.getElementById("settingsBtn").addEventListener("click", showSettingsPage);
+  document.getElementById("navNotes").addEventListener("click", (e) => {
+    e.preventDefault();
+    showNotesPage();
+    closeSidebar();
+  });
+  document.getElementById("navSettings").addEventListener("click", (e) => {
+    e.preventDefault();
+    showSettingsPage();
+    closeSidebar();
+  });
+  document.getElementById("navSignOut").addEventListener("click", (e) => {
+    e.preventDefault();
+    if (window.authFunctions) {
+      window.authFunctions.signOutUser();
+    }
+    closeSidebar();
+  });
   document.getElementById("signInBtn").addEventListener("click", () => window.location.href = "signin.html");
 
   // Editor
@@ -162,6 +188,38 @@ function setupModalEventListeners() {
       }
     });
   });
+}
+
+// Sidebar functions
+function toggleSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  
+  sidebar.classList.toggle("open");
+  hamburgerBtn.classList.toggle("active");
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  
+  sidebar.classList.remove("open");
+  hamburgerBtn.classList.remove("active");
+}
+
+function updateSidebarAuth() {
+  const navSignIn = document.getElementById("navSignIn");
+  const navSignOut = document.getElementById("navSignOut");
+  const currentUser = window.authFunctions?.getCurrentUser();
+  const isGuest = window.authFunctions?.isUserGuest();
+  
+  if (currentUser && !isGuest) {
+    navSignIn.classList.add("hidden");
+    navSignOut.classList.remove("hidden");
+  } else {
+    navSignIn.classList.remove("hidden");
+    navSignOut.classList.add("hidden");
+  }
 }
 
 // Note management
@@ -506,6 +564,7 @@ function removeSelectedUser(uid) {
 }
 
 async function sendInvitations() {
+  const currentUser = window.authFunctions?.getCurrentUser();
   if (!currentNote || !currentUser) return;
 
   const selectedUsers = Array.from(document.getElementById("selectedUsers").children).map(div => {
