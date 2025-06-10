@@ -17,18 +17,54 @@
     <header class="header">
         <div class="header-content">
             <div class="header-left">
-                <a href="index.html" class="back-btn" id="backBtn">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
+                <button class="hamburger-btn" id="hamburgerBtn" title="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
                 <h1 class="header-title" id="headerTitle">SHARED NOTES</h1>
             </div>
             <div class="header-right">
-                <button class="settings-btn" id="settingsBtn" title="Settings">
-                    <i class="fas fa-cog"></i>
-                </button>
+                <a href="index.html" class="back-btn" id="backBtn">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
         </div>
     </header>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Notes App</h2>
+            <button class="sidebar-close" id="sidebarClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="sidebar-nav">
+            <a href="index.html" class="nav-item">
+                <i class="fas fa-sticky-note"></i>
+                All Notes
+            </a>
+            <a href="category.html" class="nav-item">
+                <i class="fas fa-folder"></i>
+                Categories
+            </a>
+            <a href="#" class="nav-item active">
+                <i class="fas fa-share-alt"></i>
+                Shared Notes
+            </a>
+            <div class="nav-divider"></div>
+            <a href="#" class="nav-item" id="navSettings">
+                <i class="fas fa-cog"></i>
+                Settings
+            </a>
+            <a href="login.html" class="nav-item" id="navSignIn">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In
+            </a>
+        </div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <!-- Main Content -->
     <main class="main-content">

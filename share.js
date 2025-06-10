@@ -1,6 +1,5 @@
 // Shared Notes Page JavaScript
-let currentUser = null;
-let isGuest = false;
+// currentUser is managed by firebase-config.js
 let invitations = [];
 let sharedNotes = [];
 
@@ -48,8 +47,8 @@ function initializePage() {
   waitForFirebase().then(() => {
     console.log("Firebase ready for share page");
     
-    currentUser = window.authFunctions.getCurrentUser();
-    isGuest = window.authFunctions.isUserGuest();
+    const currentUser = window.authFunctions.getCurrentUser();
+    const isGuest = window.authFunctions.isUserGuest();
     
     if (isGuest || !currentUser) {
       showSignInRequired();

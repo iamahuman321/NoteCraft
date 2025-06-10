@@ -170,14 +170,38 @@ function generateId() {
   return Math.random().toString(36).substr(2, 9) + Date.now().toString(36)
 }
 
-// Settings button click to go back to previous page or referrer
-function setupSettingsButton() {
-  const settingsBtn = document.getElementById("settingsBtn")
-  if (settingsBtn) {
-    settingsBtn.addEventListener("click", () => {
-      window.location.href = "index.html"
-    })
+// Hamburger menu functions
+function setupHamburgerMenu() {
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const sidebar = document.getElementById("sidebar");
+  const sidebarClose = document.getElementById("sidebarClose");
+  const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+  if (hamburgerBtn) {
+    hamburgerBtn.addEventListener("click", toggleSidebar);
   }
+  if (sidebarClose) {
+    sidebarClose.addEventListener("click", closeSidebar);
+  }
+  if (sidebarOverlay) {
+    sidebarOverlay.addEventListener("click", closeSidebar);
+  }
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  
+  sidebar.classList.toggle("open");
+  hamburgerBtn.classList.toggle("active");
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  
+  sidebar.classList.remove("open");
+  hamburgerBtn.classList.remove("active");
 }
 
 // Event listeners
@@ -197,7 +221,7 @@ function setupEventListeners() {
     })
   }
   
-  setupSettingsButton()
+  setupHamburgerMenu()
 }
 
 // Initialize page
