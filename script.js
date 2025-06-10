@@ -1116,16 +1116,22 @@ async function sendInvitations() {
   if (!currentUser) return;
   
   try {
+    console.log("Starting invitation process...");
+    console.log("Current note:", currentNote);
+    console.log("Selected users:", userElements.length);
+    
     // Create shared note
     const sharedId = generateId();
+    console.log("Generated shared ID:", sharedId);
+    
     const sharedNoteData = {
       id: sharedId,
-      title: currentNote.title,
-      content: currentNote.content,
+      title: currentNote.title || "Untitled Note",
+      content: currentNote.content || "",
       categories: currentNote.categories || [],
       images: currentNote.images || [],
       list: currentNote.list || [],
-      createdAt: currentNote.createdAt,
+      createdAt: currentNote.createdAt || Date.now(),
       updatedAt: Date.now(),
       owner: currentUser.uid,
       collaborators: {}
@@ -1137,38 +1143,51 @@ async function sendInvitations() {
       joinedAt: Date.now()
     };
     
+    console.log("Shared note data:", sharedNoteData);
+    
     // Save shared note
     await window.database.ref(`sharedNotes/${sharedId}`).set(sharedNoteData);
+    console.log("Shared note saved to database");
     
     // Send invitations to selected users
     const invitations = [];
     userElements.forEach(element => {
       const uid = element.dataset.uid;
+      const userName = element.querySelector('.user-name')?.textContent || 'Unknown';
       const invitationId = generateId();
-      invitations.push({
+      
+      const invitation = {
         id: invitationId,
         sharedId: sharedId,
         from: currentUser.uid,
-        fromName: currentUser.displayName || currentUser.email,
+        fromName: currentUser.displayName || currentUser.email.split('@')[0],
         to: uid,
-        noteTitle: currentNote.title,
+        toName: userName,
+        noteTitle: currentNote.title || "Untitled Note",
         createdAt: Date.now(),
         status: 'pending'
-      });
+      };
+      
+      invitations.push(invitation);
+      console.log("Created invitation:", invitation);
     });
+    
+    console.log("Total invitations to send:", invitations.length);
     
     // Save invitations
     const invitationsRef = window.database.ref('invitations');
     for (const invitation of invitations) {
       await invitationsRef.child(invitation.id).set(invitation);
+      console.log("Saved invitation to database:", invitation.id);
     }
     
     // Mark current note as shared
     currentNote.isShared = true;
     currentNote.sharedId = sharedId;
     saveCurrentNote();
+    console.log("Note marked as shared and saved");
     
-    showToast(t("invitationSent"), "success");
+    showToast(`Sent ${invitations.length} invitation(s)`, "success");
     hideShareModal();
     
   } catch (error) {

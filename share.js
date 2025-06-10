@@ -194,10 +194,17 @@ async function loadInvitations() {
   if (!currentUser) return;
 
   try {
-    const snapshot = await window.database.ref(`users/${currentUser.uid}/invitations`).once('value');
+    console.log("Loading invitations for user:", currentUser.uid);
+    
+    // Query invitations where 'to' field matches current user's uid
+    const snapshot = await window.database.ref('invitations').orderByChild('to').equalTo(currentUser.uid).once('value');
     const invitationsData = snapshot.val() || {};
     
+    console.log("Raw invitations data:", invitationsData);
+    
     invitations = Object.values(invitationsData).filter(inv => inv.status === 'pending');
+    
+    console.log("Filtered pending invitations:", invitations);
     
     // Cache in localStorage for offline access
     localStorage.setItem('cachedInvitations', JSON.stringify(invitations));
