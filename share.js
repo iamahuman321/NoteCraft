@@ -253,9 +253,14 @@ function renderInvitations() {
   const invitationsList = document.getElementById('invitationsList');
   const invitationsEmpty = document.getElementById('invitationsEmpty');
   
+  if (!invitationsList || !invitationsEmpty) {
+    console.error("Required DOM elements not found for invitations");
+    return;
+  }
+  
   if (!invitations || invitations.length === 0) {
     invitationsList.innerHTML = '';
-    invitationsList.appendChild(invitationsEmpty);
+    invitationsEmpty.style.display = 'block';
     return;
   }
   
@@ -288,9 +293,14 @@ function renderSharedNotes() {
   const sharedNotesList = document.getElementById('sharedNotesList');
   const sharedNotesEmpty = document.getElementById('sharedNotesEmpty');
   
+  if (!sharedNotesList || !sharedNotesEmpty) {
+    console.error("Required DOM elements not found for shared notes");
+    return;
+  }
+  
   if (!sharedNotes || sharedNotes.length === 0) {
     sharedNotesList.innerHTML = '';
-    sharedNotesList.appendChild(sharedNotesEmpty);
+    sharedNotesEmpty.style.display = 'block';
     return;
   }
   
@@ -298,7 +308,7 @@ function renderSharedNotes() {
   
   sharedNotesList.innerHTML = sharedNotes.map(note => {
     const isOwner = note.ownerId === currentUser.uid;
-    const collaboratorCount = note.collaborators ? note.collaborators.length : 0;
+    const collaboratorCount = note.collaborators ? Object.keys(note.collaborators).length : 0;
     
     return `
       <div class="shared-note-card" onclick="openSharedNote('${note.id}')">
