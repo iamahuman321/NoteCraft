@@ -981,27 +981,77 @@ function updateListSection() {
     <div class="list-section" data-section-id="${section.id}">
       <div class="list-section-header">
         <span class="list-type-label">${section.type === 'checklist' ? 'Checklist' : 'Bulleted List'}</span>
-        <button class="btn-icon" onclick="deleteListSection('${section.id}')">
+        <button class="btn-icon delete-section-btn" data-section-id="${section.id}">
           <i class="fas fa-times"></i>
         </button>
       </div>
       ${section.items.map((item, itemIndex) => `
         <div class="list-item ${item.completed ? 'completed' : ''}">
-          ${section.type === 'checklist' ? `<input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleListItemInSection('${section.id}', ${itemIndex})" />` : ''}
-          <input type="text" value="${item.text || ''}" onchange="updateListItemInSection('${section.id}', ${itemIndex}, this.value)" />
-          <button class="btn-icon" onclick="deleteListItemInSection('${section.id}', ${itemIndex})">
+          ${section.type === 'checklist' ? `<input type="checkbox" ${item.completed ? 'checked' : ''} class="item-checkbox" data-section-id="${section.id}" data-item-index="${itemIndex}" />` : ''}
+          <input type="text" value="${escapeHtml(item.text || '')}" class="item-input" data-section-id="${section.id}" data-item-index="${itemIndex}" />
+          <button class="btn-icon delete-item-btn" data-section-id="${section.id}" data-item-index="${itemIndex}">
             <i class="fas fa-times"></i>
           </button>
         </div>
       `).join("")}
       <div class="list-item">
-        <button class="btn-icon" onclick="console.log('Button clicked for section:', '${section.id}'); addListItemToSection('${section.id}')">
+        <button class="btn-icon add-item-btn" data-section-id="${section.id}">
           <i class="fas fa-plus"></i>
         </button>
         <span>Add item</span>
       </div>
     </div>
   `).join("");
+  
+  // Add event listeners after rendering
+  setupListEventListeners();
+}
+
+function setupListEventListeners() {
+  // Add item buttons
+  document.querySelectorAll('.add-item-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const sectionId = e.target.closest('.add-item-btn').dataset.sectionId;
+      console.log('Add button clicked for section:', sectionId);
+      addListItemToSection(sectionId);
+    });
+  });
+
+  // Delete section buttons
+  document.querySelectorAll('.delete-section-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const sectionId = e.target.closest('.delete-section-btn').dataset.sectionId;
+      deleteListSection(sectionId);
+    });
+  });
+
+  // Delete item buttons
+  document.querySelectorAll('.delete-item-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const button = e.target.closest('.delete-item-btn');
+      const sectionId = button.dataset.sectionId;
+      const itemIndex = parseInt(button.dataset.itemIndex);
+      deleteListItemInSection(sectionId, itemIndex);
+    });
+  });
+
+  // Item checkboxes
+  document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', (e) => {
+      const sectionId = e.target.dataset.sectionId;
+      const itemIndex = parseInt(e.target.dataset.itemIndex);
+      toggleListItemInSection(sectionId, itemIndex);
+    });
+  });
+
+  // Item text inputs
+  document.querySelectorAll('.item-input').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const sectionId = e.target.dataset.sectionId;
+      const itemIndex = parseInt(e.target.dataset.itemIndex);
+      updateListItemInSection(sectionId, itemIndex, e.target.value);
+    });
+  });
 }
 
 function addListItemToSection(sectionId) {
