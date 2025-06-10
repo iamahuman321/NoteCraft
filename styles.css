@@ -1794,6 +1794,93 @@ body {
 }
 
 /* Reduced motion */
+/* User Search Styles */
+.search-results {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-top: 8px;
+  background: var(--bg-color);
+  display: none;
+}
+
+.search-results.show {
+  display: block;
+}
+
+.user-search-item {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.user-search-item:last-child {
+  border-bottom: none;
+}
+
+.user-search-item:hover {
+  background-color: var(--hover-color);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.user-username {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.user-email {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.selected-users {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  min-height: 50px;
+}
+
+.selected-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--primary-light);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.selected-user .user-info {
+  flex: 1;
+}
+
+.remove-user {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.remove-user:hover {
+  background: var(--danger-color);
+  color: white;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

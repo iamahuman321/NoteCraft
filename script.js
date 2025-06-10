@@ -189,7 +189,14 @@ function setupModalEventListeners() {
   if (shareModalClose) shareModalClose.addEventListener("click", hideShareModal);
   if (sendInvitesBtn) sendInvitesBtn.addEventListener("click", sendInvitations);
   if (cancelShareBtn) cancelShareBtn.addEventListener("click", hideShareModal);
-  if (userSearchInput) userSearchInput.addEventListener("input", debounce(searchUsers, 300));
+  if (userSearchInput) {
+    userSearchInput.addEventListener("input", debounce((e) => searchUsers(e.target.value), 300));
+    userSearchInput.addEventListener("focus", () => {
+      if (userSearchInput.value.length >= 2) {
+        searchUsers(userSearchInput.value);
+      }
+    });
+  }
 
   // Username modal
   const saveUsernameBtn = document.getElementById("saveUsernameBtn");
@@ -932,31 +939,49 @@ async function searchUsers(query) {
   }
   
   try {
-    // Search for users by username or email
+    // Search for users by username, name, and email
     const usersRef = window.database.ref('users');
-    const snapshot = await usersRef.orderByChild('username').startAt(query.toLowerCase()).endAt(query.toLowerCase() + '\uf8ff').once('value');
+    const snapshot = await usersRef.once('value');
     
     const users = [];
+    const queryLower = query.toLowerCase();
+    
     snapshot.forEach(childSnapshot => {
       const userData = childSnapshot.val();
-      if (userData.uid !== currentUser.uid) {
-        users.push({
-          uid: childSnapshot.key,
-          username: userData.username,
-          name: userData.name || userData.displayName,
-          email: userData.email
-        });
+      if (userData.uid !== currentUser.uid && userData.username) {
+        const matchesUsername = userData.username && userData.username.toLowerCase().includes(queryLower);
+        const matchesName = userData.name && userData.name.toLowerCase().includes(queryLower);
+        const matchesEmail = userData.email && userData.email.toLowerCase().includes(queryLower);
+        
+        if (matchesUsername || matchesName || matchesEmail) {
+          users.push({
+            uid: childSnapshot.key,
+            username: userData.username,
+            name: userData.name || userData.displayName || userData.email.split('@')[0],
+            email: userData.email
+          });
+        }
       }
+    });
+    
+    // Sort by relevance (exact matches first, then partial matches)
+    users.sort((a, b) => {
+      const aExact = a.username.toLowerCase() === queryLower || a.name.toLowerCase() === queryLower;
+      const bExact = b.username.toLowerCase() === queryLower || b.name.toLowerCase() === queryLower;
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+      return a.name.localeCompare(b.name);
     });
     
     if (users.length === 0) {
       searchResults.innerHTML = "<div class='user-search-item'>No users found</div>";
     } else {
       searchResults.innerHTML = users.map(user => `
-        <div class="user-search-item" onclick="selectUser('${user.uid}', '${user.name}', '${user.username}')">
+        <div class="user-search-item" onclick="selectUser('${user.uid}', '${escapeHtml(user.name)}', '${escapeHtml(user.username)}')">
           <div class="user-info">
-            <div class="user-name">${user.name}</div>
-            <div class="user-username">@${user.username}</div>
+            <div class="user-name">${escapeHtml(user.name)}</div>
+            <div class="user-username">@${escapeHtml(user.username)}</div>
+            <div class="user-email">${escapeHtml(user.email)}</div>
           </div>
         </div>
       `).join("");
@@ -1199,6 +1224,13 @@ function debounce(func, wait) {
 
 function formatDate(timestamp) {
   return new Date(timestamp).toLocaleDateString();
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 function showToast(message, type = 'default') {
