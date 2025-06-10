@@ -1809,7 +1809,14 @@ function setupRealtimeCollaboration(sharedId) {
       }
       
       updateCategoryChips();
-      updateListSection();
+      
+      // Only update list section if user is not actively interacting with it
+      const listItems = document.getElementById("listItems");
+      const isListFocused = listItems && listItems.contains(document.activeElement);
+      if (!isListFocused) {
+        updateListSection();
+      }
+      
       updateImagesSection();
       
       // Update the note in local notes array
