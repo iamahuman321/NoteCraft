@@ -709,6 +709,17 @@ body {
   transform: scale(0.95);
 }
 
+.toolbar-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbar-btn.disabled:hover {
+  background: var(--light-color);
+  color: var(--text-color);
+  transform: none;
+}
+
 /* List Type Modal Buttons */
 .list-type-btn {
   display: flex;

@@ -90,6 +90,40 @@ function setupEventListeners() {
   if (sidebarOverlay) {
     sidebarOverlay.addEventListener("click", closeSidebar);
   }
+
+  // Navigation links
+  const navNotes = document.getElementById("navNotes");
+  const navCategories = document.getElementById("navCategories");
+  const navSettings = document.getElementById("navSettings");
+  const navSignIn = document.getElementById("navSignIn");
+
+  if (navNotes) {
+    navNotes.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.href = "index.html";
+    });
+  }
+
+  if (navCategories) {
+    navCategories.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.href = "category.html";
+    });
+  }
+
+  if (navSettings) {
+    navSettings.addEventListener("click", (e) => {
+      e.preventDefault();
+      // Show settings or navigate as needed
+    });
+  }
+
+  if (navSignIn) {
+    navSignIn.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.href = "login.html";
+    });
+  }
 }
 
 // Sidebar functions

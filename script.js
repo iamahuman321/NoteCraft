@@ -565,8 +565,11 @@ function updateShareButtonVisibility() {
   
   if (currentUser && !isGuest) {
     shareBtn.style.display = "flex";
+    shareBtn.classList.remove("hidden");
   } else {
-    shareBtn.style.display = "none";
+    shareBtn.style.display = "flex";
+    shareBtn.classList.add("disabled");
+    shareBtn.title = "Sign in to share notes";
   }
 }
 
@@ -604,7 +607,20 @@ function showShareModal() {
   }
   
   const shareModal = document.getElementById("shareModal");
-  if (shareModal) shareModal.classList.add("show");
+  if (shareModal) {
+    shareModal.classList.add("show");
+    
+    // Clear previous selections
+    const selectedUsers = document.getElementById("selectedUsers");
+    const searchResults = document.getElementById("searchResults");
+    const userSearchInput = document.getElementById("userSearchInput");
+    const sendBtn = document.getElementById("sendInvitesBtn");
+    
+    if (selectedUsers) selectedUsers.innerHTML = "";
+    if (searchResults) searchResults.classList.remove("show");
+    if (userSearchInput) userSearchInput.value = "";
+    if (sendBtn) sendBtn.disabled = true;
+  }
 }
 
 function hideShareModal() {
