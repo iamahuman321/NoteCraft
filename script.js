@@ -762,7 +762,6 @@ function selectListType(event) {
 }
 
 function updateListSection() {
-  // List functionality implementation
   const listItems = document.getElementById("listItems");
   if (!listItems || !currentNote) return;
   
@@ -776,7 +775,14 @@ function updateListSection() {
         <i class="fas fa-times"></i>
       </button>
     </div>
-  `).join("");
+  `).join("") + `
+    <div class="list-item">
+      <button class="btn-icon" onclick="addListItem()">
+        <i class="fas fa-plus"></i>
+      </button>
+      <span>Add item</span>
+    </div>
+  `;
 }
 
 function addListItem() {
@@ -892,7 +898,6 @@ function deleteImage(index) {
 
 // Sharing functions
 async function searchUsers(query) {
-  // Implementation for user search
   const searchResults = document.getElementById("searchResults");
   if (!searchResults) return;
   
@@ -901,23 +906,173 @@ async function searchUsers(query) {
     return;
   }
   
-  // Placeholder for actual user search implementation
-  searchResults.classList.add("show");
-  searchResults.innerHTML = "<div class='user-search-item'>Search functionality requires Firebase setup</div>";
+  const currentUser = window.authFunctions?.getCurrentUser();
+  if (!currentUser || !window.database) {
+    searchResults.innerHTML = "<div class='user-search-item'>Sign in required</div>";
+    return;
+  }
+  
+  try {
+    // Search for users by username or email
+    const usersRef = window.database.ref('users');
+    const snapshot = await usersRef.orderByChild('username').startAt(query.toLowerCase()).endAt(query.toLowerCase() + '\uf8ff').once('value');
+    
+    const users = [];
+    snapshot.forEach(childSnapshot => {
+      const userData = childSnapshot.val();
+      if (userData.uid !== currentUser.uid) {
+        users.push({
+          uid: childSnapshot.key,
+          username: userData.username,
+          name: userData.name || userData.displayName,
+          email: userData.email
+        });
+      }
+    });
+    
+    if (users.length === 0) {
+      searchResults.innerHTML = "<div class='user-search-item'>No users found</div>";
+    } else {
+      searchResults.innerHTML = users.map(user => `
+        <div class="user-search-item" onclick="selectUser('${user.uid}', '${user.name}', '${user.username}')">
+          <div class="user-info">
+            <div class="user-name">${user.name}</div>
+            <div class="user-username">@${user.username}</div>
+          </div>
+        </div>
+      `).join("");
+    }
+    
+    searchResults.classList.add("show");
+  } catch (error) {
+    console.error("Error searching users:", error);
+    searchResults.innerHTML = "<div class='user-search-item'>Error searching users</div>";
+  }
 }
 
 async function sendInvitations() {
-  // Implementation for sending invitations
-  showToast("Invitation feature requires Firebase setup", "warning");
-  hideShareModal();
+  if (!currentNote || !window.database) return;
+  
+  const selectedUsers = document.getElementById("selectedUsers");
+  const userElements = selectedUsers?.querySelectorAll("[data-uid]");
+  
+  if (!userElements || userElements.length === 0) {
+    showToast("Select users to share with", "warning");
+    return;
+  }
+  
+  const currentUser = window.authFunctions?.getCurrentUser();
+  if (!currentUser) return;
+  
+  try {
+    // Create shared note
+    const sharedId = generateId();
+    const sharedNoteData = {
+      id: sharedId,
+      title: currentNote.title,
+      content: currentNote.content,
+      categories: currentNote.categories || [],
+      images: currentNote.images || [],
+      list: currentNote.list || [],
+      createdAt: currentNote.createdAt,
+      updatedAt: Date.now(),
+      owner: currentUser.uid,
+      collaborators: {}
+    };
+    
+    // Add owner as collaborator
+    sharedNoteData.collaborators[currentUser.uid] = {
+      role: 'owner',
+      joinedAt: Date.now()
+    };
+    
+    // Save shared note
+    await window.database.ref(`sharedNotes/${sharedId}`).set(sharedNoteData);
+    
+    // Send invitations to selected users
+    const invitations = [];
+    userElements.forEach(element => {
+      const uid = element.dataset.uid;
+      const invitationId = generateId();
+      invitations.push({
+        id: invitationId,
+        sharedId: sharedId,
+        from: currentUser.uid,
+        fromName: currentUser.displayName || currentUser.email,
+        to: uid,
+        noteTitle: currentNote.title,
+        createdAt: Date.now(),
+        status: 'pending'
+      });
+    });
+    
+    // Save invitations
+    const invitationsRef = window.database.ref('invitations');
+    for (const invitation of invitations) {
+      await invitationsRef.child(invitation.id).set(invitation);
+    }
+    
+    // Mark current note as shared
+    currentNote.isShared = true;
+    currentNote.sharedId = sharedId;
+    saveCurrentNote();
+    
+    showToast(t("invitationSent"), "success");
+    hideShareModal();
+    
+  } catch (error) {
+    console.error("Error sending invitations:", error);
+    showToast("Error sharing note", "error");
+  }
 }
 
 function selectUser(uid, name, username) {
-  // Implementation for selecting users for sharing
+  const selectedUsers = document.getElementById("selectedUsers");
+  if (!selectedUsers) return;
+  
+  // Check if user is already selected
+  if (selectedUsers.querySelector(`[data-uid="${uid}"]`)) return;
+  
+  const userElement = document.createElement("div");
+  userElement.className = "selected-user";
+  userElement.dataset.uid = uid;
+  userElement.innerHTML = `
+    <div class="user-info">
+      <div class="user-name">${name}</div>
+      <div class="user-username">@${username}</div>
+    </div>
+    <button class="remove-user" onclick="removeSelectedUser('${uid}')">
+      <i class="fas fa-times"></i>
+    </button>
+  `;
+  
+  selectedUsers.appendChild(userElement);
+  
+  // Enable send button if users are selected
+  const sendBtn = document.getElementById("sendInvitesBtn");
+  if (sendBtn) sendBtn.disabled = false;
+  
+  // Clear search
+  const searchInput = document.getElementById("userSearchInput");
+  const searchResults = document.getElementById("searchResults");
+  if (searchInput) searchInput.value = "";
+  if (searchResults) searchResults.classList.remove("show");
 }
 
 function removeSelectedUser(uid) {
-  // Implementation for removing selected users
+  const selectedUsers = document.getElementById("selectedUsers");
+  const userElement = selectedUsers?.querySelector(`[data-uid="${uid}"]`);
+  
+  if (userElement) {
+    userElement.remove();
+    
+    // Disable send button if no users selected
+    const remainingUsers = selectedUsers.querySelectorAll("[data-uid]");
+    const sendBtn = document.getElementById("sendInvitesBtn");
+    if (sendBtn && remainingUsers.length === 0) {
+      sendBtn.disabled = true;
+    }
+  }
 }
 
 async function saveUsername() {

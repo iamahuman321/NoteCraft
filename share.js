@@ -115,7 +115,7 @@ function showSignInRequired() {
     <div class="empty-state">
       <i class="fas fa-sign-in-alt"></i>
       <p>${t("signInRequired")}</p>
-      <a href="signin.html" class="btn btn-primary" style="margin-top: 1rem;">Sign In</a>
+      <a href="login.html" class="btn btn-primary" style="margin-top: 1rem;">Sign In</a>
     </div>
   `;
 }
