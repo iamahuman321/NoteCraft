@@ -365,7 +365,7 @@ function verifyNotePassword(note) {
 }
 
 function saveCurrentNote() {
-  if (!currentNote) return;
+  if (!currentNote || isReceivingUpdate) return; // Don't save during real-time updates
   
   const titleInput = document.getElementById("titleInput");
   const contentTextarea = document.getElementById("contentTextarea");
@@ -546,6 +546,11 @@ function updateFilterChips() {
 
 // UI functions
 function showNotesPage() {
+  // Clean up any active collaborative editing listeners
+  if (currentNote && currentNote.isShared && currentNote.sharedId) {
+    cleanupRealtimeCollaboration(currentNote.sharedId);
+  }
+  
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
   const notesPage = document.getElementById("notesPage");
   if (notesPage) notesPage.classList.add("active");
@@ -1473,6 +1478,100 @@ window.deleteImage = deleteImage;
 window.selectUser = selectUser;
 window.removeSelectedUser = removeSelectedUser;
 window.showUsernameModal = showUsernameModal;
+
+// Real-time collaborative editing functions
+function setupRealtimeCollaboration(sharedId) {
+  if (!window.database || !sharedId) return;
+  
+  // Remove existing listener if any
+  cleanupRealtimeCollaboration(sharedId);
+  
+  const sharedNoteRef = window.database.ref(`sharedNotes/${sharedId}`);
+  
+  // Listen for changes to the shared note
+  const listener = sharedNoteRef.on('value', (snapshot) => {
+    if (isReceivingUpdate) return; // Prevent infinite loops
+    
+    const sharedNote = snapshot.val();
+    if (!sharedNote) return;
+    
+    // Update the current note with shared data
+    if (currentNote && currentNote.sharedId === sharedId) {
+      isReceivingUpdate = true;
+      
+      // Update note content
+      currentNote.title = sharedNote.title || '';
+      currentNote.content = sharedNote.content || '';
+      currentNote.categories = sharedNote.categories || [];
+      currentNote.images = sharedNote.images || [];
+      currentNote.list = sharedNote.list || [];
+      currentNote.updatedAt = sharedNote.updatedAt;
+      
+      // Update UI elements
+      updateEditorContent();
+      updateCategoryChips();
+      updateListSection();
+      updateImagesSection();
+      
+      // Update the note in local notes array
+      const noteIndex = notes.findIndex(n => n.id === currentNote.id);
+      if (noteIndex !== -1) {
+        notes[noteIndex] = { ...currentNote };
+        localStorage.setItem("notes", JSON.stringify(notes));
+      }
+      
+      isReceivingUpdate = false;
+      
+      // Show who made the last edit (if not current user)
+      if (sharedNote.lastEditedBy && sharedNote.lastEditedBy !== window.authFunctions?.getCurrentUser()?.uid) {
+        showCollaboratorActivity(sharedNote.lastEditedBy, 'edited');
+      }
+    }
+  });
+  
+  // Store the listener for cleanup
+  sharedNoteListeners.set(sharedId, listener);
+  
+  // Update presence to show user is actively editing
+  updatePresence(sharedId, { status: 'editing' });
+  
+  collaborativeEditingEnabled = true;
+  console.log('Real-time collaboration enabled for shared note:', sharedId);
+}
+
+function cleanupRealtimeCollaboration(sharedId) {
+  if (sharedNoteListeners.has(sharedId)) {
+    const sharedNoteRef = window.database.ref(`sharedNotes/${sharedId}`);
+    sharedNoteRef.off('value', sharedNoteListeners.get(sharedId));
+    sharedNoteListeners.delete(sharedId);
+  }
+  
+  // Update presence to show user is no longer editing
+  if (window.authFunctions?.updatePresence) {
+    window.authFunctions.updatePresence(sharedId, { status: 'idle' });
+  }
+  
+  collaborativeEditingEnabled = false;
+}
+
+function updatePresence(sharedId, data) {
+  if (window.authFunctions?.updatePresence) {
+    window.authFunctions.updatePresence(sharedId, data);
+  }
+}
+
+function showCollaboratorActivity(userId, action) {
+  // Get user info and show a subtle notification
+  if (window.database) {
+    window.database.ref(`users/${userId}`).once('value').then(snapshot => {
+      const userData = snapshot.val();
+      if (userData) {
+        const userName = userData.name || userData.displayName || userData.email?.split('@')[0] || 'Someone';
+        showToast(`${userName} ${action} this note`, 'info');
+      }
+    });
+  }
+}
 
 // Export for window global
 window.renderNotes = renderNotes;
