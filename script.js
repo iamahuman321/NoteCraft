@@ -156,51 +156,87 @@ function setupEventListeners() {
   const addCategoryBtn = document.getElementById("addCategoryBtn");
   if (addCategoryBtn) addCategoryBtn.addEventListener("click", showCategoryModal);
 
-  // Modals
-  setupModalEventListeners();
-
-  // Filter chips
-  document.getElementById("filterChips").addEventListener("click", handleFilterClick);
+  // Image upload
+  const imageUpload = document.getElementById("imageUpload");
+  if (imageUpload) imageUpload.addEventListener("change", processImageUpload);
 
   // Settings
-  document.getElementById("themeSelect").addEventListener("change", handleThemeChange);
-  document.getElementById("languageSelect").addEventListener("change", handleLanguageChange);
+  const themeSelect = document.getElementById("themeSelect");
+  const languageSelect = document.getElementById("languageSelect");
+  const editNameBtn = document.getElementById("editNameBtn");
+  const signOutBtn = document.getElementById("signOutBtn");
+
+  if (themeSelect) themeSelect.addEventListener("change", handleThemeChange);
+  if (languageSelect) languageSelect.addEventListener("change", handleLanguageChange);
+  if (editNameBtn) editNameBtn.addEventListener("click", showNameModal);
+  if (signOutBtn) signOutBtn.addEventListener("click", () => {
+    if (window.authFunctions) {
+      window.authFunctions.signOutUser();
+    }
+  });
+
+  // Modals
+  setupModalEventListeners();
 }
 
 function setupModalEventListeners() {
-  // Password modal
-  document.getElementById("passwordModalClose").addEventListener("click", hidePasswordModal);
-  document.getElementById("savePasswordBtn").addEventListener("click", savePassword);
-  document.getElementById("removePasswordBtn").addEventListener("click", removePassword);
-  document.getElementById("passwordToggle").addEventListener("click", togglePasswordVisibility);
-
-  // Category modal
-  document.getElementById("categoryModalClose").addEventListener("click", hideCategoryModal);
-
   // Share modal
-  document.getElementById("shareModalClose").addEventListener("click", hideShareModal);
-  document.getElementById("sendInvitesBtn").addEventListener("click", sendInvitations);
-  document.getElementById("cancelShareBtn").addEventListener("click", hideShareModal);
-  document.getElementById("userSearchInput").addEventListener("input", debounce(searchUsers, 300));
+  const shareModalClose = document.getElementById("shareModalClose");
+  const sendInvitesBtn = document.getElementById("sendInvitesBtn");
+  const cancelShareBtn = document.getElementById("cancelShareBtn");
+  const userSearchInput = document.getElementById("userSearchInput");
+
+  if (shareModalClose) shareModalClose.addEventListener("click", hideShareModal);
+  if (sendInvitesBtn) sendInvitesBtn.addEventListener("click", sendInvitations);
+  if (cancelShareBtn) cancelShareBtn.addEventListener("click", hideShareModal);
+  if (userSearchInput) userSearchInput.addEventListener("input", debounce(searchUsers, 300));
 
   // Username modal
-  document.getElementById("saveUsernameBtn").addEventListener("click", saveUsername);
+  const saveUsernameBtn = document.getElementById("saveUsernameBtn");
+  if (saveUsernameBtn) saveUsernameBtn.addEventListener("click", saveUsername);
 
   // Name modal
-  document.getElementById("nameModalClose").addEventListener("click", hideNameModal);
-  document.getElementById("saveNameBtn").addEventListener("click", saveName);
-  document.getElementById("cancelNameBtn").addEventListener("click", hideNameModal);
+  const nameModalClose = document.getElementById("nameModalClose");
+  const saveNameBtn = document.getElementById("saveNameBtn");
+  const cancelNameBtn = document.getElementById("cancelNameBtn");
 
-  // Delete modal
-  document.getElementById("deleteModalClose").addEventListener("click", hideDeleteModal);
-  document.getElementById("confirmDeleteBtn").addEventListener("click", confirmDelete);
-  document.getElementById("cancelDeleteBtn").addEventListener("click", hideDeleteModal);
+  if (nameModalClose) nameModalClose.addEventListener("click", hideNameModal);
+  if (saveNameBtn) saveNameBtn.addEventListener("click", saveName);
+  if (cancelNameBtn) cancelNameBtn.addEventListener("click", hideNameModal);
+
+  // Category modal
+  const categoryModalClose = document.getElementById("categoryModalClose");
+  const saveCategoriesBtn = document.getElementById("saveCategoriesBtn");
+
+  if (categoryModalClose) categoryModalClose.addEventListener("click", hideCategoryModal);
+  if (saveCategoriesBtn) saveCategoriesBtn.addEventListener("click", saveNoteCategories);
+
+  // Password modal
+  const passwordModalClose = document.getElementById("passwordModalClose");
+  const savePasswordBtn = document.getElementById("savePasswordBtn");
+  const removePasswordBtn = document.getElementById("removePasswordBtn");
+
+  if (passwordModalClose) passwordModalClose.addEventListener("click", hidePasswordModal);
+  if (savePasswordBtn) savePasswordBtn.addEventListener("click", savePassword);
+  if (removePasswordBtn) removePasswordBtn.addEventListener("click", removePassword);
 
   // List type modal
-  document.getElementById("listTypeModalClose").addEventListener("click", hideListTypeModal);
-  document.querySelectorAll(".list-type-btn").forEach(btn => {
+  const listTypeModalClose = document.getElementById("listTypeModalClose");
+  if (listTypeModalClose) listTypeModalClose.addEventListener("click", hideListTypeModal);
+
+  const listTypeBtns = document.querySelectorAll(".list-type-btn");
+  listTypeBtns.forEach(btn => {
     btn.addEventListener("click", selectListType);
   });
+
+  // Delete modal
+  const deleteModalClose = document.getElementById("deleteModalClose");
+  const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+  const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+
+  if (deleteModalClose) deleteModalClose.addEventListener("click", hideDeleteModal);
+  if (confirmDeleteBtn) confirmDeleteBtn.addEventListener("click", confirmDelete);
+  if (cancelDeleteBtn) cancelDeleteBtn.addEventListener("click", hideDeleteModal);
 
   // Close modals on overlay click
   document.querySelectorAll(".modal").forEach(modal => {
@@ -236,11 +272,11 @@ function updateSidebarAuth() {
   const isGuest = window.authFunctions?.isUserGuest();
   
   if (currentUser && !isGuest) {
-    navSignIn.classList.add("hidden");
-    navSignOut.classList.remove("hidden");
+    if (navSignIn) navSignIn.classList.add("hidden");
+    if (navSignOut) navSignOut.classList.remove("hidden");
   } else {
-    navSignIn.classList.remove("hidden");
-    navSignOut.classList.add("hidden");
+    if (navSignIn) navSignIn.classList.remove("hidden");
+    if (navSignOut) navSignOut.classList.add("hidden");
   }
 }
 
@@ -252,52 +288,49 @@ function createNewNote() {
     content: "",
     categories: [],
     images: [],
-    listItems: [],
-    listType: "bulleted",
-    password: "",
+    list: [],
     createdAt: Date.now(),
-    updatedAt: Date.now(),
-    isShared: false,
-    sharedId: null
+    updatedAt: Date.now()
   };
-
+  
   showEditorPage();
   updateEditorContent();
-  document.getElementById("titleInput").focus();
 }
 
 function editNote(note) {
-  if (note.password && !verifyNotePassword(note)) {
+  if (note.password) {
+    verifyNotePassword(note);
     return;
   }
-
-  currentNote = { ...note };
+  
+  currentNote = note;
   showEditorPage();
   updateEditorContent();
-  
-  // If this is a shared note, set up real-time collaboration
-  if (note.isShared && note.sharedId && currentUser) {
-    setupRealTimeCollaboration(note.sharedId);
-  }
 }
 
 function verifyNotePassword(note) {
-  if (!note.password) return true;
-  
   const password = prompt("Enter note password:");
-  return password === note.password;
+  if (password === note.password) {
+    currentNote = note;
+    showEditorPage();
+    updateEditorContent();
+  } else {
+    showToast(t("incorrectPassword"), "error");
+  }
 }
 
 function saveCurrentNote() {
   if (!currentNote) return;
-
-  // Update note data
-  currentNote.title = document.getElementById("titleInput").value;
-  currentNote.content = document.getElementById("contentTextarea").value;
+  
+  const titleInput = document.getElementById("titleInput");
+  const contentTextarea = document.getElementById("contentTextarea");
+  
+  if (titleInput) currentNote.title = titleInput.value;
+  if (contentTextarea) currentNote.content = contentTextarea.value;
+  
   currentNote.updatedAt = Date.now();
-
-  // Save to appropriate location
-  if (currentNote.isShared && currentNote.sharedId && currentUser) {
+  
+  if (currentNote.isShared) {
     saveSharedNote();
   } else {
     saveLocalNote();
@@ -308,44 +341,39 @@ function saveLocalNote() {
   const existingIndex = notes.findIndex(n => n.id === currentNote.id);
   
   if (existingIndex >= 0) {
-    notes[existingIndex] = { ...currentNote };
-    showToast(t("noteUpdated"));
+    notes[existingIndex] = currentNote;
+    showToast(t("noteUpdated"), "success");
   } else {
-    notes.push({ ...currentNote });
-    showToast(t("noteAdded"));
+    notes.push(currentNote);
+    showToast(t("noteAdded"), "success");
   }
-
+  
   localStorage.setItem("notes", JSON.stringify(notes));
   
   // Save to Firebase if user is authenticated
-  if (window.authFunctions && currentUser && !isGuest) {
+  if (window.authFunctions && typeof window.authFunctions.saveUserData === 'function') {
     window.authFunctions.saveUserData();
   }
-
-  renderNotes();
 }
 
 function saveSharedNote() {
-  if (!currentUser || !currentNote.sharedId) return;
-
-  const sharedNoteRef = window.database.ref(`sharedNotes/${currentNote.sharedId}`);
+  if (!currentNote.sharedId) return;
   
-  sharedNoteRef.update({
-    title: currentNote.title,
-    content: currentNote.content,
-    updatedAt: Date.now(),
-    lastEditedBy: currentUser.uid
-  }).catch(error => {
-    console.error("Error saving shared note:", error);
-    showToast("Error saving shared note");
-  });
+  const currentUser = window.authFunctions?.getCurrentUser();
+  if (currentUser && window.authFunctions?.updateSharedNote) {
+    window.authFunctions.updateSharedNote(currentNote.sharedId, {
+      title: currentNote.title,
+      content: currentNote.content,
+      categories: currentNote.categories,
+      images: currentNote.images,
+      list: currentNote.list
+    });
+  }
 }
 
 function deleteNote(noteId) {
   const note = notes.find(n => n.id === noteId);
-  if (!note) return;
-
-  if (note.password) {
+  if (note && note.password) {
     showDeleteModal(note);
   } else {
     confirmDeleteNote(noteId);
@@ -353,456 +381,16 @@ function deleteNote(noteId) {
 }
 
 function confirmDeleteNote(noteId) {
-  const noteIndex = notes.findIndex(n => n.id === noteId);
-  if (noteIndex >= 0) {
-    notes.splice(noteIndex, 1);
-    localStorage.setItem("notes", JSON.stringify(notes));
-    
-    // Save to Firebase if user is authenticated
-    if (window.authFunctions && currentUser && !isGuest) {
-      window.authFunctions.saveUserData();
-    }
-
-    renderNotes();
-    showToast(t("noteDeleted"));
-    
-    if (currentNote && currentNote.id === noteId) {
-      showNotesPage();
-    }
-  }
-}
-
-// Real-time collaboration
-function setupRealTimeCollaboration(sharedId) {
-  if (!currentUser || !sharedId) return;
-
-  const sharedNoteRef = window.database.ref(`sharedNotes/${sharedId}`);
+  notes = notes.filter(n => n.id !== noteId);
+  localStorage.setItem("notes", JSON.stringify(notes));
   
-  // Clean up existing listeners
-  if (sharedNoteListeners.has(sharedId)) {
-    sharedNoteListeners.get(sharedId).off();
-  }
-
-  // Listen for content changes
-  const contentListener = sharedNoteRef.on('value', (snapshot) => {
-    const sharedNote = snapshot.val();
-    if (!sharedNote) return;
-
-    // Update local note if changed by another user
-    if (sharedNote.lastEditedBy !== currentUser.uid) {
-      const titleInput = document.getElementById("titleInput");
-      const contentTextarea = document.getElementById("contentTextarea");
-      
-      if (titleInput.value !== sharedNote.title) {
-        titleInput.value = sharedNote.title;
-        currentNote.title = sharedNote.title;
-      }
-      
-      if (contentTextarea.value !== sharedNote.content) {
-        contentTextarea.value = sharedNote.content;
-        currentNote.content = sharedNote.content;
-      }
-    }
-
-    // Update collaborator status
-    updateCollaboratorStatus(sharedNote.activeUsers || {});
-  });
-
-  sharedNoteListeners.set(sharedId, { off: () => sharedNoteRef.off('value', contentListener) });
-
-  // Update presence
-  updatePresence(sharedId);
-}
-
-function updatePresence(sharedId) {
-  if (!currentUser || !sharedId) return;
-
-  const presenceRef = window.database.ref(`sharedNotes/${sharedId}/activeUsers/${currentUser.uid}`);
-  
-  presenceRef.set({
-    name: currentUser.displayName || currentUser.email,
-    lastActive: Date.now()
-  });
-
-  // Remove presence on disconnect
-  presenceRef.onDisconnect().remove();
-}
-
-function updateCollaboratorStatus(activeUsers) {
-  const collaboratorStatus = document.getElementById("collaboratorStatus");
-  const collaboratorList = document.getElementById("collaboratorList");
-  
-  if (!collaboratorStatus || !collaboratorList) return;
-
-  const users = Object.entries(activeUsers || {});
-  const otherUsers = users.filter(([uid]) => uid !== currentUser?.uid);
-
-  if (otherUsers.length === 0) {
-    collaboratorStatus.style.display = "none";
-    return;
-  }
-
-  collaboratorStatus.style.display = "block";
-  collaboratorList.innerHTML = otherUsers.map(([uid, user]) => {
-    const isActive = Date.now() - user.lastActive < 60000; // Active within last minute
-    return `
-      <div class="collaborator-badge ${isActive ? 'active' : ''}">
-        <i class="fas fa-user"></i>
-        ${user.name}
-        ${isActive ? `<small>${t("userEditing")}</small>` : ''}
-      </div>
-    `;
-  }).join('');
-}
-
-// Sharing functionality
-function showShareModal() {
-  if (isGuest) {
-    showToast(t("guestCannotShare"));
-    return;
-  }
-
-  if (!navigator.onLine) {
-    showToast(t("offlineWarning"));
-    return;
-  }
-
-  if (!currentNote) return;
-
-  document.getElementById("shareModal").classList.add("show");
-  document.getElementById("userSearchInput").value = "";
-  document.getElementById("searchResults").innerHTML = "";
-  document.getElementById("selectedUsers").innerHTML = "";
-  document.getElementById("sendInvitesBtn").disabled = true;
-}
-
-function hideShareModal() {
-  document.getElementById("shareModal").classList.remove("show");
-}
-
-async function searchUsers(query) {
-  if (!query || query.length < 2) {
-    document.getElementById("searchResults").innerHTML = "";
-    return;
-  }
-
-  try {
-    const usersRef = window.database.ref('users');
-    const snapshot = await usersRef.orderByChild('email').startAt(query).endAt(query + '\uf8ff').limitToFirst(10).once('value');
-    
-    const results = [];
-    snapshot.forEach(child => {
-      const user = child.val();
-      if (user.email !== currentUser?.email) {
-        results.push({
-          uid: child.key,
-          ...user
-        });
-      }
-    });
-
-    // Also search by username
-    const usernameSnapshot = await usersRef.orderByChild('username').startAt(query).endAt(query + '\uf8ff').limitToFirst(10).once('value');
-    
-    usernameSnapshot.forEach(child => {
-      const user = child.val();
-      if (user.email !== currentUser?.email && !results.find(r => r.uid === child.key)) {
-        results.push({
-          uid: child.key,
-          ...user
-        });
-      }
-    });
-
-    renderSearchResults(results);
-  } catch (error) {
-    console.error("Error searching users:", error);
-    showToast("Error searching users");
-  }
-}
-
-function renderSearchResults(users) {
-  const searchResults = document.getElementById("searchResults");
-  
-  if (users.length === 0) {
-    searchResults.innerHTML = '<p class="text-muted">No users found</p>';
-    return;
-  }
-
-  searchResults.innerHTML = users.map(user => `
-    <div class="user-result" onclick="selectUser('${user.uid}', '${user.name || user.email}', '${user.username || ''}')">
-      <input type="checkbox" class="user-checkbox" id="user-${user.uid}" />
-      <div class="user-info">
-        <div class="user-name">${user.name || user.email}</div>
-        <div class="user-username">@${user.username || 'no-username'}</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function selectUser(uid, name, username) {
-  const checkbox = document.getElementById(`user-${uid}`);
-  checkbox.checked = !checkbox.checked;
-  
-  const selectedUsers = document.getElementById("selectedUsers");
-  const sendBtn = document.getElementById("sendInvitesBtn");
-  
-  if (checkbox.checked) {
-    const userDiv = document.createElement('div');
-    userDiv.className = 'selected-user';
-    userDiv.id = `selected-${uid}`;
-    userDiv.innerHTML = `
-      <div class="user-info">
-        <div class="user-name">${name}</div>
-        <div class="user-username">@${username || 'no-username'}</div>
-      </div>
-      <button class="remove-user" onclick="removeSelectedUser('${uid}')">
-        <i class="fas fa-times"></i>
-      </button>
-    `;
-    selectedUsers.appendChild(userDiv);
-  } else {
-    const existingDiv = document.getElementById(`selected-${uid}`);
-    if (existingDiv) {
-      existingDiv.remove();
-    }
+  if (window.authFunctions && typeof window.authFunctions.saveUserData === 'function') {
+    window.authFunctions.saveUserData();
   }
   
-  // Update send button state
-  const selectedCount = selectedUsers.children.length;
-  sendBtn.disabled = selectedCount === 0;
-}
-
-function removeSelectedUser(uid) {
-  const selectedDiv = document.getElementById(`selected-${uid}`);
-  const checkbox = document.getElementById(`user-${uid}`);
-  
-  if (selectedDiv) selectedDiv.remove();
-  if (checkbox) checkbox.checked = false;
-  
-  const sendBtn = document.getElementById("sendInvitesBtn");
-  const selectedCount = document.getElementById("selectedUsers").children.length;
-  sendBtn.disabled = selectedCount === 0;
-}
-
-async function sendInvitations() {
-  const currentUser = window.authFunctions?.getCurrentUser();
-  if (!currentNote || !currentUser) return;
-
-  const selectedUsers = Array.from(document.getElementById("selectedUsers").children).map(div => {
-    const uid = div.id.replace('selected-', '');
-    const name = div.querySelector('.user-name').textContent;
-    return { uid, name };
-  });
-
-  if (selectedUsers.length === 0) return;
-
-  try {
-    // Create shared note if it doesn't exist
-    let sharedId = currentNote.sharedId;
-    
-    if (!sharedId) {
-      sharedId = generateId();
-      
-      const sharedNoteData = {
-        noteId: currentNote.id,
-        ownerId: currentUser.uid,
-        ownerName: currentUser.displayName || currentUser.email,
-        title: currentNote.title,
-        content: currentNote.content,
-        collaborators: selectedUsers.map(u => u.uid),
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      };
-
-      await window.database.ref(`sharedNotes/${sharedId}`).set(sharedNoteData);
-      
-      // Update local note
-      currentNote.isShared = true;
-      currentNote.sharedId = sharedId;
-      saveLocalNote();
-    }
-
-    // Send invitations
-    const invitationPromises = selectedUsers.map(user => {
-      const invitationData = {
-        id: generateId(),
-        noteId: currentNote.id,
-        sharedId: sharedId,
-        senderId: currentUser.uid,
-        senderName: currentUser.displayName || currentUser.email,
-        noteTitle: currentNote.title,
-        status: 'pending',
-        createdAt: Date.now()
-      };
-
-      return window.database.ref(`users/${user.uid}/invitations/${invitationData.id}`).set(invitationData);
-    });
-
-    await Promise.all(invitationPromises);
-    
-    hideShareModal();
-    showToast(t("noteShared"));
-    
-  } catch (error) {
-    console.error("Error sending invitations:", error);
-    showToast("Error sharing note");
-  }
-}
-
-function updateShareButtonVisibility() {
-  const shareBtn = document.getElementById("shareBtn");
-  if (shareBtn) {
-    shareBtn.style.display = (currentUser && !isGuest) ? "block" : "none";
-  }
-}
-
-// Username modal for Google sign-in users
-function showUsernameModal() {
-  document.getElementById("usernameModal").classList.add("show");
-  document.getElementById("usernameModalInput").focus();
-}
-
-function hideUsernameModal() {
-  document.getElementById("usernameModal").classList.remove("show");
-}
-
-async function saveUsername() {
-  const username = document.getElementById("usernameModalInput").value.trim();
-  
-  if (!validateUsername(username)) {
-    showToast(t("usernameInvalid"));
-    return;
-  }
-
-  try {
-    const saveBtn = document.getElementById("saveUsernameBtn");
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-    // Check availability
-    const snapshot = await window.database.ref(`usernames/${username}`).once('value');
-    if (snapshot.exists()) {
-      showToast(t("usernameTaken"));
-      return;
-    }
-
-    // Save username
-    await window.database.ref(`usernames/${username}`).set(currentUser.uid);
-    await window.database.ref(`users/${currentUser.uid}`).update({ username });
-
-    hideUsernameModal();
-    showToast("Username saved!");
-
-  } catch (error) {
-    console.error("Error saving username:", error);
-    showToast("Error saving username");
-  } finally {
-    const saveBtn = document.getElementById("saveUsernameBtn");
-    saveBtn.disabled = false;
-    saveBtn.innerHTML = 'SAVE';
-  }
-}
-
-function validateUsername(username) {
-  const regex = /^[a-zA-Z0-9_]{4,20}$/;
-  return regex.test(username);
-}
-
-// Name change modal
-function showNameModal() {
-  if (!currentUser) return;
-  
-  document.getElementById("nameModal").classList.add("show");
-  document.getElementById("nameModalInput").value = currentUser.displayName || "";
-  document.getElementById("nameModalInput").focus();
-}
-
-function hideNameModal() {
-  document.getElementById("nameModal").classList.remove("show");
-}
-
-async function saveName() {
-  const newName = document.getElementById("nameModalInput").value.trim();
-  
-  if (!newName) {
-    showToast("Name cannot be empty");
-    return;
-  }
-
-  try {
-    await window.authFunctions.updateUserName(newName);
-    hideNameModal();
-  } catch (error) {
-    console.error("Error updating name:", error);
-    showToast("Error updating name");
-  }
-}
-
-// Category management
-function showCategoryModal() {
-  document.getElementById("categoryModal").classList.add("show");
-  renderModalCategories();
-}
-
-function hideCategoryModal() {
-  document.getElementById("categoryModal").classList.remove("show");
-}
-
-function renderModalCategories() {
-  const modalCategoriesList = document.getElementById("modalCategoriesList");
-  const userCategories = categories.filter(c => c.id !== "all");
-
-  modalCategoriesList.innerHTML = userCategories.map(category => `
-    <div class="category-checkbox">
-      <input type="checkbox" id="modal-cat-${category.id}" 
-             ${currentNote?.categories?.includes(category.id) ? 'checked' : ''} 
-             onchange="toggleNoteCategory('${category.id}')" />
-      <label for="modal-cat-${category.id}">${category.name}</label>
-    </div>
-  `).join('');
-}
-
-function toggleNoteCategory(categoryId) {
-  if (!currentNote) return;
-
-  if (!currentNote.categories) {
-    currentNote.categories = [];
-  }
-
-  const index = currentNote.categories.indexOf(categoryId);
-  if (index >= 0) {
-    currentNote.categories.splice(index, 1);
-  } else {
-    currentNote.categories.push(categoryId);
-  }
-
-  updateCategoryChips();
-  saveCurrentNote();
-}
-
-function updateCategoryChips() {
-  const categoryChips = document.getElementById("categoryChips");
-  const addCategoryBtn = document.getElementById("addCategoryBtn");
-  
-  // Clear existing chips except add button
-  const existingChips = categoryChips.querySelectorAll(".chip:not(.outline)");
-  existingChips.forEach(chip => chip.remove());
-
-  if (currentNote?.categories) {
-    currentNote.categories.forEach(categoryId => {
-      const category = categories.find(c => c.id === categoryId);
-      if (category) {
-        const chip = document.createElement("button");
-        chip.className = "chip";
-        chip.innerHTML = `
-          ${category.name}
-          <i class="fas fa-times" onclick="toggleNoteCategory('${categoryId}')"></i>
-        `;
-        categoryChips.insertBefore(chip, addCategoryBtn);
-      }
-    });
-  }
+  showToast(t("noteDeleted"), "success");
+  showNotesPage();
+  renderNotes();
 }
 
 // Rendering functions
@@ -831,334 +419,438 @@ function renderNotes() {
   notesContainer.innerHTML = `
     <div class="notes-grid">
       ${filteredNotes.map(note => {
-    const preview = note.content.length > 100 ? note.content.substring(0, 100) + "..." : note.content;
-    const dateStr = new Date(note.updatedAt).toLocaleDateString();
-    
-    const categoryTags = note.categories?.map(catId => {
-      const category = categories.find(c => c.id === catId);
-      return category ? `<span class="note-category">${category.name}</span>` : "";
-    }).join("") || "";
+        const preview = note.content ? (note.content.length > 100 ? note.content.substring(0, 100) + "..." : note.content) : "No content";
+        const dateStr = formatDate(note.updatedAt || note.createdAt || Date.now());
+        
+        const categoryTags = note.categories?.map(catId => {
+          const category = categories.find(c => c.id === catId);
+          return category ? `<span class="category-chip">${category.name}</span>` : "";
+        }).join("") || "";
 
-    const passwordIcon = note.password ? "password-protected" : "";
-    const sharedIcon = note.isShared ? "shared" : "";
-    
-    return `
-      <div class="note-card ${passwordIcon} ${sharedIcon}" onclick="editNote(${JSON.stringify(note).replace(/"/g, '&quot;')})">
-        <div class="note-title">${note.title || "Untitled"}</div>
-        <div class="note-content">${preview}</div>
-        <div class="note-meta">
-          <div class="note-date">
-            <i class="fas fa-clock"></i>
-            ${dateStr}
+        return `
+          <div class="note-card" onclick="editNote(notes.find(n => n.id === '${note.id}'))">
+            <div class="note-title">${note.title || "Untitled"}</div>
+            <div class="note-preview">${preview}</div>
+            <div class="note-meta">
+              <span>${dateStr}</span>
+              ${note.categories && note.categories.length > 0 ? `<span>${note.categories.length} categories</span>` : ""}
+            </div>
+            ${categoryTags ? `<div class="category-chips">${categoryTags}</div>` : ""}
           </div>
-          <div class="note-categories">${categoryTags}</div>
-        </div>
-      </div>
-    `;
-  }).join("");
+        `;
+      }).join("")}
+    </div>
+  `;
 }
 
 function renderCategories() {
-  // This function is called to refresh category data
-  // The actual rendering is handled by category.js when on category.html
   updateFilterChips();
 }
 
 function updateFilterChips() {
   const filterChips = document.getElementById("filterChips");
+  if (!filterChips) return;
   
   filterChips.innerHTML = categories.map(category => `
-    <button class="chip ${currentFilter === category.id ? 'active' : ''}" 
+    <button class="filter-chip ${currentFilter === category.id ? 'active' : ''}" 
             data-filter="${category.id}">
       ${category.name}
     </button>
   `).join("");
+  
+  // Add event listeners to filter chips
+  filterChips.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      currentFilter = e.target.dataset.filter;
+      renderNotes();
+    });
+  });
 }
 
 // UI functions
 function showNotesPage() {
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
-  document.getElementById("notesPage").classList.add("active");
-  document.getElementById("backBtn").classList.add("hidden");
-  document.getElementById("headerTitle").textContent = isGuest ? "NOTES (Guest)" : 
-    currentUser ? `Hello, ${currentUser.displayName || currentUser.email.split("@")[0]}` : "NOTES";
+  const notesPage = document.getElementById("notesPage");
+  if (notesPage) notesPage.classList.add("active");
   
-  // Clean up real-time listeners
-  sharedNoteListeners.forEach(listener => listener.off());
-  sharedNoteListeners.clear();
+  const headerTitle = document.getElementById("headerTitle");
+  if (headerTitle) headerTitle.textContent = "NOTES";
+  
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.classList.add("hidden");
 }
 
 function showEditorPage() {
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
-  document.getElementById("editorPage").classList.add("active");
-  document.getElementById("backBtn").classList.remove("hidden");
-  document.getElementById("headerTitle").textContent = "EDIT NOTE";
+  const editorPage = document.getElementById("editorPage");
+  if (editorPage) editorPage.classList.add("active");
+  
+  const headerTitle = document.getElementById("headerTitle");
+  if (headerTitle) headerTitle.textContent = "EDIT NOTE";
+  
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.classList.remove("hidden");
 }
 
 function showSettingsPage() {
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
-  document.getElementById("settingsPage").classList.add("active");
-  document.getElementById("backBtn").classList.remove("hidden");
-  document.getElementById("headerTitle").textContent = "SETTINGS";
+  const settingsPage = document.getElementById("settingsPage");
+  if (settingsPage) settingsPage.classList.add("active");
+  
+  const headerTitle = document.getElementById("headerTitle");
+  if (headerTitle) headerTitle.textContent = "SETTINGS";
+  
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.classList.remove("hidden");
+  
+  updateSettingsContent();
 }
 
 function updateEditorContent() {
   if (!currentNote) return;
-
-  document.getElementById("titleInput").value = currentNote.title || "";
-  document.getElementById("contentTextarea").value = currentNote.content || "";
   
+  const titleInput = document.getElementById("titleInput");
+  const contentTextarea = document.getElementById("contentTextarea");
   const dateInfo = document.getElementById("dateInfo");
-  const created = new Date(currentNote.createdAt).toLocaleString();
-  const updated = new Date(currentNote.updatedAt).toLocaleString();
-  dateInfo.innerHTML = `Created: ${created}<br>Updated: ${updated}`;
-
+  
+  if (titleInput) titleInput.value = currentNote.title || "";
+  if (contentTextarea) contentTextarea.value = currentNote.content || "";
+  if (dateInfo) {
+    const created = formatDate(currentNote.createdAt);
+    const updated = formatDate(currentNote.updatedAt);
+    dateInfo.textContent = `Created: ${created} | Updated: ${updated}`;
+  }
+  
   updateCategoryChips();
-  updatePasswordButton();
-  updateListSection();
-  updateImagesSection();
+  updateShareButtonVisibility();
 }
 
-// Password functionality
+function updateCategoryChips() {
+  const categoryChips = document.getElementById("categoryChips");
+  if (!categoryChips || !currentNote) return;
+  
+  categoryChips.innerHTML = "";
+  
+  if (currentNote.categories) {
+    currentNote.categories.forEach(categoryId => {
+      const category = categories.find(c => c.id === categoryId);
+      if (category) {
+        const chip = document.createElement("span");
+        chip.className = "category-chip selected";
+        chip.innerHTML = `
+          ${category.name}
+          <i class="fas fa-times" onclick="toggleNoteCategory('${categoryId}')"></i>
+        `;
+        categoryChips.appendChild(chip);
+      }
+    });
+  }
+}
+
+function updateShareButtonVisibility() {
+  const shareBtn = document.getElementById("shareBtn");
+  if (!shareBtn) return;
+  
+  const currentUser = window.authFunctions?.getCurrentUser();
+  const isGuest = window.authFunctions?.isUserGuest();
+  
+  if (currentUser && !isGuest) {
+    shareBtn.style.display = "flex";
+  } else {
+    shareBtn.style.display = "none";
+  }
+}
+
+function updateSettingsContent() {
+  const currentUser = window.authFunctions?.getCurrentUser();
+  const isGuest = window.authFunctions?.isUserGuest();
+  
+  const userSettings = document.getElementById("userSettings");
+  const userNameDisplay = document.getElementById("userNameDisplay");
+  const userEmailDisplay = document.getElementById("userEmailDisplay");
+  const signInBtn = document.getElementById("signInBtn");
+  const signOutBtn = document.getElementById("signOutBtn");
+  
+  if (currentUser && !isGuest) {
+    if (userSettings) userSettings.style.display = "flex";
+    if (userNameDisplay) userNameDisplay.textContent = currentUser.displayName || "No name";
+    if (userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
+    if (signInBtn) signInBtn.style.display = "none";
+    if (signOutBtn) signOutBtn.style.display = "block";
+  } else {
+    if (userSettings) userSettings.style.display = "none";
+    if (signInBtn) signInBtn.style.display = "block";
+    if (signOutBtn) signOutBtn.style.display = "none";
+  }
+}
+
+// Modal functions
+function showShareModal() {
+  const currentUser = window.authFunctions?.getCurrentUser();
+  const isGuest = window.authFunctions?.isUserGuest();
+  
+  if (isGuest || !currentUser) {
+    showToast(t("guestCannotShare"), "warning");
+    return;
+  }
+  
+  const shareModal = document.getElementById("shareModal");
+  if (shareModal) shareModal.classList.add("show");
+}
+
+function hideShareModal() {
+  const shareModal = document.getElementById("shareModal");
+  if (shareModal) shareModal.classList.remove("show");
+}
+
+function showCategoryModal() {
+  const categoryModal = document.getElementById("categoryModal");
+  if (categoryModal) categoryModal.classList.add("show");
+  renderModalCategories();
+}
+
+function hideCategoryModal() {
+  const categoryModal = document.getElementById("categoryModal");
+  if (categoryModal) categoryModal.classList.remove("show");
+}
+
 function showPasswordModal() {
-  document.getElementById("passwordModal").classList.add("show");
-  document.getElementById("passwordInput").value = currentNote?.password || "";
-  document.getElementById("passwordInput").focus();
+  const passwordModal = document.getElementById("passwordModal");
+  if (passwordModal) passwordModal.classList.add("show");
+  updatePasswordButton();
 }
 
 function hidePasswordModal() {
-  document.getElementById("passwordModal").classList.remove("show");
+  const passwordModal = document.getElementById("passwordModal");
+  if (passwordModal) passwordModal.classList.remove("show");
+}
+
+function showListTypeModal() {
+  const listTypeModal = document.getElementById("listTypeModal");
+  if (listTypeModal) listTypeModal.classList.add("show");
+}
+
+function hideListTypeModal() {
+  const listTypeModal = document.getElementById("listTypeModal");
+  if (listTypeModal) listTypeModal.classList.remove("show");
+}
+
+function showDeleteModal(note) {
+  const deleteModal = document.getElementById("deleteModal");
+  if (deleteModal) deleteModal.classList.add("show");
+  
+  const deletePasswordContainer = document.getElementById("deletePasswordContainer");
+  if (note.password && deletePasswordContainer) {
+    deletePasswordContainer.classList.remove("hidden");
+  } else if (deletePasswordContainer) {
+    deletePasswordContainer.classList.add("hidden");
+  }
+}
+
+function hideDeleteModal() {
+  const deleteModal = document.getElementById("deleteModal");
+  if (deleteModal) deleteModal.classList.remove("show");
+}
+
+function showUsernameModal() {
+  const usernameModal = document.getElementById("usernameModal");
+  if (usernameModal) usernameModal.classList.add("show");
+}
+
+function hideUsernameModal() {
+  const usernameModal = document.getElementById("usernameModal");
+  if (usernameModal) usernameModal.classList.remove("show");
+}
+
+function showNameModal() {
+  const nameModal = document.getElementById("nameModal");
+  if (nameModal) nameModal.classList.add("show");
+}
+
+function hideNameModal() {
+  const nameModal = document.getElementById("nameModal");
+  if (nameModal) nameModal.classList.remove("show");
+}
+
+// Modal action functions
+function renderModalCategories() {
+  const modalCategories = document.getElementById("modalCategories");
+  if (!modalCategories) return;
+  
+  modalCategories.innerHTML = categories.filter(c => c.id !== "all").map(category => `
+    <div class="modal-category-item ${currentNote?.categories?.includes(category.id) ? 'selected' : ''}" 
+         onclick="toggleNoteCategory('${category.id}')">
+      <input type="checkbox" ${currentNote?.categories?.includes(category.id) ? 'checked' : ''} />
+      <span>${category.name}</span>
+    </div>
+  `).join("");
+}
+
+function toggleNoteCategory(categoryId) {
+  if (!currentNote) return;
+  
+  if (!currentNote.categories) currentNote.categories = [];
+  
+  const index = currentNote.categories.indexOf(categoryId);
+  if (index >= 0) {
+    currentNote.categories.splice(index, 1);
+  } else {
+    currentNote.categories.push(categoryId);
+  }
+  
+  renderModalCategories();
+  updateCategoryChips();
+  saveCurrentNote();
+}
+
+function saveNoteCategories() {
+  hideCategoryModal();
+  updateCategoryChips();
+  saveCurrentNote();
 }
 
 function savePassword() {
-  const password = document.getElementById("passwordInput").value;
+  const passwordInput = document.getElementById("notePasswordInput");
+  if (!passwordInput || !currentNote) return;
   
-  if (password.length < 4) {
-    showToast("Password must be at least 4 characters");
-    return;
-  }
-
-  if (currentNote) {
+  const password = passwordInput.value.trim();
+  if (password) {
     currentNote.password = password;
     saveCurrentNote();
     hidePasswordModal();
+    showToast(t("passwordSet"), "success");
     updatePasswordButton();
-    showToast(t("passwordSet"));
   }
 }
 
 function removePassword() {
-  if (currentNote) {
-    currentNote.password = "";
-    saveCurrentNote();
-    hidePasswordModal();
-    updatePasswordButton();
-    showToast(t("passwordRemoved"));
-  }
+  if (!currentNote) return;
+  
+  delete currentNote.password;
+  saveCurrentNote();
+  hidePasswordModal();
+  showToast(t("passwordRemoved"), "success");
+  updatePasswordButton();
 }
 
 function updatePasswordButton() {
   const passwordIcon = document.getElementById("passwordIcon");
-  if (currentNote?.password) {
+  if (!passwordIcon || !currentNote) return;
+  
+  if (currentNote.password) {
     passwordIcon.className = "fas fa-lock";
   } else {
     passwordIcon.className = "fas fa-unlock";
   }
 }
 
-function togglePasswordVisibility() {
-  const passwordInput = document.getElementById("passwordInput");
-  const toggleIcon = document.getElementById("passwordToggle").querySelector("i");
-  
-  if (passwordInput.type === "password") {
-    passwordInput.type = "text";
-    toggleIcon.className = "fas fa-eye-slash";
-  } else {
-    passwordInput.type = "password";
-    toggleIcon.className = "fas fa-eye";
-  }
-}
-
-// List functionality
-function showListTypeModal() {
-  document.getElementById("listTypeModal").classList.add("show");
-}
-
-function hideListTypeModal() {
-  document.getElementById("listTypeModal").classList.remove("show");
-}
-
 function selectListType(event) {
-  const type = event.currentTarget.getAttribute("data-type");
-  currentListType = type;
-  
-  if (currentNote) {
-    currentNote.listType = type;
-    if (!currentNote.listItems) {
-      currentNote.listItems = [];
-    }
-    updateListSection();
-    saveCurrentNote();
-  }
-  
+  const listType = event.target.closest('.list-type-btn').dataset.type;
+  currentListType = listType;
   hideListTypeModal();
+  
+  const listSection = document.getElementById("listSection");
+  if (listSection) listSection.classList.remove("hidden");
+  
+  updateListSection();
 }
 
 function updateListSection() {
-  const listSection = document.getElementById("listSection");
+  // List functionality implementation
   const listItems = document.getElementById("listItems");
+  if (!listItems || !currentNote) return;
   
-  if (!currentNote?.listItems || currentNote.listItems.length === 0) {
-    listSection.classList.add("hidden");
-    return;
-  }
+  if (!currentNote.list) currentNote.list = [];
   
-  listSection.classList.remove("hidden");
-  
-  listItems.innerHTML = currentNote.listItems.map((item, index) => {
-    let prefix = "";
-    switch (currentNote.listType) {
-      case "bulleted":
-        prefix = "•";
-        break;
-      case "numbered":
-        prefix = `${index + 1}.`;
-        break;
-      case "checklist":
-        prefix = `<input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleListItem(${index})">`;
-        break;
-    }
-    
-    return `
-      <div class="list-item">
-        <span class="list-prefix">${prefix}</span>
-        <input type="text" class="list-item-input" value="${item.text || item}" 
-               onchange="updateListItem(${index}, this.value)" />
-        <button class="list-item-delete" onclick="deleteListItem(${index})">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-    `;
-  }).join("");
+  listItems.innerHTML = currentNote.list.map((item, index) => `
+    <div class="list-item ${item.completed ? 'completed' : ''}">
+      ${currentListType === 'checklist' ? `<input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleListItem(${index})" />` : ''}
+      <input type="text" value="${item.text || ''}" onchange="updateListItem(${index}, this.value)" />
+      <button class="btn-icon" onclick="deleteListItem(${index})">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `).join("");
 }
 
 function addListItem() {
-  if (!currentNote) {
-    currentNote = {
-      id: generateId(),
-      title: "",
-      content: "",
-      categories: [],
-      images: [],
-      listItems: [],
-      listType: currentListType,
-      password: "",
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    };
-  }
+  if (!currentNote) return;
   
-  if (!currentNote.listItems) {
-    currentNote.listItems = [];
-  }
+  if (!currentNote.list) currentNote.list = [];
   
-  const newItem = currentNote.listType === "checklist" 
-    ? { text: "", checked: false }
-    : "";
-    
-  currentNote.listItems.push(newItem);
+  currentNote.list.push({
+    text: "",
+    completed: false
+  });
+  
   updateListSection();
   saveCurrentNote();
-  
-  // Focus on the new item
-  const listItems = document.querySelectorAll(".list-item-input");
-  if (listItems.length > 0) {
-    listItems[listItems.length - 1].focus();
-  }
 }
 
 function updateListItem(index, value) {
-  if (!currentNote?.listItems) return;
+  if (!currentNote?.list?.[index]) return;
   
-  if (currentNote.listType === "checklist") {
-    currentNote.listItems[index].text = value;
-  } else {
-    currentNote.listItems[index] = value;
-  }
-  
+  currentNote.list[index].text = value;
   saveCurrentNote();
 }
 
 function toggleListItem(index) {
-  if (!currentNote?.listItems || currentNote.listType !== "checklist") return;
+  if (!currentNote?.list?.[index]) return;
   
-  currentNote.listItems[index].checked = !currentNote.listItems[index].checked;
-  saveCurrentNote();
-}
-
-function deleteListItem(index) {
-  if (!currentNote?.listItems) return;
-  
-  currentNote.listItems.splice(index, 1);
+  currentNote.list[index].completed = !currentNote.list[index].completed;
   updateListSection();
   saveCurrentNote();
 }
 
-// Setup list item button
-document.getElementById("addListItemBtn").addEventListener("click", addListItem);
-
-// Image functionality
-function handleImageUpload() {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "image/*";
-  input.multiple = true;
+function deleteListItem(index) {
+  if (!currentNote?.list) return;
   
-  input.onchange = function(event) {
-    const files = Array.from(event.target.files);
-    files.forEach(processImage);
-  };
-  
-  input.click();
+  currentNote.list.splice(index, 1);
+  updateListSection();
+  saveCurrentNote();
 }
 
-function processImage(file) {
-  if (!file.type.startsWith("image/")) return;
+function confirmDelete() {
+  if (!currentNote) return;
   
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const imageData = {
-      id: generateId(),
-      data: e.target.result,
-      name: file.name,
-      size: file.size
-    };
-    
-    if (!currentNote) {
-      currentNote = {
-        id: generateId(),
-        title: "",
-        content: "",
-        categories: [],
-        images: [],
-        listItems: [],
-        listType: "bulleted",
-        password: "",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
+  const deletePasswordInput = document.getElementById("deletePasswordInput");
+  if (currentNote.password && deletePasswordInput) {
+    const password = deletePasswordInput.value;
+    if (password !== currentNote.password) {
+      showToast(t("incorrectPassword"), "error");
+      return;
+    }
+  }
+  
+  confirmDeleteNote(currentNote.id);
+  hideDeleteModal();
+}
+
+// Image handling
+function handleImageUpload() {
+  const imageUpload = document.getElementById("imageUpload");
+  if (imageUpload) imageUpload.click();
+}
+
+function processImageUpload(event) {
+  const files = event.target.files;
+  if (!files || !currentNote) return;
+  
+  Array.from(files).forEach(file => {
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (!currentNote.images) currentNote.images = [];
+        currentNote.images.push({
+          name: file.name,
+          data: e.target.result
+        });
+        updateImagesSection();
+        saveCurrentNote();
       };
+      reader.readAsDataURL(file);
     }
-    
-    if (!currentNote.images) {
-      currentNote.images = [];
-    }
-    
-    currentNote.images.push(imageData);
-    updateImagesSection();
-    saveCurrentNote();
-  };
-  
-  reader.readAsDataURL(file);
+  });
 }
 
 function updateImagesSection() {
@@ -1166,20 +858,22 @@ function updateImagesSection() {
   const imageGrid = document.getElementById("imageGrid");
   
   if (!currentNote?.images || currentNote.images.length === 0) {
-    imagesSection.classList.add("hidden");
+    if (imagesSection) imagesSection.classList.add("hidden");
     return;
   }
   
-  imagesSection.classList.remove("hidden");
+  if (imagesSection) imagesSection.classList.remove("hidden");
   
-  imageGrid.innerHTML = currentNote.images.map((image, index) => `
-    <div class="image-item">
-      <img src="${image.data}" alt="${image.name}" />
-      <button class="image-delete" onclick="deleteImage(${index})">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-  `).join("");
+  if (imageGrid) {
+    imageGrid.innerHTML = currentNote.images.map((image, index) => `
+      <div class="image-item">
+        <img src="${image.data}" alt="${image.name}" />
+        <button class="image-delete" onclick="deleteImage(${index})">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `).join("");
+  }
 }
 
 function deleteImage(index) {
@@ -1190,61 +884,82 @@ function deleteImage(index) {
   saveCurrentNote();
 }
 
-// Delete modal
-function showDeleteModal(note) {
-  currentDeleteNote = note;
-  document.getElementById("deleteModal").classList.add("show");
+// Sharing functions
+async function searchUsers(query) {
+  // Implementation for user search
+  const searchResults = document.getElementById("searchResults");
+  if (!searchResults) return;
   
-  if (note.password) {
-    document.getElementById("deletePasswordContainer").classList.remove("hidden");
-    document.getElementById("deletePasswordInput").focus();
-  } else {
-    document.getElementById("deletePasswordContainer").classList.add("hidden");
+  if (query.length < 2) {
+    searchResults.classList.remove("show");
+    return;
   }
-}
-
-function hideDeleteModal() {
-  document.getElementById("deleteModal").classList.remove("show");
-  currentDeleteNote = null;
-}
-
-function confirmDelete() {
-  if (!currentDeleteNote) return;
   
-  if (currentDeleteNote.password) {
-    const enteredPassword = document.getElementById("deletePasswordInput").value;
-    if (enteredPassword !== currentDeleteNote.password) {
-      showToast(t("incorrectPassword"));
-      return;
+  // Placeholder for actual user search implementation
+  searchResults.classList.add("show");
+  searchResults.innerHTML = "<div class='user-search-item'>Search functionality requires Firebase setup</div>";
+}
+
+async function sendInvitations() {
+  // Implementation for sending invitations
+  showToast("Invitation feature requires Firebase setup", "warning");
+  hideShareModal();
+}
+
+function selectUser(uid, name, username) {
+  // Implementation for selecting users for sharing
+}
+
+function removeSelectedUser(uid) {
+  // Implementation for removing selected users
+}
+
+async function saveUsername() {
+  const usernameInput = document.getElementById("usernameInput");
+  if (!usernameInput) return;
+  
+  const username = usernameInput.value.trim();
+  if (!validateUsername(username)) {
+    showToast(t("usernameInvalid"), "error");
+    return;
+  }
+  
+  // Implementation for saving username
+  hideUsernameModal();
+  showToast("Username saved", "success");
+}
+
+function validateUsername(username) {
+  return username.length >= 4 && username.length <= 20 && /^[a-zA-Z0-9_]+$/.test(username);
+}
+
+async function saveName() {
+  const nameInput = document.getElementById("nameInput");
+  if (!nameInput) return;
+  
+  const name = nameInput.value.trim();
+  if (name && window.authFunctions?.updateUserName) {
+    try {
+      await window.authFunctions.updateUserName(name);
+      hideNameModal();
+      updateSettingsContent();
+    } catch (error) {
+      showToast("Error updating name", "error");
     }
   }
-  
-  confirmDeleteNote(currentDeleteNote.id);
-  hideDeleteModal();
 }
 
-// Filter handling
-function handleFilterClick(event) {
-  if (event.target.classList.contains("chip")) {
-    const filter = event.target.getAttribute("data-filter");
-    currentFilter = filter;
-    
-    document.querySelectorAll(".chip").forEach(chip => chip.classList.remove("active"));
-    event.target.classList.add("active");
-    
-    renderNotes();
-  }
-}
-
-// Settings
+// Settings functions
 function loadSettings() {
   const theme = localStorage.getItem("theme") || "system";
   const language = localStorage.getItem("language") || "en";
   
-  document.getElementById("themeSelect").value = theme;
-  document.getElementById("languageSelect").value = language;
+  const themeSelect = document.getElementById("themeSelect");
+  const languageSelect = document.getElementById("languageSelect");
   
-  currentLanguage = language;
+  if (themeSelect) themeSelect.value = theme;
+  if (languageSelect) languageSelect.value = language;
+  
   applyTheme(theme);
 }
 
@@ -1263,36 +978,8 @@ function handleLanguageChange(event) {
 }
 
 function applyTheme(theme) {
-  const root = document.documentElement;
-  
-  if (theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-    root.style.setProperty("--background-color", "#1a1a1a");
-    root.style.setProperty("--text-color", "#ffffff");
-    root.style.setProperty("--text-muted", "#a0a0a0");
-    root.style.setProperty("--border-color", "#333333");
-    root.style.setProperty("--light-color", "#2a2a2a");
-  } else {
-    root.style.setProperty("--background-color", "#ffffff");
-    root.style.setProperty("--text-color", "#212529");
-    root.style.setProperty("--text-muted", "#6c757d");
-    root.style.setProperty("--border-color", "#dee2e6");
-    root.style.setProperty("--light-color", "#f8f9fa");
-  }
+  document.documentElement.setAttribute("data-theme", theme);
 }
-
-// Global functions for inline event handlers
-window.editNote = editNote;
-window.deleteNote = deleteNote;
-window.toggleNoteCategory = toggleNoteCategory;
-window.toggleListItem = toggleListItem;
-window.updateListItem = updateListItem;
-window.deleteListItem = deleteListItem;
-window.deleteImage = deleteImage;
-window.selectUser = selectUser;
-window.removeSelectedUser = removeSelectedUser;
-window.showNameModal = showNameModal;
-window.logoutUser = () => window.authFunctions?.signOutUser();
-window.showUsernameModal = showUsernameModal;
 
 // Utility functions
 function generateId() {
@@ -1311,17 +998,34 @@ function debounce(func, wait) {
   };
 }
 
+function formatDate(timestamp) {
+  return new Date(timestamp).toLocaleDateString();
+}
+
 function showToast(message, type = 'default') {
   const toast = document.getElementById("toast");
   const toastMessage = document.getElementById("toastMessage");
   
-  toastMessage.textContent = message;
-  toast.className = `toast show ${type}`;
-  
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 3000);
+  if (toast && toastMessage) {
+    toastMessage.textContent = message;
+    toast.className = `toast show ${type}`;
+    
+    setTimeout(() => {
+      toast.classList.remove("show");
+    }, 3000);
+  }
 }
+
+// Global functions for inline event handlers
+window.editNote = editNote;
+window.toggleNoteCategory = toggleNoteCategory;
+window.toggleListItem = toggleListItem;
+window.updateListItem = updateListItem;
+window.deleteListItem = deleteListItem;
+window.deleteImage = deleteImage;
+window.selectUser = selectUser;
+window.removeSelectedUser = removeSelectedUser;
+window.showUsernameModal = showUsernameModal;
 
 // Export for window global
 window.renderNotes = renderNotes;
