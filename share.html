@@ -22,7 +22,7 @@
                     <span></span>
                     <span></span>
                 </button>
-                <h1 class="header-title" id="headerTitle">SHARED NOTES</h1>
+                <h1 class="header-title" id="headerTitle">INVITATIONS</h1>
             </div>
             <div class="header-right">
                 <a href="index.html" class="back-btn" id="backBtn">
@@ -50,8 +50,8 @@
                 Categories
             </a>
             <a href="#" class="nav-item active">
-                <i class="fas fa-share-alt"></i>
-                Shared Notes
+                <i class="fas fa-envelope"></i>
+                Invitations
             </a>
             <div class="nav-divider"></div>
             <a href="#" class="nav-item" id="navSettings">
@@ -68,25 +68,20 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        <div class="shared-container">
+        <div class="invitations-container">
             <!-- Invitations Section -->
             <div class="section">
-                <h3 class="section-title">INVITATIONS</h3>
+                <div class="section-header">
+                    <h3 class="section-title">Pending Invitations</h3>
+                    <small class="section-subtitle">Accept or decline note sharing invitations</small>
+                </div>
                 <div class="invitations-list" id="invitationsList">
                     <div class="empty-state" id="invitationsEmpty">
-                        <i class="fas fa-envelope"></i>
-                        <p>No pending invitations</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Shared Notes Section -->
-            <div class="section">
-                <h3 class="section-title">SHARED NOTES</h3>
-                <div class="shared-notes-list" id="sharedNotesList">
-                    <div class="empty-state" id="sharedNotesEmpty">
-                        <i class="fas fa-users"></i>
-                        <p>No shared notes yet</p>
+                        <div class="empty-icon">
+                            <i class="fas fa-envelope-open"></i>
+                        </div>
+                        <h4>No pending invitations</h4>
+                        <p>When someone shares a note with you, invitations will appear here</p>
                     </div>
                 </div>
             </div>

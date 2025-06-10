@@ -175,13 +175,8 @@ async function loadSharedContent() {
   if (!currentUser) return;
 
   try {
-    await Promise.all([
-      loadInvitations(),
-      loadSharedNotes()
-    ]);
-    
+    await loadInvitations();
     renderInvitations();
-    renderSharedNotes();
     
   } catch (error) {
     console.error("Error loading shared content:", error);
@@ -220,34 +215,7 @@ async function loadInvitations() {
   }
 }
 
-async function loadSharedNotes() {
-  const currentUser = window.authFunctions?.getCurrentUser();
-  if (!currentUser) return;
 
-  try {
-    const snapshot = await window.database.ref('sharedNotes').orderByChild('collaborators').once('value');
-    const sharedNotesData = snapshot.val() || {};
-    
-    sharedNotes = Object.entries(sharedNotesData)
-      .filter(([id, note]) => 
-        note.owner === currentUser.uid || 
-        (note.collaborators && note.collaborators[currentUser.uid])
-      )
-      .map(([id, note]) => ({ id, ...note }));
-    
-    // Cache in localStorage for offline access
-    localStorage.setItem('cachedSharedNotes', JSON.stringify(sharedNotes));
-    
-  } catch (error) {
-    console.error("Error loading shared notes:", error);
-    
-    // Try to load from cache if offline
-    const cached = localStorage.getItem('cachedSharedNotes');
-    if (cached) {
-      sharedNotes = JSON.parse(cached);
-    }
-  }
-}
 
 function renderInvitations() {
   const invitationsList = document.getElementById('invitationsList');
@@ -289,54 +257,7 @@ function renderInvitations() {
   `).join('');
 }
 
-function renderSharedNotes() {
-  const sharedNotesList = document.getElementById('sharedNotesList');
-  const sharedNotesEmpty = document.getElementById('sharedNotesEmpty');
-  
-  if (!sharedNotesList || !sharedNotesEmpty) {
-    console.error("Required DOM elements not found for shared notes");
-    return;
-  }
-  
-  if (!sharedNotes || sharedNotes.length === 0) {
-    sharedNotesList.innerHTML = '';
-    sharedNotesEmpty.style.display = 'block';
-    return;
-  }
-  
-  sharedNotesEmpty.style.display = 'none';
-  
-  sharedNotesList.innerHTML = sharedNotes.map(note => {
-    const isOwner = note.ownerId === currentUser.uid;
-    const collaboratorCount = note.collaborators ? Object.keys(note.collaborators).length : 0;
-    
-    return `
-      <div class="shared-note-card" onclick="openSharedNote('${note.id}')">
-        <div class="shared-note-header">
-          <div class="shared-note-title">${note.title || 'Untitled Note'}</div>
-          <small class="text-muted">${new Date(note.updatedAt).toLocaleDateString()}</small>
-        </div>
-        <div class="shared-note-owner">
-          <i class="fas fa-${isOwner ? 'crown' : 'user'}"></i> 
-          ${isOwner ? 'Owned by you' : `Shared by ${note.ownerName}`}
-        </div>
-        <div class="shared-note-collaborators">
-          <i class="fas fa-users"></i> ${collaboratorCount} collaborator${collaboratorCount !== 1 ? 's' : ''}
-        </div>
-        <div class="shared-note-actions">
-          <button class="btn btn-primary" onclick="event.stopPropagation(); openSharedNote('${note.id}')">
-            <i class="fas fa-edit"></i> Edit
-          </button>
-          ${isOwner ? `
-            <button class="btn btn-secondary" onclick="event.stopPropagation(); manageSharedNote('${note.id}')">
-              <i class="fas fa-cog"></i> Manage
-            </button>
-          ` : ''}
-        </div>
-      </div>
-    `;
-  }).join('');
-}
+
 
 async function acceptInvitation(invitationId, sharedId) {
   if (!navigator.onLine) {
@@ -369,8 +290,6 @@ async function acceptInvitation(invitationId, sharedId) {
     
     // Refresh the page
     await loadSharedContent();
-    renderInvitations();
-    renderSharedNotes();
     
     showToast(t("invitationAccepted"));
     
