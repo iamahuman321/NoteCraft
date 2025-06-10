@@ -447,6 +447,12 @@ body {
   box-shadow: 0 12px 32px rgba(200, 16, 46, 0.4);
 }
 
+.fab.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.8);
+}
+
 .fab:active {
   transform: scale(0.95);
 }
@@ -575,10 +581,14 @@ body {
   transition: var(--transition);
   max-width: calc(100% - 2rem);
   font-weight: 500;
+  opacity: 0;
+  visibility: hidden;
 }
 
 .toast.show {
   transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  visibility: visible;
 }
 
 .toast.success {

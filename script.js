@@ -478,6 +478,9 @@ function showNotesPage() {
   
   const backBtn = document.getElementById("backBtn");
   if (backBtn) backBtn.classList.add("hidden");
+  
+  const fab = document.getElementById("addNoteBtn");
+  if (fab) fab.classList.remove("hidden");
 }
 
 function showEditorPage() {
@@ -490,6 +493,9 @@ function showEditorPage() {
   
   const backBtn = document.getElementById("backBtn");
   if (backBtn) backBtn.classList.remove("hidden");
+  
+  const fab = document.getElementById("addNoteBtn");
+  if (fab) fab.classList.add("hidden");
 }
 
 function showSettingsPage() {
