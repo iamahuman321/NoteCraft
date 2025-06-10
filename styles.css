@@ -1192,6 +1192,41 @@ body {
   margin: 1rem 0;
 }
 
+/* List Sections */
+.list-section {
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.list-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--surface-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.list-type-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.list-section .list-item {
+  margin-bottom: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.list-section .list-item:last-child {
+  border-bottom: none;
+}
+
 .list-item {
   display: flex;
   align-items: center;
