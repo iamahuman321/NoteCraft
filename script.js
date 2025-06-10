@@ -1539,6 +1539,9 @@ function setupRealtimeCollaboration(sharedId) {
   // Setup faster auto-save for collaborative editing
   setupFastAutoSave();
   
+  // Setup user activity tracking
+  trackUserActivity();
+  
   collaborativeEditingEnabled = true;
   console.log('Real-time collaboration enabled for shared note:', sharedId);
 }
@@ -1638,6 +1641,7 @@ function setupFastAutoSave() {
 
 function updateCollaboratorPresence(activeUsers) {
   const activeCollaborators = document.getElementById('activeCollaborators');
+  const collaborationText = document.querySelector('.collaboration-text');
   if (!activeCollaborators) return;
   
   const currentUser = window.authFunctions?.getCurrentUser();
@@ -1650,12 +1654,23 @@ function updateCollaboratorPresence(activeUsers) {
   
   if (collaborators.length === 0) {
     activeCollaborators.innerHTML = '';
+    if (collaborationText) {
+      collaborationText.textContent = 'Real-time collaboration active';
+    }
     return;
+  }
+  
+  // Update collaboration text with count
+  if (collaborationText) {
+    const count = collaborators.length;
+    collaborationText.textContent = `${count} other${count > 1 ? 's' : ''} editing`;
   }
   
   activeCollaborators.innerHTML = collaborators.map(([uid, userData]) => {
     const initials = (userData.name || 'U').charAt(0).toUpperCase();
-    return `<div class="collaborator-avatar" title="${userData.name || 'Unknown'}">${initials}</div>`;
+    const fieldIndicator = userData.currentField === 'titleInput' ? '📝' : 
+                          userData.currentField === 'contentTextarea' ? '✏️' : '';
+    return `<div class="collaborator-avatar" title="${userData.name || 'Unknown'} ${fieldIndicator}">${initials}</div>`;
   }).join('');
 }
 
