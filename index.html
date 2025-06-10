@@ -48,6 +48,10 @@
                 <i class="fas fa-folder"></i>
                 Categories
             </a>
+            <a href="#" class="nav-item" id="navShopping">
+                <i class="fas fa-shopping-cart"></i>
+                Shopping Lists
+            </a>
             <a href="share.html" class="nav-item" id="navShared">
                 <i class="fas fa-share-alt"></i>
                 Shared Notes
@@ -85,6 +89,41 @@
                     <i class="fas fa-sticky-note"></i>
                     <h3>No notes yet</h3>
                     <p>Tap the + button to create your first note</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shopping Lists Page -->
+        <div class="page" id="shoppingPage">
+            <div class="shopping-container">
+                <div class="shopping-categories">
+                    <button class="shopping-category-btn" id="groceryBtn" data-category="grocery">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>GROCERY</span>
+                    </button>
+                    <button class="shopping-category-btn" id="pharmacyBtn" data-category="pharmacy">
+                        <i class="fas fa-pills"></i>
+                        <span>PHARMACY</span>
+                    </button>
+                    <button class="shopping-category-btn" id="otherBtn" data-category="other">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>OTHER</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shopping Category Page -->
+        <div class="page" id="shoppingCategoryPage">
+            <div class="shopping-list-container">
+                <div class="shopping-list-header">
+                    <h2 id="shoppingCategoryTitle">GROCERY</h2>
+                    <button class="btn-icon" id="addShoppingItemBtn">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="shopping-list-items" id="shoppingListItems">
+                    <!-- Shopping items will be rendered here -->
                 </div>
             </div>
         </div>

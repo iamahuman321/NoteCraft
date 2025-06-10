@@ -12,6 +12,12 @@ let sharedNoteListeners = new Map(); // Track Firebase listeners for shared note
 let isReceivingUpdate = false; // Prevent infinite loops during real-time updates
 let collaborativeEditingEnabled = false;
 let homePageSyncInterval = null; // Track home page sync interval
+let shoppingLists = JSON.parse(localStorage.getItem("shoppingLists")) || {
+  grocery: [],
+  pharmacy: [],
+  other: []
+};
+let currentShoppingCategory = null;
 
 // Translations
 const translations = {
@@ -664,6 +670,47 @@ function showSettingsPage() {
   if (fab) fab.classList.add("hidden");
   
   updateSettingsContent();
+}
+
+function showShoppingPage() {
+  // Clean up home page sync when leaving notes page
+  cleanupHomePageSync();
+  
+  document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+  const shoppingPage = document.getElementById("shoppingPage");
+  if (shoppingPage) shoppingPage.classList.add("active");
+  
+  const headerTitle = document.getElementById("headerTitle");
+  if (headerTitle) headerTitle.textContent = "SHOPPING LISTS";
+  
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.classList.add("hidden");
+  
+  const fab = document.getElementById("addNoteBtn");
+  if (fab) fab.classList.add("hidden");
+}
+
+function showShoppingCategoryPage(category) {
+  currentShoppingCategory = category;
+  
+  document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+  const shoppingCategoryPage = document.getElementById("shoppingCategoryPage");
+  if (shoppingCategoryPage) shoppingCategoryPage.classList.add("active");
+  
+  const headerTitle = document.getElementById("headerTitle");
+  const categoryTitle = document.getElementById("shoppingCategoryTitle");
+  const displayName = category.toUpperCase();
+  
+  if (headerTitle) headerTitle.textContent = displayName;
+  if (categoryTitle) categoryTitle.textContent = displayName;
+  
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.classList.remove("hidden");
+  
+  const fab = document.getElementById("addNoteBtn");
+  if (fab) fab.classList.add("hidden");
+  
+  renderShoppingList(category);
 }
 
 function updateEditorContent() {

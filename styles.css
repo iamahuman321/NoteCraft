@@ -1225,6 +1225,120 @@ body {
   padding-left: 0.5rem;
 }
 
+/* Shopping Lists Styles */
+.shopping-container {
+  padding: 2rem 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.shopping-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.shopping-category-btn {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 1.5rem;
+  background: var(--background-color);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  width: 100%;
+  text-align: left;
+}
+
+.shopping-category-btn:hover {
+  background: var(--light-color);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.shopping-category-btn i {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+  min-width: 1.5rem;
+}
+
+.shopping-category-btn span {
+  flex: 1;
+}
+
+/* Shopping List Container */
+.shopping-list-container {
+  padding: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.shopping-list-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.shopping-list-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-color);
+  flex: 1;
+}
+
+.shopping-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.shopping-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition-fast);
+}
+
+.shopping-item:hover {
+  background: var(--light-color);
+}
+
+.shopping-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.shopping-item input[type="text"] {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--text-color);
+  outline: none;
+}
+
+.shopping-item.completed {
+  opacity: 0.6;
+}
+
+.shopping-item.completed input[type="text"] {
+  text-decoration: line-through;
+}
+
 .list-section-header {
   display: flex;
   justify-content: space-between;
