@@ -239,23 +239,20 @@ function loadUserData(user) {
         const lastLocalModified = parseInt(localStorage.getItem("categoriesLastModified")) || 0;
         const firebaseLastModified = userData.categoriesLastModified || 0;
         
-        // Determine which categories to use based on timestamp and content
+        // Check if we have recent local changes (within last 10 minutes)
+        const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
+        const hasRecentLocalChanges = lastLocalModified > tenMinutesAgo;
+        
         console.log("Local categories:", localCategories.length, "items");
         console.log("Firebase categories:", firebaseCategories.length, "items");
-        console.log("Local timestamp:", lastLocalModified);
-        console.log("Firebase timestamp:", firebaseLastModified);
+        console.log("Has recent local changes:", hasRecentLocalChanges);
         
+        // Always use local categories if there are recent changes or if local has more items
         let finalCategories;
-        if (lastLocalModified > firebaseLastModified) {
-          // Local categories are newer
+        if (hasRecentLocalChanges || localCategories.length > firebaseCategories.length) {
           finalCategories = localCategories;
-          console.log("Using local categories (newer timestamp)");
-        } else if (localCategories.length > firebaseCategories.length) {
-          // Local has more categories
-          finalCategories = localCategories;
-          console.log("Using local categories (more items)");
+          console.log("Using local categories - preserving recent changes");
         } else {
-          // Use Firebase categories
           finalCategories = firebaseCategories;
           console.log("Using Firebase categories");
         }
@@ -275,15 +272,19 @@ function loadUserData(user) {
           window.categories = finalCategories;
         }
 
-        // Update localStorage
+        // Update localStorage with notes always, categories only when appropriate
         localStorage.setItem("notes", JSON.stringify(userNotes));
-        localStorage.setItem("categories", JSON.stringify(finalCategories));
         
-        // Save local categories to Firebase if they were used
-        if (localHasMoreCategories || categoriesDiffer) {
+        // Never overwrite localStorage categories if we have recent local changes
+        if (!hasRecentLocalChanges) {
+          localStorage.setItem("categories", JSON.stringify(finalCategories));
+        }
+        
+        // Save local categories to Firebase if they were preserved
+        if (hasRecentLocalChanges || localCategories.length > firebaseCategories.length) {
           setTimeout(() => {
             saveUserData();
-          }, 500);
+          }, 1000);
         }
 
         // Set data loaded flag
