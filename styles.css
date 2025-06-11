@@ -3381,7 +3381,7 @@ body {
 }
 
 .duplicate-action {
-  background: var(--text-secondary);
+  background: #333333;
 }
 
 .duplicate-action i {
