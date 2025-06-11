@@ -3376,16 +3376,32 @@ body {
   background: #ff4444;
 }
 
+.delete-action i {
+  color: white;
+}
+
 .duplicate-action {
   background: var(--text-secondary);
+}
+
+.duplicate-action i {
+  color: white;
 }
 
 .share-action {
   background: var(--light-color);
 }
 
+.share-action i {
+  color: var(--dark-color);
+}
+
 .category-action {
   background: var(--border-color);
+}
+
+.category-action i {
+  color: white;
 }
 
 .note-card {
