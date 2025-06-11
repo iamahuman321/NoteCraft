@@ -2846,8 +2846,11 @@ function setupRealtimeCollaboration(sharedId) {
 
 function cleanupRealtimeCollaboration(sharedId) {
   if (sharedNoteListeners.has(sharedId)) {
-    const sharedNoteRef = window.database.ref(`sharedNotes/${sharedId}`);
-    sharedNoteRef.off('value', sharedNoteListeners.get(sharedId));
+    const listener = sharedNoteListeners.get(sharedId);
+    if (listener && window.database) {
+      const sharedNoteRef = window.database.ref(`sharedNotes/${sharedId}`);
+      sharedNoteRef.off('value', listener);
+    }
     sharedNoteListeners.delete(sharedId);
   }
   

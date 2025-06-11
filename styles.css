@@ -1976,7 +1976,7 @@ body {
   box-shadow: var(--shadow);
 }
 
-.search-results.show {
+.search-results.open {
   display: block;
 }
 
@@ -2615,7 +2615,7 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.search-results.show {
+.search-results.open {
   display: block !important;
 }
 
