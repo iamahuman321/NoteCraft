@@ -637,9 +637,12 @@ async function updateSharedNote(sharedId, updates) {
   const updateData = {
     ...cleanedUpdates,
     lastEditedBy: currentUser.uid,
-    updatedAt: Date.now()
+    lastEditedByName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Unknown',
+    updatedAt: Date.now(),
+    lastModified: Date.now()
   }
 
+  console.log('Updating shared note:', sharedId, 'with data:', updateData);
   await window.database.ref(`sharedNotes/${sharedId}`).update(updateData)
 }
 

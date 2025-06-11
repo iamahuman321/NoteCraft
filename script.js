@@ -2805,17 +2805,27 @@ function setupRealtimeCollaboration(sharedId) {
         currentListType = sharedNote.listType;
       }
       
-      // Update UI elements only if user is not actively typing
+      // Update UI elements with real-time changes
       const titleInput = document.getElementById("titleInput");
       const contentTextarea = document.getElementById("contentTextarea");
       
-      // Only update fields that user is not currently editing
+      // Update title field if user is not currently typing in it
       if (titleInput && document.activeElement !== titleInput) {
-        titleInput.value = currentNote.title || '';
+        if (titleInput.value !== (currentNote.title || '')) {
+          titleInput.value = currentNote.title || '';
+        }
       }
       
+      // Update content field if user is not currently typing in it
       if (contentTextarea && document.activeElement !== contentTextarea) {
-        contentTextarea.value = currentNote.content || '';
+        if (contentTextarea.value !== (currentNote.content || '')) {
+          contentTextarea.value = currentNote.content || '';
+        }
+      }
+      
+      // If user is typing, show a subtle indicator that content was updated by others
+      if (document.activeElement === titleInput || document.activeElement === contentTextarea) {
+        console.log('Real-time update received while user is typing');
       }
       
       // Update category chips
@@ -2962,15 +2972,22 @@ function setupFastAutoSave() {
   const contentTextarea = document.getElementById("contentTextarea");
   
   function fastSave() {
-    if (collaborativeEditingEnabled && !isReceivingUpdate) {
+    if (collaborativeEditingEnabled && !isReceivingUpdate && currentNote) {
+      // Update current note with latest values before saving
+      const titleInput = document.getElementById("titleInput");
+      const contentTextarea = document.getElementById("contentTextarea");
+      
+      if (titleInput) currentNote.title = titleInput.value;
+      if (contentTextarea) currentNote.content = contentTextarea.value;
+      
       isAutoSave = true;
       saveCurrentNote();
       isAutoSave = false;
     }
   }
   
-  // Save every 200ms for near real-time collaborative editing
-  const fastAutoSave = debounce(fastSave, 200);
+  // Save every 100ms for near real-time collaborative editing
+  const fastAutoSave = debounce(fastSave, 100);
   
   if (titleInput) {
     titleInput.removeEventListener('input', fastAutoSave);
