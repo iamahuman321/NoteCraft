@@ -1787,16 +1787,21 @@ function processImageUpload(event) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (!currentNote.images) currentNote.images = [];
-        // Generate unique ID for each image to prevent cross-contamination
-        const imageId = generateId();
-        currentNote.images.push({
-          id: imageId,
+        
+        // Create a completely unique image object for this specific note
+        const uniqueImageId = `${currentNote.id}_img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const imageData = {
+          id: uniqueImageId,
           name: file.name,
           data: e.target.result,
-          timestamp: Date.now()
-        });
+          timestamp: Date.now(),
+          noteId: currentNote.id // Tie image to specific note
+        };
+        
+        currentNote.images.push(imageData);
         updateImagesSection();
         saveCurrentNote();
+        showToast("Image added successfully", "success");
       };
       reader.readAsDataURL(file);
     }
@@ -1816,8 +1821,12 @@ function updateImagesSection() {
     return;
   }
   
-  // Ensure images is an array
-  if (!Array.isArray(currentNote.images) || currentNote.images.length === 0) {
+  // Filter images that belong only to this note
+  const noteImages = currentNote.images?.filter(img => 
+    !img.noteId || img.noteId === currentNote.id
+  ) || [];
+  
+  if (noteImages.length === 0) {
     if (imagesSection) imagesSection.classList.add("hidden");
     return;
   }
@@ -1825,65 +1834,78 @@ function updateImagesSection() {
   if (imagesSection) imagesSection.classList.remove("hidden");
   
   if (imageGrid) {
-    try {
-      imageGrid.innerHTML = currentNote.images.map((image, index) => {
-        // Handle both old format (string) and new format (object)
-        const imageSrc = typeof image === 'string' ? image : (image?.data || '');
-        const imageId = typeof image === 'object' && image?.id ? image.id : `img_${index}`;
-        
-        if (!imageSrc) return ''; // Skip if no valid image source
-        
-        return `
-          <div class="image-item" data-image-id="${imageId}">
-            <img src="${imageSrc}" alt="Note Image" class="clickable-image" data-index="${index}" style="cursor: pointer;" />
-            <button class="image-delete" onclick="deleteImage(${index})">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        `;
-      }).filter(html => html !== '').join("");
+    // Clear existing content and event listeners
+    imageGrid.innerHTML = '';
+    
+    noteImages.forEach((image, index) => {
+      const imageSrc = typeof image === 'string' ? image : (image?.data || '');
+      const imageId = typeof image === 'object' && image?.id ? image.id : `img_${currentNote.id}_${index}`;
       
-      // Add click event listeners to images
-      const clickableImages = imageGrid.querySelectorAll('.clickable-image');
-      console.log("Found clickable images:", clickableImages.length);
+      if (!imageSrc) return;
       
-      clickableImages.forEach((img, index) => {
-        img.addEventListener('click', (e) => {
-          console.log("Image clicked:", index);
-          e.preventDefault();
-          e.stopPropagation();
-          
-          const actualIndex = parseInt(img.dataset.index);
-          console.log("Actual index:", actualIndex);
-          
-          if (currentNote.images && currentNote.images[actualIndex]) {
-            const image = currentNote.images[actualIndex];
-            const imageSrc = typeof image === 'string' ? image : image.data;
-            console.log("Opening image with src:", imageSrc ? "valid" : "invalid");
-            openImageViewer(imageSrc, actualIndex);
-          } else {
-            console.error("Image not found at index:", actualIndex);
-          }
-        });
+      // Create image container
+      const imageContainer = document.createElement('div');
+      imageContainer.className = 'image-item';
+      imageContainer.setAttribute('data-image-id', imageId);
+      
+      // Create image element
+      const imgElement = document.createElement('img');
+      imgElement.src = imageSrc;
+      imgElement.alt = 'Note Image';
+      imgElement.style.cursor = 'pointer';
+      imgElement.setAttribute('data-index', index.toString());
+      
+      // Add click event listener directly to the image
+      imgElement.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("Image clicked:", index, "for note:", currentNote.id);
+        openImageViewer(imageSrc, index);
       });
       
-    } catch (error) {
-      console.error('Error updating images section:', error);
-      if (imageGrid) imageGrid.innerHTML = '<p>Error loading images</p>';
-    }
+      // Create delete button
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'image-delete';
+      deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+      deleteBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteImage(index);
+      });
+      
+      // Assemble the container
+      imageContainer.appendChild(imgElement);
+      imageContainer.appendChild(deleteBtn);
+      imageGrid.appendChild(imageContainer);
+    });
+    
+    console.log("Updated images section with", noteImages.length, "images for note:", currentNote.id);
   }
 }
 
 function deleteImage(index) {
-  if (!currentNote?.images || !currentNote.images[index]) return;
+  if (!currentNote?.images) return;
   
-  // Create a new array without the deleted image to ensure no reference issues
-  currentNote.images = currentNote.images.filter((_, i) => i !== index);
+  // Filter images that belong to this note
+  const noteImages = currentNote.images.filter(img => 
+    !img.noteId || img.noteId === currentNote.id
+  );
   
-  updateImagesSection();
-  saveCurrentNote();
+  if (!noteImages[index]) return;
   
-  showToast("Image deleted successfully", "success");
+  // Find the actual index in the full images array
+  const imageToDelete = noteImages[index];
+  const actualIndex = currentNote.images.findIndex(img => 
+    (img.id && img.id === imageToDelete.id) || 
+    (img.data === imageToDelete.data && img.timestamp === imageToDelete.timestamp)
+  );
+  
+  if (actualIndex >= 0) {
+    currentNote.images.splice(actualIndex, 1);
+    updateImagesSection();
+    saveCurrentNote();
+    showToast("Image deleted successfully", "success");
+  }
 }
 
 // Image viewer functions
