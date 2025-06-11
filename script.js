@@ -1503,15 +1503,14 @@ function showCategoryModal() {
   
   const categoryModal = document.getElementById("categoryModal");
   if (categoryModal) {
-    categoryModal.style.display = "flex";
-    categoryModal.classList.add("show");
+    categoryModal.classList.add("open");
   }
   renderModalCategories();
 }
 
 function hideCategoryModal() {
   const categoryModal = document.getElementById("categoryModal");
-  if (categoryModal) categoryModal.classList.remove("show");
+  if (categoryModal) categoryModal.classList.remove("open");
 }
 
 function showPasswordModal() {
@@ -1580,22 +1579,22 @@ function hideDeleteModal() {
 
 function showUsernameModal() {
   const usernameModal = document.getElementById("usernameModal");
-  if (usernameModal) usernameModal.classList.add("show");
+  if (usernameModal) usernameModal.classList.add("open");
 }
 
 function hideUsernameModal() {
   const usernameModal = document.getElementById("usernameModal");
-  if (usernameModal) usernameModal.classList.remove("show");
+  if (usernameModal) usernameModal.classList.remove("open");
 }
 
 function showNameModal() {
   const nameModal = document.getElementById("nameModal");
-  if (nameModal) nameModal.classList.add("show");
+  if (nameModal) nameModal.classList.add("open");
 }
 
 function hideNameModal() {
   const nameModal = document.getElementById("nameModal");
-  if (nameModal) nameModal.classList.remove("show");
+  if (nameModal) nameModal.classList.remove("open");
 }
 
 // Modal action functions
