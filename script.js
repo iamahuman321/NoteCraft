@@ -2615,10 +2615,10 @@ function showToast(message, type = 'default') {
   
   if (toast && toastMessage) {
     toastMessage.textContent = message;
-    toast.className = `toast show ${type}`;
+    toast.className = `toast open ${type}`;
     
     setTimeout(() => {
-      toast.classList.remove("show");
+      toast.classList.remove("open");
     }, 3000);
   }
 }

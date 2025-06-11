@@ -120,9 +120,9 @@ function showToast(message) {
   if (!toast || !toastMessage) return
   
   toastMessage.textContent = message
-  toast.classList.add("show")
+  toast.classList.add("open")
   setTimeout(() => {
-    toast.classList.remove("show")
+    toast.classList.remove("open")
   }, 3000)
 }
 
