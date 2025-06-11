@@ -172,15 +172,7 @@
                 </div>
 
                 <!-- Content -->
-                <div class="editor-section">
-                    <div class="section-header">
-                        <h3>Content</h3>
-                        <button class="btn-icon" id="voiceRecordBtnEditor" onclick="showVoiceRecordingModal()" title="Add voice note">
-                            <i class="fas fa-microphone"></i>
-                        </button>
-                    </div>
-                    <textarea class="editor-body" id="contentTextarea" placeholder="Start writing your note..."></textarea>
-                </div>
+                <textarea class="editor-body" id="contentTextarea" placeholder="Start writing your note..."></textarea>
 
                 <!-- List Section -->
                 <div class="editor-section hidden" id="listSection">
@@ -608,13 +600,15 @@
                 </div>
                 <div class="voice-status" id="voiceStatus">Tap to start speech recognition</div>
                 <div class="voice-duration" id="voiceDuration">00:00</div>
-                <div class="voice-transcript" id="voiceTranscript">Your speech will appear here...</div>
                 <div class="voice-controls">
-                    <button class="btn-voice" id="voiceRecordBtn" onclick="toggleVoiceRecording()" title="Start recording">
+                    <button class="btn-voice" id="voiceRecordBtn" onclick="toggleVoiceRecording()">
                         <i class="fas fa-microphone"></i>
                     </button>
-                    <button class="btn-voice hidden" id="voiceStopBtn" onclick="stopVoiceRecording()" title="Stop recording">
+                    <button class="btn-voice hidden" id="voiceStopBtn" onclick="stopVoiceRecording()">
                         <i class="fas fa-stop"></i>
+                    </button>
+                    <button class="btn-voice hidden" id="voicePlayBtn" onclick="playVoiceRecording()">
+                        <i class="fas fa-play"></i>
                     </button>
                 </div>
                 <div class="voice-actions hidden" id="voiceActions">

@@ -2456,157 +2456,6 @@ function showToast(message, type = 'default') {
   }
 }
 
-// Voice recording functions
-function toggleVoiceRecording() {
-  if (!isListening) {
-    startSpeechRecognition();
-  } else {
-    stopSpeechRecognition();
-  }
-}
-
-function stopVoiceRecording() {
-  stopSpeechRecognition();
-}
-
-function discardVoiceRecording() {
-  recognizedText = '';
-  resetVoiceRecording();
-}
-
-function saveVoiceRecording() {
-  if (recognizedText) {
-    addSpeechToNote(recognizedText);
-    showToast('Speech added to note successfully', 'success');
-    resetVoiceRecording();
-  }
-}
-
-function addSpeechToNote(text) {
-  const contentTextarea = document.getElementById('contentTextarea') || document.getElementById('noteContent');
-  if (contentTextarea) {
-    const currentContent = contentTextarea.value;
-    const newContent = currentContent ? currentContent + '\n\n' + text : text;
-    contentTextarea.value = newContent;
-    
-    // Focus and position cursor at end
-    contentTextarea.focus();
-    contentTextarea.setSelectionRange(contentTextarea.value.length, contentTextarea.value.length);
-    
-    // Auto-save
-    if (typeof saveCurrentNote === 'function') {
-      saveCurrentNote();
-    }
-  }
-}
-
-function updateRecordingDuration() {
-  if (recordingStartTime) {
-    const elapsed = Date.now() - recordingStartTime;
-    const seconds = Math.floor(elapsed / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    
-    const durationEl = document.getElementById('voiceDuration');
-    if (durationEl) {
-      durationEl.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-  }
-}
-
-// Language selector functions
-function showLanguageSelector() {
-  const modal = document.getElementById('languageSelectorModal');
-  if (modal) {
-    modal.classList.add('show');
-    modal.style.display = 'flex';
-  }
-}
-
-function hideLanguageSelector() {
-  const modal = document.getElementById('languageSelectorModal');
-  if (modal) {
-    modal.classList.remove('show');
-    modal.style.display = 'none';
-  }
-}
-
-function selectLanguage(langCode) {
-  localStorage.setItem('speechLanguage', langCode);
-  updateLanguageDisplay(langCode);
-  
-  // Update speech recognition language
-  if (speechRecognition) {
-    speechRecognition.lang = langCode;
-  }
-  
-  hideLanguageSelector();
-  showToast('Language updated successfully', 'success');
-}
-
-function updateLanguageDisplay(langCode) {
-  const displayEl = document.getElementById('currentLanguageDisplay');
-  if (displayEl) {
-    const languages = {
-      'en-US': 'English (US)',
-      'en-GB': 'English (UK)', 
-      'hi-IN': 'हिन्दी',
-      'gu-IN': 'ગુજરાતી',
-      'nb-NO': 'Norsk'
-    };
-    displayEl.textContent = languages[langCode] || 'English';
-  }
-}
-
-// Show voice recording modal
-function showVoiceRecordingModal() {
-  console.log('showVoiceRecordingModal called');
-  const modal = document.getElementById('voiceRecordingModal');
-  console.log('Modal found:', !!modal);
-  
-  if (modal) {
-    modal.style.display = 'flex';
-    modal.classList.add('open', 'show');
-    
-    // Reset state
-    recognizedText = '';
-    isListening = false;
-    
-    // Clear any existing timers
-    if (recordingTimer) {
-      clearInterval(recordingTimer);
-      recordingTimer = null;
-    }
-    if (speechTimeout) {
-      clearTimeout(speechTimeout);
-      speechTimeout = null;
-    }
-    
-    // Update UI elements
-    const statusEl = document.getElementById('voiceStatus');
-    const transcriptEl = document.getElementById('voiceTranscript');
-    const actionsEl = document.getElementById('voiceActions');
-    const circleEl = document.getElementById('voiceVisualizer')?.querySelector('.voice-circle');
-    const durationEl = document.getElementById('voiceDuration');
-    
-    if (statusEl) statusEl.textContent = 'Tap microphone to start speech recognition';
-    if (transcriptEl) transcriptEl.textContent = '';
-    if (durationEl) durationEl.textContent = '00:00';
-    if (actionsEl) {
-      actionsEl.classList.add('hidden');
-      actionsEl.style.display = 'none';
-    }
-    if (circleEl) circleEl.classList.remove('recording');
-    
-    // Initialize speech recognition
-    initializeSpeechRecognition();
-    console.log('Voice modal opened and initialized');
-  } else {
-    console.error('Voice recording modal not found');
-    showToast('Voice recording not available', 'error');
-  }
-}
-
 // Global functions for inline event handlers
 window.editNote = editNote;
 window.toggleNoteCategory = toggleNoteCategory;
@@ -2625,14 +2474,6 @@ window.showUsernameModal = showUsernameModal;
 window.updateShoppingItem = updateShoppingItem;
 window.toggleShoppingItem = toggleShoppingItem;
 window.deleteShoppingItem = deleteShoppingItem;
-window.toggleVoiceRecording = toggleVoiceRecording;
-window.stopVoiceRecording = stopVoiceRecording;
-window.discardVoiceRecording = discardVoiceRecording;
-window.saveVoiceRecording = saveVoiceRecording;
-window.showLanguageSelector = showLanguageSelector;
-window.hideLanguageSelector = hideLanguageSelector;
-window.selectLanguage = selectLanguage;
-window.showVoiceRecordingModal = showVoiceRecordingModal;
 
 // Search functionality
 function handleSearch() {
@@ -3399,7 +3240,17 @@ let recordedChunks = [];
 let recordingStartTime = null;
 let recordingTimer = null;
 
-// Removed duplicate - function already exists above
+function showVoiceRecordingModal() {
+  const modal = document.getElementById('voiceRecordingModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('open');
+    initializeSpeechRecognition();
+    resetVoiceRecording();
+  } else {
+    showToast('Voice recording not available', 'error');
+  }
+}
 
 // Initialize speech recognition
 function initializeSpeechRecognition() {
@@ -3477,18 +3328,13 @@ function initializeSpeechRecognition() {
       
       recognizedText = finalTranscript;
       
-      // Update transcript display
-      const transcriptEl = document.getElementById('voiceTranscript');
-      if (transcriptEl) {
-        if (finalTranscript || interimTranscript) {
-          transcriptEl.innerHTML = `<span style="color: var(--text-color);">${finalTranscript}</span><span style="color: var(--text-muted); font-style: italic;">${interimTranscript}</span>`;
-        }
-      }
-      
-      // Update status
+      // Show live transcription with confidence indicator
       const statusEl = document.getElementById('voiceStatus');
-      if (statusEl && finalTranscript) {
-        statusEl.textContent = 'Speech captured! Continue speaking or add to note.';
+      if (statusEl && (finalTranscript || interimTranscript)) {
+        statusEl.innerHTML = `<div style="font-size: 14px; margin-top: 10px; padding: 10px; background: var(--bg-secondary); border-radius: 6px; text-align: left; line-height: 1.4;">
+          <div style="color: var(--text-primary); font-weight: 500;">${finalTranscript}</div>
+          <div style="color: var(--text-secondary); font-style: italic;">${interimTranscript}</div>
+        </div>`;
       }
       
       // Extend timeout for longer speech
@@ -3524,42 +3370,40 @@ function initializeSpeechRecognition() {
       
       // Filter out very short or low-quality results
       const minLength = 3;
+      const filteredText = recognizedText && recognizedText.trim().length >= minLength ? recognizedText : '';
       
-      if (recognizedText && recognizedText.trim().length >= minLength) {
-        if (statusEl) {
-          statusEl.textContent = 'Speech captured! Add to note or speak more.';
-        }
-        
-        // Show action buttons
-        const actionsEl = document.getElementById('voiceActions');
-        if (actionsEl) {
-          actionsEl.classList.remove('hidden');
-          actionsEl.style.display = 'flex';
-        }
-        
-        // Update transcript display
-        const transcriptEl = document.getElementById('voiceTranscript');
-        if (transcriptEl) {
-          transcriptEl.textContent = recognizedText;
-        }
-        
-        console.log('Final transcript captured:', recognizedText);
-      } else {
-        if (statusEl) {
-          statusEl.textContent = 'No clear speech detected. Try again.';
+      if (statusEl) {
+        if (filteredText) {
+          statusEl.innerHTML = `<div style="color: var(--success-color); font-weight: 500;">✓ Speech converted to text - Adding to note...</div>`;
+        } else {
+          statusEl.textContent = 'No clear speech detected. Please try again.';
         }
       }
+      if (circleEl) circleEl.classList.remove('recording');
       
-      if (circleEl) {
-        circleEl.classList.remove('recording');
+      // Add recognized text to note if quality is sufficient
+      if (filteredText && currentNote) {
+        addSpeechToNote(filteredText);
+        
+        // Auto-close modal after successful conversion
+        setTimeout(() => {
+          const modal = document.getElementById('voiceRecordingModal');
+          if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('open');
+          }
+          resetVoiceRecording();
+        }, 1000);
+      } else {
+        // Keep modal open for retry if no good speech detected
+        setTimeout(() => {
+          if (statusEl) statusEl.textContent = 'Tap to start speech recognition';
+          resetVoiceRecording();
+        }, 2000);
       }
     };
-    
-    return true;
   } else {
-    console.error('Speech recognition not supported');
     showToast('Speech recognition not supported in this browser', 'error');
-    return false;
   }
 }
 
@@ -4183,51 +4027,6 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeSpeechRecognition();
 });
 
-// Speech recognition control functions
-function startSpeechRecognition() {
-  if (!speechRecognition) {
-    initializeSpeechRecognition();
-  }
-  
-  if (speechRecognition && !isListening) {
-    try {
-      speechRecognition.start();
-      isListening = true;
-    } catch (error) {
-      console.error('Error starting speech recognition:', error);
-      showToast('Could not start speech recognition', 'error');
-    }
-  }
-}
-
-function stopSpeechRecognition() {
-  if (speechRecognition && isListening) {
-    speechRecognition.stop();
-    isListening = false;
-  }
-}
-
-// Format speech text with proper punctuation and capitalization
-function formatSpeechText(text) {
-  if (!text) return '';
-  
-  // Basic text formatting for mixed languages
-  let formatted = text.trim();
-  
-  // Capitalize first letter
-  formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
-  
-  // Add period if no ending punctuation
-  if (!/[.!?]$/.test(formatted)) {
-    formatted += '.';
-  }
-  
-  // Add space after sentence
-  formatted += ' ';
-  
-  return formatted;
-}
-
 // Enhanced collaboration presence update
 function updateCollaboratorPresence(activeUsers) {
   const statusDiv = document.getElementById('collaborationStatus');
@@ -4254,116 +4053,6 @@ function updateCollaboratorPresence(activeUsers) {
   } else {
     statusDiv.style.display = 'none';
   }
-}
-
-// Enhanced cursor positioning for collaborative editing
-function createCursorIndicator(textarea, cursorData) {
-  // Remove any existing cursor indicators for this user
-  const existingIndicators = document.querySelectorAll(`.cursor-indicator[data-user="${cursorData.userId}"]`);
-  existingIndicators.forEach(indicator => indicator.remove());
-  
-  const indicator = document.createElement('div');
-  indicator.className = 'cursor-indicator';
-  indicator.setAttribute('data-user', cursorData.userId);
-  indicator.style.backgroundColor = cursorData.color;
-  indicator.style.position = 'absolute';
-  indicator.style.zIndex = '1000';
-  indicator.style.pointerEvents = 'none';
-  indicator.style.width = '2px';
-  indicator.style.transition = 'all 0.15s ease-out';
-  
-  // Get textarea dimensions and styling
-  const textareaRect = textarea.getBoundingClientRect();
-  const textareaStyle = window.getComputedStyle(textarea);
-  const paddingLeft = parseInt(textareaStyle.paddingLeft) || 8;
-  const paddingTop = parseInt(textareaStyle.paddingTop) || 8;
-  const fontSize = parseInt(textareaStyle.fontSize) || 14;
-  const lineHeight = parseInt(textareaStyle.lineHeight) || Math.floor(fontSize * 1.4);
-  
-  // Calculate precise cursor position
-  const textBeforeCursor = textarea.value.substring(0, cursorData.position || 0);
-  const lines = textBeforeCursor.split('\n');
-  const currentLine = lines.length - 1;
-  const currentLineText = lines[currentLine] || '';
-  
-  // Create canvas for accurate text measurement
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  ctx.font = `${fontSize}px ${textareaStyle.fontFamily}`;
-  
-  const textWidth = ctx.measureText(currentLineText).width;
-  
-  // Position calculation with scroll offset
-  const scrollLeft = textarea.scrollLeft || 0;
-  const scrollTop = textarea.scrollTop || 0;
-  
-  const x = textareaRect.left + paddingLeft + textWidth - scrollLeft;
-  const y = textareaRect.top + paddingTop + (currentLine * lineHeight) - scrollTop;
-  
-  // Ensure cursor stays within textarea bounds
-  const maxX = textareaRect.right - 2;
-  const maxY = textareaRect.bottom - lineHeight;
-  
-  indicator.style.left = `${Math.max(textareaRect.left + paddingLeft, Math.min(x, maxX))}px`;
-  indicator.style.top = `${Math.max(textareaRect.top + paddingTop, Math.min(y, maxY))}px`;
-  indicator.style.height = `${lineHeight}px`;
-  indicator.style.opacity = '0.8';
-  indicator.style.animation = 'cursor-blink 1.2s infinite';
-  
-  document.body.appendChild(indicator);
-  
-  // Auto-cleanup after 5 seconds
-  setTimeout(() => {
-    if (indicator.parentNode) {
-      indicator.style.opacity = '0';
-      setTimeout(() => {
-        if (indicator.parentNode) {
-          document.body.removeChild(indicator);
-        }
-      }, 150);
-    }
-  }, 5000);
-  
-  return indicator;
-}
-
-// Complete the formatMixedLanguageText function
-function completeMixedLanguageFormatting(text) {
-  if (!text) return '';
-  
-  let formatted = text.trim().replace(/\s+/g, ' ');
-  
-  // Enhanced punctuation mapping for multiple languages
-  const multiLangPunctuationMap = {
-    // English
-    ' period': '.', ' comma': ',', ' question mark': '?', ' exclamation mark': '!',
-    // Hindi/Gujarati
-    ' पूर्ण विराम': '.', ' अल्प विराम': ',', ' प्रश्न चिह्न': '?',
-    ' પૂર્ણવિરામ': '.', ' અલ્પવિરામ': ',', ' પ્રશ્નચિહ્ન': '?',
-    // Norwegian
-    ' punktum': '.', ' komma': ',', ' spørsmålstegn': '?', ' utropstegn': '!',
-    // Common mixed patterns
-    ' full stop': '.', ' dot': '.', ' new line': '\n', ' new paragraph': '\n\n'
-  };
-  
-  // Apply punctuation replacements
-  Object.keys(multiLangPunctuationMap).forEach(key => {
-    formatted = formatted.replace(new RegExp(key, 'gi'), multiLangPunctuationMap[key]);
-  });
-  
-  // Capitalize first letter of sentences
-  formatted = formatted.replace(/(^|\. |\n)([a-zA-Z\u0900-\u097F\u0A80-\u0AFF])/g, (match, separator, letter) => {
-    return separator + letter.toUpperCase();
-  });
-  
-  // Ensure proper spacing around punctuation
-  formatted = formatted.replace(/\s*([.!?])\s*/g, '$1 ');
-  formatted = formatted.replace(/\s*,\s*/g, ', ');
-  
-  // Clean up multiple spaces
-  formatted = formatted.replace(/\s+/g, ' ').trim();
-  
-  return formatted;
 }
 
 // Export for window global
