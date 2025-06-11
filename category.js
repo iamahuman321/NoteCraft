@@ -37,13 +37,22 @@ function showToast(message) {
 function saveData() {
   localStorage.setItem("categories", JSON.stringify(categories))
   
+  // Force update global categories if available
+  if (window.categories) {
+    window.categories.length = 0
+    window.categories.push(...categories)
+  }
+  
   // Save to Firebase if user is authenticated and not a guest
   if (window.authFunctions && typeof window.authFunctions.getCurrentUser === 'function') {
     const currentUser = window.authFunctions.getCurrentUser()
     const isGuest = window.authFunctions.isUserGuest()
     
     if (currentUser && !isGuest) {
-      window.authFunctions.saveUserData()
+      // Force immediate Firebase sync
+      setTimeout(() => {
+        window.authFunctions.saveUserData()
+      }, 100)
     }
   }
 }

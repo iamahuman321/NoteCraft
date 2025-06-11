@@ -1376,8 +1376,18 @@ function hideShareModal() {
 }
 
 function showCategoryModal() {
-  // Reload categories from localStorage in case they were updated
-  categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }];
+  // Always reload the freshest categories from localStorage
+  const savedCategories = localStorage.getItem("categories");
+  if (savedCategories) {
+    try {
+      const parsedCategories = JSON.parse(savedCategories);
+      if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
+        categories = parsedCategories;
+      }
+    } catch (error) {
+      console.error("Error parsing categories:", error);
+    }
+  }
   
   const categoryModal = document.getElementById("categoryModal");
   if (categoryModal) {
@@ -1453,16 +1463,9 @@ function hideNameModal() {
 // Modal action functions
 function renderModalCategories() {
   const modalCategories = document.getElementById("modalCategories");
-  if (!modalCategories) {
-    console.log("Modal categories element not found");
-    return;
-  }
-  
-  console.log("Current categories:", categories);
-  console.log("Current note categories:", currentNote?.categories);
+  if (!modalCategories) return;
   
   const userCategories = categories.filter(c => c.id !== "all");
-  console.log("User categories to display:", userCategories);
   
   if (userCategories.length === 0) {
     modalCategories.innerHTML = `

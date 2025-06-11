@@ -232,7 +232,18 @@ function loadUserData(user) {
       if (userData) {
         // Always ensure arrays exist and are properly populated
         const userNotes = userData.notes || [];
-        const userCategories = userData.categories || [{ id: "all", name: "All" }];
+        const firebaseCategories = userData.categories || [{ id: "all", name: "All" }];
+        
+        // Get current local categories to merge with Firebase data
+        const localCategories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }];
+        
+        // Merge categories - keep local categories that aren't in Firebase
+        const mergedCategories = [...firebaseCategories];
+        localCategories.forEach(localCat => {
+          if (!mergedCategories.find(fbCat => fbCat.id === localCat.id)) {
+            mergedCategories.push(localCat);
+          }
+        });
 
         // Force update global arrays
         if (window.notes) {
@@ -244,14 +255,19 @@ function loadUserData(user) {
 
         if (window.categories) {
           window.categories.length = 0;
-          window.categories.push(...userCategories);
+          window.categories.push(...mergedCategories);
         } else {
-          window.categories = userCategories;
+          window.categories = mergedCategories;
         }
 
-        // Update localStorage
+        // Update localStorage with merged data
         localStorage.setItem("notes", JSON.stringify(userNotes));
-        localStorage.setItem("categories", JSON.stringify(userCategories));
+        localStorage.setItem("categories", JSON.stringify(mergedCategories));
+        
+        // Save merged categories back to Firebase if there were new local ones
+        if (mergedCategories.length > firebaseCategories.length) {
+          saveUserData();
+        }
 
         // Set data loaded flag
         window.dataLoaded = true;
