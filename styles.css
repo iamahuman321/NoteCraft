@@ -222,7 +222,7 @@ body {
   backdrop-filter: blur(5px);
 }
 
-.image-viewer-modal.show {
+.image-viewer-modal.open {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -893,7 +893,7 @@ body {
   visibility: hidden;
 }
 
-.toast.show {
+.toast.open {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
   visibility: visible;
@@ -1354,7 +1354,7 @@ body {
   display: none;
 }
 
-.search-results.show {
+.search-results.open {
   display: block;
 }
 

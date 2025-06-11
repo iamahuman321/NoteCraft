@@ -1118,14 +1118,14 @@ function addShoppingItem(category) {
 }
 
 function updateShoppingItem(category, index, text) {
-  if (shoppingLists[category] && shoppingLists[category][index]) {
+  if (shoppingLists[category] && index >= 0 && index < shoppingLists[category].length && shoppingLists[category][index]) {
     shoppingLists[category][index].text = text;
     forceSyncShoppingLists();
   }
 }
 
 function toggleShoppingItem(category, index) {
-  if (shoppingLists[category] && shoppingLists[category][index]) {
+  if (shoppingLists[category] && index >= 0 && index < shoppingLists[category].length && shoppingLists[category][index]) {
     shoppingLists[category][index].completed = !shoppingLists[category][index].completed;
     forceSyncShoppingLists();
     renderShoppingList(category);
@@ -1133,7 +1133,7 @@ function toggleShoppingItem(category, index) {
 }
 
 function deleteShoppingItem(category, index) {
-  if (shoppingLists[category]) {
+  if (shoppingLists[category] && index >= 0 && index < shoppingLists[category].length) {
     shoppingLists[category].splice(index, 1);
     forceSyncShoppingLists();
     renderShoppingList(category);
