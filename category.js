@@ -4,6 +4,36 @@
 let categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }]
 const notes = JSON.parse(localStorage.getItem("notes")) || []
 
+// Wait for Firebase to be ready and load user data
+function waitForFirebaseAndLoadData() {
+  if (window.authFunctions && window.database) {
+    const currentUser = window.authFunctions.getCurrentUser()
+    const isGuest = window.authFunctions.isUserGuest()
+    
+    if (currentUser && !isGuest) {
+      // Load categories from Firebase
+      const userRef = window.database.ref(`users/${currentUser.uid}`)
+      userRef.once('value').then((snapshot) => {
+        const userData = snapshot.val()
+        if (userData && userData.categories) {
+          categories = userData.categories
+          localStorage.setItem("categories", JSON.stringify(categories))
+          renderCategories()
+          console.log("Categories loaded from Firebase:", categories.length)
+        }
+      }).catch((error) => {
+        console.error("Error loading categories from Firebase:", error)
+      })
+    }
+  } else {
+    // Retry if Firebase not ready
+    setTimeout(waitForFirebaseAndLoadData, 500)
+  }
+}
+
+// Start loading when page loads
+document.addEventListener("DOMContentLoaded", waitForFirebaseAndLoadData)
+
 // Translations
 const translations = {
   en: {
@@ -35,11 +65,9 @@ function showToast(message) {
 }
 
 function saveData() {
-  // Add timestamp to track when categories were last modified locally
+  // Save to localStorage and sessionStorage
   localStorage.setItem("categories", JSON.stringify(categories))
   localStorage.setItem("categoriesLastModified", Date.now().toString())
-  
-  // Also save to sessionStorage as backup
   sessionStorage.setItem("categoriesBackup", JSON.stringify(categories))
   
   // Force update global categories if available
@@ -48,16 +76,23 @@ function saveData() {
     window.categories.push(...categories)
   }
   
-  // Save to Firebase if user is authenticated and not a guest
+  // Immediately save to Firebase - this is critical
   if (window.authFunctions && typeof window.authFunctions.getCurrentUser === 'function') {
     const currentUser = window.authFunctions.getCurrentUser()
     const isGuest = window.authFunctions.isUserGuest()
     
-    if (currentUser && !isGuest) {
-      // Force immediate Firebase sync with a slight delay to ensure localStorage is written
-      setTimeout(() => {
-        window.authFunctions.saveUserData()
-      }, 200)
+    if (currentUser && !isGuest && window.database) {
+      // Save directly to Firebase immediately
+      const userRef = window.database.ref(`users/${currentUser.uid}`)
+      userRef.update({
+        categories: categories,
+        categoriesLastModified: Date.now(),
+        lastUpdated: Date.now()
+      }).then(() => {
+        console.log("Categories saved to Firebase successfully")
+      }).catch((error) => {
+        console.error("Error saving categories to Firebase:", error)
+      })
     }
   }
 }

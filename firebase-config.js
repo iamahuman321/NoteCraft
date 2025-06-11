@@ -247,11 +247,19 @@ function loadUserData(user) {
         console.log("Firebase categories:", firebaseCategories.length, "items");
         console.log("Has recent local changes:", hasRecentLocalChanges);
         
-        // Always use local categories if there are recent changes or if local has more items
+        // Always use Firebase as source of truth, but preserve local if it has more items
         let finalCategories;
-        if (hasRecentLocalChanges || localCategories.length > firebaseCategories.length) {
+        if (localCategories.length > firebaseCategories.length) {
           finalCategories = localCategories;
-          console.log("Using local categories - preserving recent changes");
+          console.log("Using local categories (more items) and syncing to Firebase");
+          // Immediately save to Firebase
+          setTimeout(() => {
+            const userRef = window.database.ref(`users/${user.uid}`);
+            userRef.update({
+              categories: localCategories,
+              categoriesLastModified: Date.now()
+            });
+          }, 100);
         } else {
           finalCategories = firebaseCategories;
           console.log("Using Firebase categories");
@@ -281,10 +289,8 @@ function loadUserData(user) {
         // Update localStorage with notes always, categories only when appropriate
         localStorage.setItem("notes", JSON.stringify(userNotes));
         
-        // Never overwrite localStorage categories if we have recent local changes
-        if (!hasRecentLocalChanges) {
-          localStorage.setItem("categories", JSON.stringify(finalCategories));
-        }
+        // Always update localStorage with final categories
+        localStorage.setItem("categories", JSON.stringify(finalCategories));
         
         // Save local categories to Firebase if they were preserved
         if (hasRecentLocalChanges || localCategories.length > firebaseCategories.length) {

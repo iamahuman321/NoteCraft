@@ -2,6 +2,48 @@
 // Global variables
 let notes = JSON.parse(localStorage.getItem("notes")) || [];
 let categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }];
+
+// Create a robust category manager
+const CategoryManager = {
+  get: () => {
+    // Try multiple sources for categories
+    const sources = [
+      () => JSON.parse(sessionStorage.getItem("categoriesBackup") || "null"),
+      () => JSON.parse(localStorage.getItem("categories") || "null"),
+      () => window.categories
+    ];
+    
+    let bestCategories = [{ id: "all", name: "All" }];
+    let maxLength = 1;
+    
+    for (const getSource of sources) {
+      try {
+        const cats = getSource();
+        if (cats && Array.isArray(cats) && cats.length > maxLength) {
+          bestCategories = cats;
+          maxLength = cats.length;
+        }
+      } catch (e) {
+        // Ignore errors and try next source
+      }
+    }
+    
+    return bestCategories;
+  },
+  
+  set: (newCategories) => {
+    if (!Array.isArray(newCategories) || newCategories.length === 0) return;
+    
+    // Save to all locations
+    localStorage.setItem("categories", JSON.stringify(newCategories));
+    sessionStorage.setItem("categoriesBackup", JSON.stringify(newCategories));
+    localStorage.setItem("categoriesLastModified", Date.now().toString());
+    
+    // Update global variable
+    window.categories = newCategories;
+    categories = newCategories;
+  }
+};
 let currentNote = null;
 let currentFilter = "all";
 let currentListType = "bulleted";
@@ -1402,21 +1444,8 @@ function hideShareModal() {
 }
 
 function showCategoryModal() {
-  // Try to get the most complete category list from multiple sources
-  const localCategories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }];
-  const sessionCategories = JSON.parse(sessionStorage.getItem("categoriesBackup")) || [{ id: "all", name: "All" }];
-  
-  // Use the source with the most categories
-  let bestCategories = categories;
-  if (localCategories.length > bestCategories.length) {
-    bestCategories = localCategories;
-  }
-  if (sessionCategories.length > bestCategories.length) {
-    bestCategories = sessionCategories;
-  }
-  
-  // Update global categories with the best source
-  categories = bestCategories;
+  // Use the category manager to get the best available categories
+  categories = CategoryManager.get();
   
   const categoryModal = document.getElementById("categoryModal");
   if (categoryModal) {
