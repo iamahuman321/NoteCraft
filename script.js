@@ -1442,7 +1442,23 @@ function hideCategoryModal() {
 
 function showPasswordModal() {
   const passwordModal = document.getElementById("passwordModal");
-  if (passwordModal) passwordModal.classList.add("show");
+  const passwordInput = document.getElementById("notePasswordInput");
+  const removeBtn = document.getElementById("removePasswordBtn");
+  
+  if (passwordModal) {
+    passwordModal.classList.add("show");
+    
+    // Show/hide remove button based on whether note has password
+    if (removeBtn) {
+      removeBtn.style.display = (currentNote && currentNote.password) ? "inline-block" : "none";
+    }
+    
+    // Clear and focus password input
+    if (passwordInput) {
+      passwordInput.value = "";
+      setTimeout(() => passwordInput.focus(), 100);
+    }
+  }
   updatePasswordButton();
 }
 
