@@ -1,49 +1,7 @@
 // Notes App Main JavaScript
 // Global variables
 let notes = JSON.parse(localStorage.getItem("notes")) || [];
-let categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }];
-
-// Create a robust category manager
-const CategoryManager = {
-  get: () => {
-    // Try multiple sources for categories
-    const sources = [
-      () => JSON.parse(sessionStorage.getItem("categoriesBackup") || "null"),
-      () => JSON.parse(localStorage.getItem("categories") || "null"),
-      () => window.categories
-    ];
-    
-    let bestCategories = [{ id: "all", name: "All" }];
-    let maxLength = 1;
-    
-    for (const getSource of sources) {
-      try {
-        const cats = getSource();
-        if (cats && Array.isArray(cats) && cats.length > maxLength) {
-          bestCategories = cats;
-          maxLength = cats.length;
-        }
-      } catch (e) {
-        // Ignore errors and try next source
-      }
-    }
-    
-    return bestCategories;
-  },
-  
-  set: (newCategories) => {
-    if (!Array.isArray(newCategories) || newCategories.length === 0) return;
-    
-    // Save to all locations
-    localStorage.setItem("categories", JSON.stringify(newCategories));
-    sessionStorage.setItem("categoriesBackup", JSON.stringify(newCategories));
-    localStorage.setItem("categoriesLastModified", Date.now().toString());
-    
-    // Update global variable
-    window.categories = newCategories;
-    categories = newCategories;
-  }
-};
+let categories = [{ id: "all", name: "All" }];
 let currentNote = null;
 let currentFilter = "all";
 let currentListType = "bulleted";
@@ -120,8 +78,20 @@ function initializeApp() {
     });
   }
 
-  waitForFirebase().then(() => {
+  waitForFirebase().then(async () => {
     console.log("Firebase ready for main app");
+    
+    // Initialize CategoryManager first
+    if (window.CategoryManager) {
+      try {
+        await window.CategoryManager.init();
+        categories = window.CategoryManager.getCategories();
+        console.log("Categories initialized via CategoryManager:", categories.length);
+      } catch (error) {
+        console.error("Error initializing CategoryManager:", error);
+        categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }];
+      }
+    }
     
     // Clear search on page load
     clearSearch();
@@ -141,6 +111,10 @@ function initializeApp() {
           // Wait for data to be loaded, then render
           const checkDataLoaded = () => {
             if (window.dataLoaded || notes.length > 0) {
+              // Sync categories from CategoryManager after Firebase data loads
+              if (window.CategoryManager) {
+                categories = window.CategoryManager.getCategories();
+              }
               renderNotes();
               renderCategories();
               updateFilterChips();
@@ -840,6 +814,10 @@ function renderNotes() {
 }
 
 function renderCategories() {
+  // Sync categories from CategoryManager if available
+  if (window.CategoryManager) {
+    categories = window.CategoryManager.getCategories();
+  }
   updateFilterChips();
 }
 
