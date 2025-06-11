@@ -1750,9 +1750,13 @@ function processImageUpload(event) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (!currentNote.images) currentNote.images = [];
+        // Generate unique ID for each image to prevent cross-contamination
+        const imageId = generateId();
         currentNote.images.push({
+          id: imageId,
           name: file.name,
-          data: e.target.result
+          data: e.target.result,
+          timestamp: Date.now()
         });
         updateImagesSection();
         saveCurrentNote();
@@ -1760,6 +1764,9 @@ function processImageUpload(event) {
       reader.readAsDataURL(file);
     }
   });
+  
+  // Clear the input so the same file can be uploaded again
+  event.target.value = '';
 }
 
 function updateImagesSection() {
@@ -1774,23 +1781,48 @@ function updateImagesSection() {
   if (imagesSection) imagesSection.classList.remove("hidden");
   
   if (imageGrid) {
-    imageGrid.innerHTML = currentNote.images.map((image, index) => `
-      <div class="image-item">
-        <img src="${image}" alt="Note Image" onclick="openImageViewer('${image}', ${index})" style="cursor: pointer;" />
-        <button class="image-delete" onclick="deleteImage(${index})">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-    `).join("");
+    // Ensure we have a fresh copy of images for this specific note
+    const noteImages = currentNote.images || [];
+    
+    imageGrid.innerHTML = noteImages.map((image, index) => {
+      // Handle both old format (string) and new format (object)
+      const imageSrc = typeof image === 'string' ? image : image.data;
+      const imageId = typeof image === 'object' ? image.id : `img_${index}`;
+      
+      return `
+        <div class="image-item" data-image-id="${imageId}">
+          <img src="${imageSrc}" alt="Note Image" class="clickable-image" data-index="${index}" style="cursor: pointer;" />
+          <button class="image-delete" onclick="deleteImage(${index})">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      `;
+    }).join("");
+    
+    // Add click event listeners to images
+    const clickableImages = imageGrid.querySelectorAll('.clickable-image');
+    clickableImages.forEach((img, index) => {
+      img.addEventListener('click', () => {
+        const currentImages = currentNote.images || [];
+        if (currentImages[index]) {
+          const imageSrc = typeof currentImages[index] === 'string' ? currentImages[index] : currentImages[index].data;
+          openImageViewer(imageSrc, index);
+        }
+      });
+    });
   }
 }
 
 function deleteImage(index) {
-  if (!currentNote?.images) return;
+  if (!currentNote?.images || !currentNote.images[index]) return;
   
-  currentNote.images.splice(index, 1);
+  // Create a new array without the deleted image to ensure no reference issues
+  currentNote.images = currentNote.images.filter((_, i) => i !== index);
+  
   updateImagesSection();
   saveCurrentNote();
+  
+  showToast("Image deleted successfully", "success");
 }
 
 // Image viewer functions
