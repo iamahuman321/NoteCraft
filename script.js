@@ -2483,11 +2483,15 @@ function saveVoiceRecording() {
 }
 
 function addSpeechToNote(text) {
-  const contentTextarea = document.getElementById('noteContent');
+  const contentTextarea = document.getElementById('contentTextarea') || document.getElementById('noteContent');
   if (contentTextarea) {
     const currentContent = contentTextarea.value;
     const newContent = currentContent ? currentContent + '\n\n' + text : text;
     contentTextarea.value = newContent;
+    
+    // Focus and position cursor at end
+    contentTextarea.focus();
+    contentTextarea.setSelectionRange(contentTextarea.value.length, contentTextarea.value.length);
     
     // Auto-save
     if (typeof saveCurrentNote === 'function') {
@@ -2556,33 +2560,50 @@ function updateLanguageDisplay(langCode) {
 
 // Show voice recording modal
 function showVoiceRecordingModal() {
+  console.log('showVoiceRecordingModal called');
   const modal = document.getElementById('voiceRecordingModal');
+  console.log('Modal found:', !!modal);
+  
   if (modal) {
     modal.style.display = 'flex';
-    modal.classList.add('open');
+    modal.classList.add('open', 'show');
     
     // Reset state
     recognizedText = '';
     isListening = false;
+    
+    // Clear any existing timers
+    if (recordingTimer) {
+      clearInterval(recordingTimer);
+      recordingTimer = null;
+    }
+    if (speechTimeout) {
+      clearTimeout(speechTimeout);
+      speechTimeout = null;
+    }
     
     // Update UI elements
     const statusEl = document.getElementById('voiceStatus');
     const transcriptEl = document.getElementById('voiceTranscript');
     const actionsEl = document.getElementById('voiceActions');
     const circleEl = document.getElementById('voiceVisualizer')?.querySelector('.voice-circle');
+    const durationEl = document.getElementById('voiceDuration');
     
-    if (statusEl) statusEl.textContent = 'Tap to start speech recognition';
+    if (statusEl) statusEl.textContent = 'Tap microphone to start speech recognition';
     if (transcriptEl) transcriptEl.textContent = '';
+    if (durationEl) durationEl.textContent = '00:00';
     if (actionsEl) {
       actionsEl.classList.add('hidden');
       actionsEl.style.display = 'none';
     }
     if (circleEl) circleEl.classList.remove('recording');
     
-    // Initialize speech recognition if not already done
-    if (!speechRecognition) {
-      initializeSpeechRecognition();
-    }
+    // Initialize speech recognition
+    initializeSpeechRecognition();
+    console.log('Voice modal opened and initialized');
+  } else {
+    console.error('Voice recording modal not found');
+    showToast('Voice recording not available', 'error');
   }
 }
 
@@ -3456,13 +3477,18 @@ function initializeSpeechRecognition() {
       
       recognizedText = finalTranscript;
       
-      // Show live transcription with confidence indicator
+      // Update transcript display
+      const transcriptEl = document.getElementById('voiceTranscript');
+      if (transcriptEl) {
+        if (finalTranscript || interimTranscript) {
+          transcriptEl.innerHTML = `<span style="color: var(--text-color);">${finalTranscript}</span><span style="color: var(--text-muted); font-style: italic;">${interimTranscript}</span>`;
+        }
+      }
+      
+      // Update status
       const statusEl = document.getElementById('voiceStatus');
-      if (statusEl && (finalTranscript || interimTranscript)) {
-        statusEl.innerHTML = `<div style="font-size: 14px; margin-top: 10px; padding: 10px; background: var(--bg-secondary); border-radius: 6px; text-align: left; line-height: 1.4;">
-          <div style="color: var(--text-primary); font-weight: 500;">${finalTranscript}</div>
-          <div style="color: var(--text-secondary); font-style: italic;">${interimTranscript}</div>
-        </div>`;
+      if (statusEl && finalTranscript) {
+        statusEl.textContent = 'Speech captured! Continue speaking or add to note.';
       }
       
       // Extend timeout for longer speech
@@ -4226,6 +4252,77 @@ function updateCollaboratorPresence(activeUsers) {
   } else {
     statusDiv.style.display = 'none';
   }
+}
+
+// Enhanced cursor positioning for collaborative editing
+function createCursorIndicator(textarea, cursorData) {
+  // Remove any existing cursor indicators for this user
+  const existingIndicators = document.querySelectorAll(`.cursor-indicator[data-user="${cursorData.userId}"]`);
+  existingIndicators.forEach(indicator => indicator.remove());
+  
+  const indicator = document.createElement('div');
+  indicator.className = 'cursor-indicator';
+  indicator.setAttribute('data-user', cursorData.userId);
+  indicator.style.backgroundColor = cursorData.color;
+  indicator.style.position = 'absolute';
+  indicator.style.zIndex = '1000';
+  indicator.style.pointerEvents = 'none';
+  indicator.style.width = '2px';
+  indicator.style.transition = 'all 0.15s ease-out';
+  
+  // Get textarea dimensions and styling
+  const textareaRect = textarea.getBoundingClientRect();
+  const textareaStyle = window.getComputedStyle(textarea);
+  const paddingLeft = parseInt(textareaStyle.paddingLeft) || 8;
+  const paddingTop = parseInt(textareaStyle.paddingTop) || 8;
+  const fontSize = parseInt(textareaStyle.fontSize) || 14;
+  const lineHeight = parseInt(textareaStyle.lineHeight) || Math.floor(fontSize * 1.4);
+  
+  // Calculate precise cursor position
+  const textBeforeCursor = textarea.value.substring(0, cursorData.position || 0);
+  const lines = textBeforeCursor.split('\n');
+  const currentLine = lines.length - 1;
+  const currentLineText = lines[currentLine] || '';
+  
+  // Create canvas for accurate text measurement
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.font = `${fontSize}px ${textareaStyle.fontFamily}`;
+  
+  const textWidth = ctx.measureText(currentLineText).width;
+  
+  // Position calculation with scroll offset
+  const scrollLeft = textarea.scrollLeft || 0;
+  const scrollTop = textarea.scrollTop || 0;
+  
+  const x = textareaRect.left + paddingLeft + textWidth - scrollLeft;
+  const y = textareaRect.top + paddingTop + (currentLine * lineHeight) - scrollTop;
+  
+  // Ensure cursor stays within textarea bounds
+  const maxX = textareaRect.right - 2;
+  const maxY = textareaRect.bottom - lineHeight;
+  
+  indicator.style.left = `${Math.max(textareaRect.left + paddingLeft, Math.min(x, maxX))}px`;
+  indicator.style.top = `${Math.max(textareaRect.top + paddingTop, Math.min(y, maxY))}px`;
+  indicator.style.height = `${lineHeight}px`;
+  indicator.style.opacity = '0.8';
+  indicator.style.animation = 'cursor-blink 1.2s infinite';
+  
+  document.body.appendChild(indicator);
+  
+  // Auto-cleanup after 5 seconds
+  setTimeout(() => {
+    if (indicator.parentNode) {
+      indicator.style.opacity = '0';
+      setTimeout(() => {
+        if (indicator.parentNode) {
+          document.body.removeChild(indicator);
+        }
+      }, 150);
+    }
+  }, 5000);
+  
+  return indicator;
 }
 
 // Complete the formatMixedLanguageText function

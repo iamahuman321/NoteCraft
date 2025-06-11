@@ -175,7 +175,7 @@
                 <div class="editor-section">
                     <div class="section-header">
                         <h3>Content</h3>
-                        <button class="btn-icon" id="voiceRecordBtn" onclick="showVoiceRecordingModal()" title="Add voice note">
+                        <button class="btn-icon" id="voiceRecordBtnEditor" onclick="showVoiceRecordingModal()" title="Add voice note">
                             <i class="fas fa-microphone"></i>
                         </button>
                     </div>
@@ -610,10 +610,10 @@
                 <div class="voice-duration" id="voiceDuration">00:00</div>
                 <div class="voice-transcript" id="voiceTranscript">Your speech will appear here...</div>
                 <div class="voice-controls">
-                    <button class="btn-voice" id="voiceRecordBtn" onclick="toggleVoiceRecording()">
+                    <button class="btn-voice" id="voiceRecordBtn" onclick="toggleVoiceRecording()" title="Start recording">
                         <i class="fas fa-microphone"></i>
                     </button>
-                    <button class="btn-voice hidden" id="voiceStopBtn" onclick="stopVoiceRecording()">
+                    <button class="btn-voice hidden" id="voiceStopBtn" onclick="stopVoiceRecording()" title="Stop recording">
                         <i class="fas fa-stop"></i>
                     </button>
                 </div>
