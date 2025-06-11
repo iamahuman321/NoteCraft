@@ -265,9 +265,15 @@ function loadUserData(user) {
           window.notes = userNotes;
         }
 
+        // Only update global categories if we're using Firebase data or if global is empty
         if (window.categories) {
-          window.categories.length = 0;
-          window.categories.push(...finalCategories);
+          if (finalCategories === firebaseCategories || window.categories.length <= 1) {
+            window.categories.length = 0;
+            window.categories.push(...finalCategories);
+            console.log("Updated global categories to:", window.categories);
+          } else {
+            console.log("Preserving existing global categories:", window.categories);
+          }
         } else {
           window.categories = finalCategories;
         }

@@ -39,6 +39,9 @@ function saveData() {
   localStorage.setItem("categories", JSON.stringify(categories))
   localStorage.setItem("categoriesLastModified", Date.now().toString())
   
+  // Also save to sessionStorage as backup
+  sessionStorage.setItem("categoriesBackup", JSON.stringify(categories))
+  
   // Force update global categories if available
   if (window.categories) {
     window.categories.length = 0

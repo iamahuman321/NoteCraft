@@ -143,18 +143,44 @@ function loadLocalData() {
     notes = [];
   }
   
-  // Load categories from localStorage
+  // Load categories from localStorage with fallback protection
   const savedCategories = localStorage.getItem("categories");
   if (savedCategories) {
     try {
       const parsedCategories = JSON.parse(savedCategories);
-      categories = Array.isArray(parsedCategories) ? parsedCategories : [{ id: "all", name: "All" }];
+      if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
+        categories = parsedCategories;
+        // Store categories in a backup location to prevent loss
+        sessionStorage.setItem("categoriesBackup", JSON.stringify(parsedCategories));
+      } else {
+        categories = [{ id: "all", name: "All" }];
+      }
     } catch (error) {
       console.error("Error parsing saved categories:", error);
-      categories = [{ id: "all", name: "All" }];
+      // Try to recover from backup
+      const backup = sessionStorage.getItem("categoriesBackup");
+      if (backup) {
+        try {
+          categories = JSON.parse(backup);
+        } catch {
+          categories = [{ id: "all", name: "All" }];
+        }
+      } else {
+        categories = [{ id: "all", name: "All" }];
+      }
     }
   } else {
-    categories = [{ id: "all", name: "All" }];
+    // Try to recover from backup
+    const backup = sessionStorage.getItem("categoriesBackup");
+    if (backup) {
+      try {
+        categories = JSON.parse(backup);
+      } catch {
+        categories = [{ id: "all", name: "All" }];
+      }
+    } else {
+      categories = [{ id: "all", name: "All" }];
+    }
   }
   
   // Load settings from localStorage
@@ -1376,29 +1402,21 @@ function hideShareModal() {
 }
 
 function showCategoryModal() {
-  console.log("showCategoryModal called");
-  console.log("Current global categories:", categories);
+  // Try to get the most complete category list from multiple sources
+  const localCategories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }];
+  const sessionCategories = JSON.parse(sessionStorage.getItem("categoriesBackup")) || [{ id: "all", name: "All" }];
   
-  // Use global categories if they have more items than localStorage
-  const savedCategories = localStorage.getItem("categories");
-  console.log("Saved categories from localStorage:", savedCategories);
-  
-  if (savedCategories) {
-    try {
-      const parsedCategories = JSON.parse(savedCategories);
-      console.log("Parsed categories:", parsedCategories);
-      
-      // Only use localStorage if it has more categories than global
-      if (parsedCategories.length > categories.length) {
-        categories = parsedCategories;
-        console.log("Updated categories from localStorage:", categories);
-      } else {
-        console.log("Using global categories (more items):", categories);
-      }
-    } catch (error) {
-      console.error("Error parsing categories:", error);
-    }
+  // Use the source with the most categories
+  let bestCategories = categories;
+  if (localCategories.length > bestCategories.length) {
+    bestCategories = localCategories;
   }
+  if (sessionCategories.length > bestCategories.length) {
+    bestCategories = sessionCategories;
+  }
+  
+  // Update global categories with the best source
+  categories = bestCategories;
   
   const categoryModal = document.getElementById("categoryModal");
   if (categoryModal) {
