@@ -1376,13 +1376,20 @@ function hideShareModal() {
 }
 
 function showCategoryModal() {
+  console.log("showCategoryModal called");
+  console.log("Current global categories:", categories);
+  
   // Always reload the freshest categories from localStorage
   const savedCategories = localStorage.getItem("categories");
+  console.log("Saved categories from localStorage:", savedCategories);
+  
   if (savedCategories) {
     try {
       const parsedCategories = JSON.parse(savedCategories);
+      console.log("Parsed categories:", parsedCategories);
       if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
         categories = parsedCategories;
+        console.log("Updated categories to:", categories);
       }
     } catch (error) {
       console.error("Error parsing categories:", error);

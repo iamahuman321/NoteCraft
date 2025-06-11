@@ -240,6 +240,11 @@ function loadUserData(user) {
         const firebaseLastModified = userData.categoriesLastModified || 0;
         
         // Determine which categories to use based on timestamp and content
+        console.log("Local categories:", localCategories.length, "items");
+        console.log("Firebase categories:", firebaseCategories.length, "items");
+        console.log("Local timestamp:", lastLocalModified);
+        console.log("Firebase timestamp:", firebaseLastModified);
+        
         let finalCategories;
         if (lastLocalModified > firebaseLastModified) {
           // Local categories are newer
