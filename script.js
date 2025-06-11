@@ -3267,9 +3267,14 @@ function resetVoiceRecording() {
 }
 
 async function toggleVoiceRecording() {
+  console.log('toggleVoiceRecording called');
+  console.log('mediaRecorder state:', mediaRecorder?.state);
+  
   if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+    console.log('Starting voice recording');
     await startVoiceRecording();
   } else {
+    console.log('Stopping voice recording');
     stopVoiceRecording();
   }
 }
@@ -3294,14 +3299,17 @@ async function startVoiceRecording() {
     recordingTimer = setInterval(updateRecordingDuration, 100);
     
     mediaRecorder.ondataavailable = (event) => {
+      console.log('Data available:', event.data.size, 'bytes');
       if (event.data.size > 0) {
         recordedChunks.push(event.data);
       }
     };
     
     mediaRecorder.onstop = () => {
+      console.log('Recording stopped, creating blob...');
       const blob = new Blob(recordedChunks, { type: 'audio/webm' });
       voiceRecording = blob;
+      console.log('Voice recording blob created:', voiceRecording.size, 'bytes');
       
       const statusEl = document.getElementById('voiceStatus');
       const circleEl = document.getElementById('voiceVisualizer').querySelector('.voice-circle');
@@ -3319,7 +3327,9 @@ async function startVoiceRecording() {
       stream.getTracks().forEach(track => track.stop());
     };
     
+    console.log('Starting MediaRecorder...');
     mediaRecorder.start();
+    console.log('MediaRecorder started');
   } catch (error) {
     console.error('Error starting voice recording:', error);
     showToast('Could not access microphone', 'error');
@@ -3367,7 +3377,12 @@ function discardVoiceRecording() {
 }
 
 function saveVoiceRecording() {
+  console.log('saveVoiceRecording called');
+  console.log('voiceRecording:', voiceRecording);
+  console.log('currentNote:', currentNote);
+  
   if (!voiceRecording || !currentNote) {
+    console.log('Missing voiceRecording or currentNote');
     showToast('No recording to save', 'error');
     return;
   }
