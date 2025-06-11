@@ -1849,7 +1849,7 @@ function toggleListItemInSection(sectionId, itemIndex) {
   if (!currentNote?.listSections) return;
   
   const section = currentNote.listSections.find(s => s.id === sectionId);
-  if (!section?.items?.[itemIndex]) return;
+  if (!section?.items || itemIndex < 0 || itemIndex >= section.items.length) return;
   
   section.items[itemIndex].completed = !section.items[itemIndex].completed;
   updateListSection();
@@ -1868,7 +1868,7 @@ function deleteListItemInSection(sectionId, itemIndex) {
   if (!currentNote?.listSections) return;
   
   const section = currentNote.listSections.find(s => s.id === sectionId);
-  if (!section?.items) return;
+  if (!section?.items || itemIndex < 0 || itemIndex >= section.items.length) return;
   
   section.items.splice(itemIndex, 1);
   
@@ -1894,7 +1894,7 @@ function deleteListSection(sectionId) {
   if (!currentNote?.listSections) return;
   
   const sectionIndex = currentNote.listSections.findIndex(s => s.id === sectionId);
-  if (sectionIndex === -1) return;
+  if (sectionIndex === -1 || sectionIndex >= currentNote.listSections.length) return;
   
   currentNote.listSections.splice(sectionIndex, 1);
   updateListSection();
@@ -2079,7 +2079,7 @@ function deleteImage(index) {
     !img.noteId || img.noteId === currentNote.id
   );
   
-  if (!noteImages[index]) return;
+  if (index < 0 || index >= noteImages.length || !noteImages[index]) return;
   
   // Find the actual index in the full images array
   const imageToDelete = noteImages[index];
@@ -2088,7 +2088,7 @@ function deleteImage(index) {
     (img.data === imageToDelete.data && img.timestamp === imageToDelete.timestamp)
   );
   
-  if (actualIndex >= 0) {
+  if (actualIndex >= 0 && actualIndex < currentNote.images.length) {
     currentNote.images.splice(actualIndex, 1);
     updateImagesSection();
     saveCurrentNote();
@@ -3905,7 +3905,7 @@ function updateVoiceNotesSection() {
 }
 
 function deleteVoiceNote(index) {
-  if (!currentNote || !currentNote.voiceNotes) return;
+  if (!currentNote || !currentNote.voiceNotes || index < 0 || index >= currentNote.voiceNotes.length) return;
   
   currentNote.voiceNotes.splice(index, 1);
   currentNote.lastModified = Date.now();
