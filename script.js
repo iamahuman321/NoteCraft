@@ -4224,10 +4224,10 @@ function setupSwipeToReveal() {
       // Allow both left swipe (negative) and right swipe back (positive)
       if (deltaX < 0) {
         // Left swipe - reveal actions
-        const translateX = Math.max(deltaX, -180);
+        const translateX = Math.max(deltaX, -200);
         noteCard.style.transform = `translateX(${translateX}px)`;
         
-        if (Math.abs(translateX) > 70) {
+        if (Math.abs(translateX) > 80) {
           actions.style.opacity = '1';
           actions.style.transform = 'translateX(0)';
           actions.classList.add('revealed');
@@ -4240,10 +4240,10 @@ function setupSwipeToReveal() {
         }
       } else if (deltaX > 0 && hasRevealed) {
         // Right swipe - close actions
-        const translateX = Math.max(-180 + deltaX, -180);
+        const translateX = Math.max(-200 + deltaX, -200);
         noteCard.style.transform = `translateX(${translateX}px)`;
         
-        if (translateX > -90) {
+        if (translateX > -100) {
           actions.style.opacity = '0';
           actions.style.transform = 'translateX(12px)';
           actions.classList.remove('revealed');
@@ -4259,7 +4259,7 @@ function setupSwipeToReveal() {
       
       if (hasRevealed) {
         // Keep actions visible
-        noteCard.style.transform = 'translateX(-180px)';
+        noteCard.style.transform = 'translateX(-200px)';
         actions.style.opacity = '1';
         actions.style.transform = 'translateX(0)';
         actions.classList.add('revealed');
