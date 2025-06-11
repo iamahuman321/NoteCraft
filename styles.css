@@ -89,8 +89,10 @@ body {
 
 /* Search Section */
 .search-section {
-  position: sticky;
-  top: 0;
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
   background: var(--background-color);
   border-bottom: 1px solid var(--border-color);
   padding: 0.75rem 1rem;
@@ -400,20 +402,16 @@ body {
 /* Main Content */
 .main-content {
   margin-top: var(--header-height);
-  height: calc(100vh - var(--header-height));
+  min-height: calc(100vh - var(--header-height));
   padding: 0;
   max-width: 100%;
   background: var(--background-light);
-  overflow: hidden;
 }
 
 /* Pages */
 .page {
   display: none;
   animation: fadeIn 0.3s ease-in-out;
-  height: calc(100vh - var(--header-height));
-  overflow-y: auto;
-  padding-top: 0;
 }
 
 .page.active {
@@ -428,8 +426,8 @@ body {
 /* Notes Container */
 .notes-container {
   padding: 1rem;
-  padding-top: 0;
-  min-height: calc(100vh - var(--header-height) - 128px); /* Account for search + filter sections */
+  padding-top: 128px; /* Space for fixed search + filter sections */
+  min-height: calc(100vh - var(--header-height));
 }
 
 .notes-grid {
@@ -500,8 +498,10 @@ body {
 
 /* Filter Chips */
 .filter-chips {
-  position: sticky;
-  top: 64px; /* Height of search section */
+  position: fixed;
+  top: calc(var(--header-height) + 64px); /* Below header + search section */
+  left: 0;
+  right: 0;
   display: flex;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
