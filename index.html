@@ -84,8 +84,11 @@
             <div class="search-section" id="searchSection">
                 <div class="search-container" id="searchContainer">
                     <input type="text" class="search-input" id="searchInput" placeholder="Search notes..." />
-                    <button class="search-btn" id="searchBtn" title="Search">
-                        <i class="fas fa-search"></i>
+                    <button class="search-voice-btn" id="searchVoiceBtn" title="Voice search">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="search-btn" id="searchBtn" title="Advanced search">
+                        <i class="fas fa-sliders-h"></i>
                     </button>
                     <button class="search-clear hidden" id="searchClear" title="Clear search">
                         <i class="fas fa-times"></i>
@@ -208,6 +211,9 @@
             <div class="editor-toolbar">
                 <button class="toolbar-btn" id="imageBtn" title="Add Image">
                     <i class="fas fa-image"></i>
+                </button>
+                <button class="toolbar-btn" id="voiceNoteBtn" title="Voice Note">
+                    <i class="fas fa-microphone"></i>
                 </button>
                 <button class="toolbar-btn" id="listBtn" title="Add List">
                     <i class="fas fa-list"></i>
@@ -443,6 +449,128 @@
                     <i class="fas fa-download"></i>
                     Download
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Search Modal -->
+    <div class="modal" id="advancedSearchModal">
+        <div class="modal-overlay" onclick="hideAdvancedSearchModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Advanced Search</h3>
+                <button class="modal-close" onclick="hideAdvancedSearchModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Search in content</label>
+                    <input type="text" id="advancedSearchContent" class="form-input" placeholder="Search within note content...">
+                </div>
+                <div class="form-group">
+                    <label>Date range</label>
+                    <div class="date-range">
+                        <input type="date" id="advancedSearchFromDate" class="form-input">
+                        <span>to</span>
+                        <input type="date" id="advancedSearchToDate" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="advancedSearchCategory" class="form-input">
+                        <option value="">All categories</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Note type</label>
+                    <select id="advancedSearchType" class="form-input">
+                        <option value="">All types</option>
+                        <option value="text">Text only</option>
+                        <option value="images">With images</option>
+                        <option value="lists">With lists</option>
+                        <option value="voice">With voice notes</option>
+                        <option value="shared">Shared notes</option>
+                        <option value="password">Password protected</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Sort by</label>
+                    <select id="advancedSearchSort" class="form-input">
+                        <option value="date">Date modified</option>
+                        <option value="title">Title</option>
+                        <option value="created">Date created</option>
+                        <option value="relevance">Relevance</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="clearAdvancedSearch()">Clear</button>
+                <button class="btn btn-primary" onclick="performAdvancedSearch()">Search</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Recording Modal -->
+    <div class="modal" id="voiceRecordingModal">
+        <div class="modal-overlay" onclick="stopVoiceRecording()"></div>
+        <div class="modal-content voice-modal">
+            <div class="modal-header">
+                <h3>Voice Note</h3>
+                <button class="modal-close" onclick="stopVoiceRecording()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body voice-body">
+                <div class="voice-visualizer" id="voiceVisualizer">
+                    <div class="voice-circle">
+                        <i class="fas fa-microphone" id="voiceMicIcon"></i>
+                    </div>
+                </div>
+                <div class="voice-status" id="voiceStatus">Tap to start recording</div>
+                <div class="voice-duration" id="voiceDuration">00:00</div>
+                <div class="voice-controls">
+                    <button class="btn-voice" id="voiceRecordBtn" onclick="toggleVoiceRecording()">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="btn-voice hidden" id="voiceStopBtn" onclick="stopVoiceRecording()">
+                        <i class="fas fa-stop"></i>
+                    </button>
+                    <button class="btn-voice hidden" id="voicePlayBtn" onclick="playVoiceRecording()">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+                <div class="voice-actions hidden" id="voiceActions">
+                    <button class="btn btn-secondary" onclick="discardVoiceRecording()">Discard</button>
+                    <button class="btn btn-primary" onclick="saveVoiceRecording()">Add to Note</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Search Modal -->
+    <div class="modal" id="voiceSearchModal">
+        <div class="modal-overlay" onclick="stopVoiceSearch()"></div>
+        <div class="modal-content voice-modal">
+            <div class="modal-header">
+                <h3>Voice Search</h3>
+                <button class="modal-close" onclick="stopVoiceSearch()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body voice-body">
+                <div class="voice-visualizer" id="voiceSearchVisualizer">
+                    <div class="voice-circle">
+                        <i class="fas fa-microphone" id="voiceSearchMicIcon"></i>
+                    </div>
+                </div>
+                <div class="voice-status" id="voiceSearchStatus">Listening...</div>
+                <div class="voice-transcript" id="voiceSearchTranscript"></div>
+                <div class="voice-controls">
+                    <button class="btn-voice" id="voiceSearchStopBtn" onclick="stopVoiceSearch()">
+                        <i class="fas fa-stop"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
