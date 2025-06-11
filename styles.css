@@ -3313,7 +3313,7 @@ body {
   height: 100px;
 }
 
-/* Clean Mobile Swipe Actions */
+/* Minimal Icon-Only Swipe Actions */
 .note-card-container {
   position: relative;
   overflow: hidden;
@@ -3324,17 +3324,14 @@ body {
 
 .note-card-swipe-actions {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  bottom: 8px;
-  width: 200px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 160px;
   display: flex;
-  gap: 2px;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 8px;
-  padding: 4px;
+  background: var(--background-color);
   opacity: 0;
-  transform: translateX(6px);
+  transform: translateX(4px);
   transition: all 0.2s ease;
   z-index: 5;
 }
@@ -3342,50 +3339,48 @@ body {
 .swipe-action {
   flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
-  border-radius: 6px;
-  padding: 12px 8px;
+  border-left: 1px solid var(--border-color);
   margin: 0;
-  border: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.swipe-action:first-child {
+  border-left: none;
 }
 
 .swipe-action:active {
-  transform: scale(0.92);
+  transform: scale(0.9);
 }
 
 .swipe-action i {
-  font-size: 22px;
-  margin-bottom: 4px;
+  font-size: 24px;
   color: white;
-}
-
-.swipe-action span {
-  font-size: 10px;
-  font-weight: 600;
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   opacity: 0.9;
 }
 
+.swipe-action span {
+  display: none;
+}
+
 .delete-action {
-  background: #ff4444;
+  background: #dc3545;
 }
 
 .duplicate-action {
-  background: #666666;
+  background: #6c757d;
 }
 
 .share-action {
-  background: #0088ff;
+  background: #007bff;
 }
 
 .category-action {
-  background: #00cc66;
+  background: #28a745;
 }
 
 .note-card {
@@ -3399,7 +3394,7 @@ body {
 }
 
 .note-card.swiping {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .note-card-swipe-actions.revealed {
@@ -3407,41 +3402,23 @@ body {
   transform: translateX(0);
 }
 
-/* Mobile Optimized */
+/* Mobile Clean */
 @media (max-width: 768px) {
   .note-card-swipe-actions {
-    width: 180px;
-  }
-  
-  .swipe-action {
-    padding: 10px 6px;
+    width: 140px;
   }
   
   .swipe-action i {
-    font-size: 20px;
-  }
-  
-  .swipe-action span {
-    font-size: 9px;
+    font-size: 22px;
   }
 }
 
 @media (max-width: 480px) {
   .note-card-swipe-actions {
-    width: 160px;
-  }
-  
-  .swipe-action {
-    padding: 8px 4px;
+    width: 120px;
   }
   
   .swipe-action i {
-    font-size: 18px;
-    margin-bottom: 3px;
-  }
-  
-  .swipe-action span {
-    font-size: 8px;
-    letter-spacing: 0.3px;
+    font-size: 20px;
   }
 }
