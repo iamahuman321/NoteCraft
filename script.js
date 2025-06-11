@@ -3234,10 +3234,15 @@ let recordingStartTime = null;
 let recordingTimer = null;
 
 function showVoiceRecordingModal() {
+  console.log('Voice recording modal clicked');
   const modal = document.getElementById('voiceRecordingModal');
+  console.log('Modal found:', modal);
   if (modal) {
     modal.classList.add('open');
     resetVoiceRecording();
+    showToast('Voice recording modal opened', 'success');
+  } else {
+    showToast('Voice recording modal not found', 'error');
   }
 }
 
