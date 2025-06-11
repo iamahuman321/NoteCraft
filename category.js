@@ -2,7 +2,7 @@
 
 // Global variables
 let categories = [{ id: "all", name: "All" }]
-const notes = JSON.parse(localStorage.getItem("notes")) || []
+let notes = JSON.parse(localStorage.getItem("notes")) || []
 
 // Initialize the page with CategoryManager
 async function initializePage() {
@@ -24,6 +24,44 @@ async function initializePage() {
   } else {
     // Retry if CategoryManager not ready
     setTimeout(initializePage, 100)
+  }
+  
+  // Set up Firebase authentication listener to refresh notes when user data loads
+  setupFirebaseListener()
+}
+
+// Setup Firebase listener to refresh notes data
+function setupFirebaseListener() {
+  const checkAndSetupAuth = () => {
+    if (window.auth && window.authFunctions && window.database) {
+      window.auth.onAuthStateChanged((user) => {
+        if (user && !window.authFunctions.isUserGuest()) {
+          // User is authenticated, refresh notes when data loads
+          setTimeout(() => {
+            refreshNotesData()
+          }, 1500);
+        }
+      });
+    } else {
+      setTimeout(checkAndSetupAuth, 500);
+    }
+  };
+  
+  checkAndSetupAuth();
+}
+
+// Refresh notes data from localStorage/Firebase
+function refreshNotesData() {
+  try {
+    const latestNotes = JSON.parse(localStorage.getItem("notes")) || []
+    if (latestNotes.length !== notes.length) {
+      notes.length = 0
+      notes.push(...latestNotes)
+      console.log("Refreshed notes data on category page:", notes.length)
+      renderCategories() // Re-render with updated notes
+    }
+  } catch (error) {
+    console.error("Error refreshing notes data:", error)
   }
 }
 
