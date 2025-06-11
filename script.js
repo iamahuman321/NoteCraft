@@ -2905,9 +2905,9 @@ function showAdvancedSearchModal() {
   if (modal) {
     // Populate categories in dropdown
     const categorySelect = document.getElementById('advancedSearchCategory');
-    if (categorySelect && appData.categories) {
+    if (categorySelect && userData.categories) {
       categorySelect.innerHTML = '<option value="">All categories</option>';
-      appData.categories.forEach(category => {
+      userData.categories.forEach(category => {
         const option = document.createElement('option');
         option.value = category.id;
         option.textContent = category.name;
