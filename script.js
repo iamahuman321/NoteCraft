@@ -106,7 +106,7 @@ function initializeApp() {
         window.currentUser = user;
         
         // Load data after auth state is determined
-        if (user && !window.authFunctions.isUserGuest()) {
+        if (user && window.authFunctions && !window.authFunctions.isUserGuest()) {
           // Authenticated user - data will be loaded by firebase-config
           // Wait for data to be loaded, then render
           const checkDataLoaded = () => {
@@ -2284,7 +2284,7 @@ async function searchUsers(query) {
       const userData = childSnapshot.val();
       console.log(`User ${totalUsers}:`, userData);
       
-      if (userData.uid !== currentUser.uid && userData.username) {
+      if (userData && userData.uid !== currentUser.uid && userData.username) {
         const matchesUsername = userData.username && userData.username.toLowerCase().includes(queryLower);
         const matchesName = userData.name && userData.name.toLowerCase().includes(queryLower);
         const matchesEmail = userData.email && userData.email.toLowerCase().includes(queryLower);
@@ -2294,8 +2294,8 @@ async function searchUsers(query) {
           users.push({
             uid: childSnapshot.key,
             username: userData.username,
-            name: userData.name || userData.displayName || userData.email.split('@')[0],
-            email: userData.email
+            name: userData.name || userData.displayName || (userData.email ? userData.email.split('@')[0] : 'Unknown'),
+            email: userData.email || ''
           });
         }
       }

@@ -46,7 +46,6 @@ const set = () => Promise.reject(new Error("Firebase not initialized"))
 
 // Sharing-related functions
 const shareNote = () => Promise.reject(new Error("Firebase not initialized"))
-const getInvitations = () => Promise.reject(new Error("Firebase not initialized"))
 const acceptInvitation = () => Promise.reject(new Error("Firebase not initialized"))
 const declineInvitation = () => Promise.reject(new Error("Firebase not initialized"))
 const getSharedNotes = () => Promise.reject(new Error("Firebase not initialized"))
