@@ -81,6 +81,9 @@ function initializeApp() {
   waitForFirebase().then(() => {
     console.log("Firebase ready for main app");
     
+    // Clear search on page load
+    clearSearch();
+    
     // Initialize UI first
     setupEventListeners();
     loadSettings();
