@@ -3239,9 +3239,124 @@ function showVoiceRecordingModal() {
   if (modal) {
     modal.style.display = 'flex';
     modal.classList.add('open');
+    initializeSpeechRecognition();
     resetVoiceRecording();
   } else {
     showToast('Voice recording not available', 'error');
+  }
+}
+
+// Initialize speech recognition
+function initializeSpeechRecognition() {
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    speechRecognition = new SpeechRecognition();
+    
+    speechRecognition.continuous = true;
+    speechRecognition.interimResults = true;
+    speechRecognition.lang = 'en-US';
+    
+    speechRecognition.onstart = () => {
+      isListening = true;
+      const statusEl = document.getElementById('voiceStatus');
+      const circleEl = document.getElementById('voiceVisualizer').querySelector('.voice-circle');
+      
+      if (statusEl) statusEl.textContent = 'Listening... Speak now';
+      if (circleEl) circleEl.classList.add('recording');
+      
+      // Start timer
+      recordingStartTime = Date.now();
+      recordingTimer = setInterval(updateRecordingDuration, 100);
+    };
+    
+    speechRecognition.onresult = (event) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+      
+      recognizedText = finalTranscript;
+      
+      // Show live transcription
+      const statusEl = document.getElementById('voiceStatus');
+      if (statusEl && (finalTranscript || interimTranscript)) {
+        statusEl.innerHTML = `<div style="font-size: 14px; margin-top: 10px; padding: 10px; background: var(--bg-secondary); border-radius: 6px; text-align: left;">${finalTranscript}<span style="color: var(--text-secondary);">${interimTranscript}</span></div>`;
+      }
+      
+      // Reset timeout for auto-stop
+      clearTimeout(speechTimeout);
+      speechTimeout = setTimeout(() => {
+        if (isListening) {
+          stopSpeechRecognition();
+        }
+      }, 3000); // Stop after 3 seconds of silence
+    };
+    
+    speechRecognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      showToast('Speech recognition error: ' + event.error, 'error');
+      stopSpeechRecognition();
+    };
+    
+    speechRecognition.onend = () => {
+      isListening = false;
+      clearInterval(recordingTimer);
+      clearTimeout(speechTimeout);
+      
+      const statusEl = document.getElementById('voiceStatus');
+      const circleEl = document.getElementById('voiceVisualizer').querySelector('.voice-circle');
+      const actionsEl = document.getElementById('voiceActions');
+      
+      if (statusEl) statusEl.textContent = recognizedText ? 'Speech recognized - Adding to note...' : 'No speech detected';
+      if (circleEl) circleEl.classList.remove('recording');
+      
+      // Add recognized text to note
+      if (recognizedText && currentNote) {
+        addSpeechToNote(recognizedText);
+      }
+      
+      // Auto-close modal after adding text
+      setTimeout(() => {
+        const modal = document.getElementById('voiceRecordingModal');
+        if (modal) {
+          modal.style.display = 'none';
+          modal.classList.remove('open');
+        }
+        resetVoiceRecording();
+      }, 1500);
+    };
+  } else {
+    showToast('Speech recognition not supported in this browser', 'error');
+  }
+}
+
+function addSpeechToNote(text) {
+  if (!currentNote || !text.trim()) return;
+  
+  const contentTextarea = document.getElementById('contentTextarea');
+  if (contentTextarea) {
+    const currentContent = contentTextarea.value;
+    const newContent = currentContent ? `${currentContent}\n${text.trim()}` : text.trim();
+    
+    contentTextarea.value = newContent;
+    currentNote.content = newContent;
+    currentNote.lastModified = Date.now();
+    
+    saveCurrentNote();
+    showToast('Speech added to note', 'success');
+  }
+}
+
+function stopSpeechRecognition() {
+  if (speechRecognition && isListening) {
+    speechRecognition.stop();
   }
 }
 
@@ -3267,15 +3382,23 @@ function resetVoiceRecording() {
 }
 
 async function toggleVoiceRecording() {
-  console.log('toggleVoiceRecording called');
-  console.log('mediaRecorder state:', mediaRecorder?.state);
-  
-  if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-    console.log('Starting voice recording');
-    await startVoiceRecording();
+  if (!isListening) {
+    startSpeechRecognition();
   } else {
-    console.log('Stopping voice recording');
-    stopVoiceRecording();
+    stopSpeechRecognition();
+  }
+}
+
+function startSpeechRecognition() {
+  if (speechRecognition && !isListening) {
+    recognizedText = '';
+    speechRecognition.start();
+    
+    const recordBtn = document.getElementById('voiceRecordBtn');
+    const stopBtn = document.getElementById('voiceStopBtn');
+    
+    if (recordBtn) recordBtn.classList.add('hidden');
+    if (stopBtn) stopBtn.classList.remove('hidden');
   }
 }
 
@@ -3346,14 +3469,15 @@ async function startVoiceRecording() {
 }
 
 function stopVoiceRecording() {
-  if (mediaRecorder && mediaRecorder.state === 'recording') {
-    mediaRecorder.stop();
-  }
-  
-  const modal = document.getElementById('voiceRecordingModal');
-  if (modal) {
-    modal.style.display = 'none';
-    modal.classList.remove('open');
+  if (isListening) {
+    stopSpeechRecognition();
+  } else {
+    // Close modal if not listening
+    const modal = document.getElementById('voiceRecordingModal');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.remove('open');
+    }
   }
 }
 
