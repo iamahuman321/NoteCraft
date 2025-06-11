@@ -2456,6 +2456,104 @@ function showToast(message, type = 'default') {
   }
 }
 
+// Voice recording functions
+function toggleVoiceRecording() {
+  if (!isListening) {
+    startSpeechRecognition();
+  } else {
+    stopSpeechRecognition();
+  }
+}
+
+function stopVoiceRecording() {
+  stopSpeechRecognition();
+}
+
+function discardVoiceRecording() {
+  recognizedText = '';
+  resetVoiceRecording();
+}
+
+function saveVoiceRecording() {
+  if (recognizedText) {
+    addSpeechToNote(recognizedText);
+    showToast('Speech added to note successfully', 'success');
+    resetVoiceRecording();
+  }
+}
+
+function addSpeechToNote(text) {
+  const contentTextarea = document.getElementById('noteContent');
+  if (contentTextarea) {
+    const currentContent = contentTextarea.value;
+    const newContent = currentContent ? currentContent + '\n\n' + text : text;
+    contentTextarea.value = newContent;
+    
+    // Auto-save
+    if (typeof saveCurrentNote === 'function') {
+      saveCurrentNote();
+    }
+  }
+}
+
+function updateRecordingDuration() {
+  if (recordingStartTime) {
+    const elapsed = Date.now() - recordingStartTime;
+    const seconds = Math.floor(elapsed / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    
+    const durationEl = document.getElementById('voiceDuration');
+    if (durationEl) {
+      durationEl.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+  }
+}
+
+// Language selector functions
+function showLanguageSelector() {
+  const modal = document.getElementById('languageSelectorModal');
+  if (modal) {
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+  }
+}
+
+function hideLanguageSelector() {
+  const modal = document.getElementById('languageSelectorModal');
+  if (modal) {
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+  }
+}
+
+function selectLanguage(langCode) {
+  localStorage.setItem('speechLanguage', langCode);
+  updateLanguageDisplay(langCode);
+  
+  // Update speech recognition language
+  if (speechRecognition) {
+    speechRecognition.lang = langCode;
+  }
+  
+  hideLanguageSelector();
+  showToast('Language updated successfully', 'success');
+}
+
+function updateLanguageDisplay(langCode) {
+  const displayEl = document.getElementById('currentLanguageDisplay');
+  if (displayEl) {
+    const languages = {
+      'en-US': 'English (US)',
+      'en-GB': 'English (UK)', 
+      'hi-IN': 'हिन्दी',
+      'gu-IN': 'ગુજરાતી',
+      'nb-NO': 'Norsk'
+    };
+    displayEl.textContent = languages[langCode] || 'English';
+  }
+}
+
 // Global functions for inline event handlers
 window.editNote = editNote;
 window.toggleNoteCategory = toggleNoteCategory;
@@ -2474,6 +2572,13 @@ window.showUsernameModal = showUsernameModal;
 window.updateShoppingItem = updateShoppingItem;
 window.toggleShoppingItem = toggleShoppingItem;
 window.deleteShoppingItem = deleteShoppingItem;
+window.toggleVoiceRecording = toggleVoiceRecording;
+window.stopVoiceRecording = stopVoiceRecording;
+window.discardVoiceRecording = discardVoiceRecording;
+window.saveVoiceRecording = saveVoiceRecording;
+window.showLanguageSelector = showLanguageSelector;
+window.hideLanguageSelector = hideLanguageSelector;
+window.selectLanguage = selectLanguage;
 
 // Search functionality
 function handleSearch() {
@@ -4026,6 +4131,51 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize speech recognition
   initializeSpeechRecognition();
 });
+
+// Speech recognition control functions
+function startSpeechRecognition() {
+  if (!speechRecognition) {
+    initializeSpeechRecognition();
+  }
+  
+  if (speechRecognition && !isListening) {
+    try {
+      speechRecognition.start();
+      isListening = true;
+    } catch (error) {
+      console.error('Error starting speech recognition:', error);
+      showToast('Could not start speech recognition', 'error');
+    }
+  }
+}
+
+function stopSpeechRecognition() {
+  if (speechRecognition && isListening) {
+    speechRecognition.stop();
+    isListening = false;
+  }
+}
+
+// Format speech text with proper punctuation and capitalization
+function formatSpeechText(text) {
+  if (!text) return '';
+  
+  // Basic text formatting for mixed languages
+  let formatted = text.trim();
+  
+  // Capitalize first letter
+  formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  
+  // Add period if no ending punctuation
+  if (!/[.!?]$/.test(formatted)) {
+    formatted += '.';
+  }
+  
+  // Add space after sentence
+  formatted += ' ';
+  
+  return formatted;
+}
 
 // Enhanced collaboration presence update
 function updateCollaboratorPresence(activeUsers) {
