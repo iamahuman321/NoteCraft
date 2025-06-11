@@ -3542,6 +3542,8 @@ function initializeSpeechRecognition() {
         if (transcriptEl) {
           transcriptEl.textContent = recognizedText;
         }
+        
+        console.log('Final transcript captured:', recognizedText);
       } else {
         if (statusEl) {
           statusEl.textContent = 'No clear speech detected. Try again.';
