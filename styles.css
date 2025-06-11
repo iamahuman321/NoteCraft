@@ -577,13 +577,24 @@ body {
 
 /* Notes Container */
 .notes-container {
+  position: fixed;
+  top: 184px; /* Fixed position: header (64px) + search (52px) + filter (68px) = 184px */
+  left: 0;
+  right: 0;
+  bottom: 0;
   padding: 1rem;
-  padding-top: 184px; /* Space for fixed header (64px) + search (52px) + filter (68px) = 184px */
   padding-bottom: calc(var(--toolbar-height) + 1rem);
-  min-height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--background-light);
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+  transform: translate3d(0, 0, 0); /* Hardware acceleration */
+  -webkit-transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
 }
 
 .notes-grid {
@@ -591,6 +602,9 @@ body {
   grid-template-columns: 1fr;
   gap: 1rem;
   padding-bottom: 2rem;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
 
 @media (min-width: 768px) {
@@ -611,24 +625,29 @@ body {
   border-radius: var(--border-radius);
   padding: 1.25rem;
   box-shadow: var(--shadow);
-  transition: var(--transition-fast);
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
   cursor: pointer;
   border: 1px solid var(--border-color);
   min-height: 120px;
   position: relative;
-  transform: translateZ(0); /* Hardware acceleration */
-  will-change: transform, box-shadow;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+  contain: layout style paint;
 }
 
 .note-card:hover {
-  transform: translateY(-2px) translateZ(0);
+  transform: translate3d(0, -2px, 0);
+  -webkit-transform: translate3d(0, -2px, 0);
   box-shadow: var(--shadow-lg);
 }
 
 .note-card:active {
-  transform: translateY(0) translateZ(0);
-  transition: var(--transition-fast);
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  transition: transform 0.1s ease-out;
 }
 
 .note-title {
@@ -676,8 +695,11 @@ body {
   z-index: 998;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   height: 68px;
-  transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
   will-change: scroll-position;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .filter-chip {
