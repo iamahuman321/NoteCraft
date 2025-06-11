@@ -365,65 +365,7 @@ function setupEventListeners() {
   if (titleInput) titleInput.addEventListener("input", debounce(autoSaveWrapper, 500));
   if (contentTextarea) contentTextarea.addEventListener("input", debounce(autoSaveWrapper, 500));
   
-  // Toolbar buttons with debugging
-  const imageBtn = document.getElementById("imageBtn");
-  const voiceNoteBtn = document.getElementById("voiceNoteBtn");
-  const listBtn = document.getElementById("listBtn");
-  const passwordBtn = document.getElementById("passwordBtn");
-  const shareBtn = document.getElementById("shareBtn");
-  const deleteBtn = document.getElementById("deleteBtn");
-  
-  console.log("Setting up toolbar buttons:", {
-    imageBtn: !!imageBtn,
-    voiceNoteBtn: !!voiceNoteBtn,
-    listBtn: !!listBtn,
-    passwordBtn: !!passwordBtn,
-    shareBtn: !!shareBtn,
-    deleteBtn: !!deleteBtn
-  });
-  
-  if (imageBtn) {
-    imageBtn.addEventListener("click", (e) => {
-      console.log("Image button clicked");
-      e.preventDefault();
-      handleImageUpload();
-    });
-  }
-  if (voiceNoteBtn) {
-    voiceNoteBtn.addEventListener("click", (e) => {
-      console.log("Voice button clicked");
-      e.preventDefault();
-      toggleVoiceRecording();
-    });
-  }
-  if (listBtn) {
-    listBtn.addEventListener("click", (e) => {
-      console.log("List button clicked");
-      e.preventDefault();
-      showListTypeModal();
-    });
-  }
-  if (passwordBtn) {
-    passwordBtn.addEventListener("click", (e) => {
-      console.log("Password button clicked");
-      e.preventDefault();
-      showPasswordModal();
-    });
-  }
-  if (shareBtn) {
-    shareBtn.addEventListener("click", (e) => {
-      console.log("Share button clicked");
-      e.preventDefault();
-      showShareModal();
-    });
-  }
-  if (deleteBtn) {
-    deleteBtn.addEventListener("click", (e) => {
-      console.log("Delete button clicked");
-      e.preventDefault();
-      if (currentNote) showDeleteModal(currentNote);
-    });
-  }
+  // Note: Toolbar buttons are now set up in setupToolbarButtons() function
 
   // Categories
   const addCategoryBtn = document.getElementById("addCategoryBtn");
@@ -960,11 +902,92 @@ function showEditorPage() {
   const fab = document.getElementById("addNoteBtn");
   if (fab) fab.classList.add("hidden");
   
-  // Search section is hidden automatically when notes page is not active
+  // Setup toolbar buttons when editor page is shown
+  setupToolbarButtons();
   
   // Setup real-time collaboration if note is shared
   if (currentNote && currentNote.isShared && currentNote.sharedId) {
     setupRealtimeCollaboration(currentNote.sharedId);
+  }
+}
+
+function setupToolbarButtons() {
+  // Remove any existing event listeners by cloning buttons
+  const imageBtn = document.getElementById("imageBtn");
+  const voiceNoteBtn = document.getElementById("voiceNoteBtn");
+  const listBtn = document.getElementById("listBtn");
+  const passwordBtn = document.getElementById("passwordBtn");
+  const shareBtn = document.getElementById("shareBtn");
+  const deleteBtn = document.getElementById("deleteBtn");
+  
+  console.log("Setting up toolbar buttons:", {
+    imageBtn: !!imageBtn,
+    voiceNoteBtn: !!voiceNoteBtn,
+    listBtn: !!listBtn,
+    passwordBtn: !!passwordBtn,
+    shareBtn: !!shareBtn,
+    deleteBtn: !!deleteBtn
+  });
+  
+  if (imageBtn) {
+    // Clone button to remove existing listeners
+    const newImageBtn = imageBtn.cloneNode(true);
+    imageBtn.parentNode.replaceChild(newImageBtn, imageBtn);
+    newImageBtn.addEventListener("click", (e) => {
+      console.log("Image button clicked");
+      e.preventDefault();
+      handleImageUpload();
+    });
+  }
+  
+  if (voiceNoteBtn) {
+    const newVoiceBtn = voiceNoteBtn.cloneNode(true);
+    voiceNoteBtn.parentNode.replaceChild(newVoiceBtn, voiceNoteBtn);
+    newVoiceBtn.addEventListener("click", (e) => {
+      console.log("Voice button clicked");
+      e.preventDefault();
+      toggleVoiceRecording();
+    });
+  }
+  
+  if (listBtn) {
+    const newListBtn = listBtn.cloneNode(true);
+    listBtn.parentNode.replaceChild(newListBtn, listBtn);
+    newListBtn.addEventListener("click", (e) => {
+      console.log("List button clicked");
+      e.preventDefault();
+      showListTypeModal();
+    });
+  }
+  
+  if (passwordBtn) {
+    const newPasswordBtn = passwordBtn.cloneNode(true);
+    passwordBtn.parentNode.replaceChild(newPasswordBtn, passwordBtn);
+    newPasswordBtn.addEventListener("click", (e) => {
+      console.log("Password button clicked");
+      e.preventDefault();
+      showPasswordModal();
+    });
+  }
+  
+  if (shareBtn) {
+    const newShareBtn = shareBtn.cloneNode(true);
+    shareBtn.parentNode.replaceChild(newShareBtn, shareBtn);
+    newShareBtn.addEventListener("click", (e) => {
+      console.log("Share button clicked");
+      e.preventDefault();
+      showShareModal();
+    });
+  }
+  
+  if (deleteBtn) {
+    const newDeleteBtn = deleteBtn.cloneNode(true);
+    deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+    newDeleteBtn.addEventListener("click", (e) => {
+      console.log("Delete button clicked");
+      e.preventDefault();
+      if (currentNote) showDeleteModal(currentNote);
+    });
   }
 }
 
