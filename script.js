@@ -527,7 +527,16 @@ function editNote(note) {
     return;
   }
   
-  currentNote = note;
+  // Create a deep copy of the note to prevent reference issues
+  currentNote = {
+    ...note,
+    categories: Array.isArray(note.categories) ? [...note.categories] : [],
+    images: Array.isArray(note.images) ? note.images.map(img => ({...img})) : [],
+    listSections: Array.isArray(note.listSections) ? note.listSections.map(section => ({
+      ...section,
+      items: Array.isArray(section.items) ? section.items.map(item => ({...item})) : []
+    })) : []
+  };
   
   // Ensure proper list structure before editing
   if (!currentNote.listSections && currentNote.listItems) {
@@ -535,14 +544,9 @@ function editNote(note) {
     currentNote.listSections = [{
       id: generateId(),
       type: currentNote.listType || 'bulleted',
-      items: currentNote.listItems
+      items: Array.isArray(currentNote.listItems) ? currentNote.listItems.map(item => ({...item})) : []
     }];
   }
-  
-  // Ensure all required arrays exist
-  currentNote.categories = currentNote.categories || [];
-  currentNote.images = currentNote.images || [];
-  currentNote.listSections = currentNote.listSections || [];
   
   showEditorPage();
   updateEditorContent();
@@ -592,14 +596,25 @@ function saveCurrentNote() {
 function saveLocalNote() {
   const existingIndex = notes.findIndex(n => n.id === currentNote.id);
   
+  // Create a deep copy of the current note to prevent reference issues
+  const noteToSave = {
+    ...currentNote,
+    categories: Array.isArray(currentNote.categories) ? [...currentNote.categories] : [],
+    images: Array.isArray(currentNote.images) ? currentNote.images.map(img => ({...img})) : [],
+    listSections: Array.isArray(currentNote.listSections) ? currentNote.listSections.map(section => ({
+      ...section,
+      items: Array.isArray(section.items) ? section.items.map(item => ({...item})) : []
+    })) : []
+  };
+  
   if (existingIndex >= 0) {
-    notes[existingIndex] = currentNote;
+    notes[existingIndex] = noteToSave;
     // Only show toast for manual saves, not auto-saves
     if (!isAutoSave && !collaborativeEditingEnabled) {
       showToast(t("noteUpdated"), "success");
     }
   } else {
-    notes.push(currentNote);
+    notes.push(noteToSave);
     if (!isAutoSave && !collaborativeEditingEnabled) {
       showToast(t("noteAdded"), "success");
     }
@@ -1821,10 +1836,11 @@ function updateImagesSection() {
     return;
   }
   
-  // Filter images that belong only to this note
-  const noteImages = currentNote.images?.filter(img => 
-    !img.noteId || img.noteId === currentNote.id
-  ) || [];
+  // Filter images that belong only to this note and create deep copies
+  const noteImages = (currentNote.images || []).filter(img => {
+    // Include image if it has no noteId (legacy) or if noteId matches current note
+    return !img.noteId || img.noteId === currentNote.id;
+  }).map(img => ({...img})); // Create deep copies to prevent reference issues
   
   if (noteImages.length === 0) {
     if (imagesSection) imagesSection.classList.add("hidden");
