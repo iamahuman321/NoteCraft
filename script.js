@@ -628,10 +628,16 @@ function saveCurrentNote() {
 function saveLocalNote() {
   const existingIndex = notes.findIndex(n => n.id === currentNote.id);
   
+  // Preserve existing categories from the notes array if they exist
+  const existingNote = existingIndex >= 0 ? notes[existingIndex] : null;
+  const preservedCategories = existingNote && Array.isArray(existingNote.categories) && existingNote.categories.length > 0 
+    ? existingNote.categories 
+    : (Array.isArray(currentNote.categories) ? currentNote.categories : []);
+  
   // Create a deep copy of the current note to prevent reference issues
   const noteToSave = {
     ...currentNote,
-    categories: Array.isArray(currentNote.categories) ? [...currentNote.categories] : [],
+    categories: [...preservedCategories], // Always preserve existing categories
     images: Array.isArray(currentNote.images) ? currentNote.images.map(img => ({...img})) : [],
     listSections: Array.isArray(currentNote.listSections) ? currentNote.listSections.map(section => ({
       ...section,

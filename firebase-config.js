@@ -265,28 +265,48 @@ function loadUserData(user) {
           console.log("Using Firebase categories");
         }
 
-        // Force update global arrays - preserve existing notes with categories if they exist
+        // Force update global arrays - always preserve note category assignments
         const existingNotes = JSON.parse(localStorage.getItem("notes")) || [];
-        const hasLocalNotesWithCategories = existingNotes.some(note => 
-          Array.isArray(note.categories) && note.categories.length > 0
-        );
         
-        let finalNotes;
-        if (hasLocalNotesWithCategories && userNotes.length === existingNotes.length) {
-          // Local notes have categories and same count, preserve them
-          finalNotes = existingNotes;
-          console.log("Preserving local notes with categories");
-        } else {
-          // Use Firebase notes but preserve any category assignments from local
-          finalNotes = userNotes.map(firebaseNote => {
-            const localNote = existingNotes.find(note => note.id === firebaseNote.id);
-            if (localNote && Array.isArray(localNote.categories) && localNote.categories.length > 0) {
-              return { ...firebaseNote, categories: localNote.categories };
+        // Always merge Firebase notes with local category assignments - preserve all category data
+        let finalNotes = [];
+        
+        // First, process Firebase notes
+        userNotes.forEach(firebaseNote => {
+          // Ensure note has categories array
+          if (!Array.isArray(firebaseNote.categories)) {
+            firebaseNote.categories = [];
+          }
+          
+          // Check if we have this note locally with categories
+          const localNote = existingNotes.find(note => note.id === firebaseNote.id);
+          if (localNote) {
+            // Always prefer local categories if they exist, otherwise use Firebase categories
+            const mergedNote = {
+              ...firebaseNote,
+              categories: Array.isArray(localNote.categories) && localNote.categories.length > 0 
+                ? localNote.categories 
+                : firebaseNote.categories
+            };
+            finalNotes.push(mergedNote);
+          } else {
+            // New note from Firebase
+            finalNotes.push(firebaseNote);
+          }
+        });
+        
+        // Then, add any local-only notes that aren't in Firebase yet
+        existingNotes.forEach(localNote => {
+          if (!finalNotes.find(note => note.id === localNote.id)) {
+            // Ensure categories array exists
+            if (!Array.isArray(localNote.categories)) {
+              localNote.categories = [];
             }
-            return firebaseNote;
-          });
-          console.log("Using Firebase notes but preserving local categories");
-        }
+            finalNotes.push(localNote);
+          }
+        });
+        
+        console.log("Merged notes with preserved categories:", finalNotes.length, "notes processed");
         
         if (window.notes) {
           window.notes.length = 0;
@@ -390,18 +410,29 @@ function loadUserData(user) {
 
 function saveUserData() {
   if (currentUser && !isGuest) {
-    const notes = JSON.parse(localStorage.getItem("notes")) || []
+    const localNotes = JSON.parse(localStorage.getItem("notes")) || []
     const categories = JSON.parse(localStorage.getItem("categories")) || []
     const categoriesLastModified = localStorage.getItem("categoriesLastModified") || Date.now()
+
+    // Ensure all notes have proper category arrays before saving
+    const notesToSave = localNotes.map(note => ({
+      ...note,
+      categories: Array.isArray(note.categories) ? note.categories : [],
+      images: Array.isArray(note.images) ? note.images : [],
+      listSections: Array.isArray(note.listSections) ? note.listSections : []
+    }));
 
     const userRef = window.database.ref(`users/${currentUser.uid}`)
 
     userRef
       .update({
-        notes: notes,
+        notes: notesToSave,
         categories: categories,
         categoriesLastModified: parseInt(categoriesLastModified),
         lastUpdated: Date.now(),
+      })
+      .then(() => {
+        console.log("User data saved to Firebase with", notesToSave.length, "notes");
       })
       .catch((error) => {
         console.error("Error saving user data:", error)
