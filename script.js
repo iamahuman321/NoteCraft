@@ -4224,23 +4224,26 @@ function setupSwipeToReveal() {
       // Allow both left swipe (negative) and right swipe back (positive)
       if (deltaX < 0) {
         // Left swipe - reveal actions
-        const translateX = Math.max(deltaX, -120);
+        const translateX = Math.max(deltaX, -200);
         noteCard.style.transform = `translateX(${translateX}px)`;
         
-        if (Math.abs(translateX) > 60) {
+        if (Math.abs(translateX) > 80) {
           actions.style.opacity = '1';
+          actions.style.transform = 'translateX(0)';
           hasRevealed = true;
         } else {
           actions.style.opacity = '0';
+          actions.style.transform = 'translateX(20px)';
           hasRevealed = false;
         }
       } else if (deltaX > 0 && hasRevealed) {
         // Right swipe - close actions
-        const translateX = Math.max(-120 + deltaX, -120);
+        const translateX = Math.max(-200 + deltaX, -200);
         noteCard.style.transform = `translateX(${translateX}px)`;
         
-        if (translateX > -60) {
+        if (translateX > -100) {
           actions.style.opacity = '0';
+          actions.style.transform = 'translateX(20px)';
           hasRevealed = false;
         }
       }
@@ -4253,13 +4256,15 @@ function setupSwipeToReveal() {
       
       if (hasRevealed) {
         // Keep actions visible
-        noteCard.style.transform = 'translateX(-140px)';
+        noteCard.style.transform = 'translateX(-200px)';
         actions.style.opacity = '1';
+        actions.style.transform = 'translateX(0)';
         actions.classList.add('revealed');
       } else {
         // Snap back
         noteCard.style.transform = 'translateX(0)';
         actions.style.opacity = '0';
+        actions.style.transform = 'translateX(20px)';
         actions.classList.remove('revealed');
       }
     });
@@ -4269,6 +4274,7 @@ function setupSwipeToReveal() {
       if (hasRevealed && !e.target.closest('.note-card-swipe-actions')) {
         noteCard.style.transform = 'translateX(0)';
         actions.style.opacity = '0';
+        actions.style.transform = 'translateX(20px)';
         actions.classList.remove('revealed');
         hasRevealed = false;
       }
@@ -4280,6 +4286,7 @@ function setupSwipeToReveal() {
         e.stopPropagation();
         noteCard.style.transform = 'translateX(0)';
         actions.style.opacity = '0';
+        actions.style.transform = 'translateX(20px)';
         actions.classList.remove('revealed');
         hasRevealed = false;
       }
