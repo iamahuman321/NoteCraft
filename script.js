@@ -4233,7 +4233,7 @@ function setupSwipeToReveal() {
           hasRevealed = true;
         } else {
           actions.style.opacity = '0';
-          actions.style.transform = 'translateX(8px)';
+          actions.style.transform = 'translateX(6px)';
           hasRevealed = false;
         }
       } else if (deltaX > 0 && hasRevealed) {
@@ -4243,7 +4243,7 @@ function setupSwipeToReveal() {
         
         if (translateX > -100) {
           actions.style.opacity = '0';
-          actions.style.transform = 'translateX(8px)';
+          actions.style.transform = 'translateX(6px)';
           hasRevealed = false;
         }
       }
@@ -4264,7 +4264,7 @@ function setupSwipeToReveal() {
         // Snap back
         noteCard.style.transform = 'translateX(0)';
         actions.style.opacity = '0';
-        actions.style.transform = 'translateX(8px)';
+        actions.style.transform = 'translateX(6px)';
         actions.classList.remove('revealed');
       }
     });
@@ -4274,7 +4274,7 @@ function setupSwipeToReveal() {
       if (hasRevealed && !e.target.closest('.note-card-swipe-actions')) {
         noteCard.style.transform = 'translateX(0)';
         actions.style.opacity = '0';
-        actions.style.transform = 'translateX(8px)';
+        actions.style.transform = 'translateX(6px)';
         actions.classList.remove('revealed');
         hasRevealed = false;
       }
@@ -4286,7 +4286,7 @@ function setupSwipeToReveal() {
         e.stopPropagation();
         noteCard.style.transform = 'translateX(0)';
         actions.style.opacity = '0';
-        actions.style.transform = 'translateX(8px)';
+        actions.style.transform = 'translateX(6px)';
         actions.classList.remove('revealed');
         hasRevealed = false;
       }

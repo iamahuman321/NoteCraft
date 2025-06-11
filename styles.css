@@ -3313,7 +3313,7 @@ body {
   height: 100px;
 }
 
-/* Ultra Clean Mobile Swipe Actions */
+/* Clean Mobile Swipe Actions */
 .note-card-container {
   position: relative;
   overflow: hidden;
@@ -3324,15 +3324,18 @@ body {
 
 .note-card-swipe-actions {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  top: 8px;
+  right: 8px;
+  bottom: 8px;
   width: 200px;
   display: flex;
-  background: var(--dark-color);
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  padding: 4px;
   opacity: 0;
-  transform: translateX(8px);
-  transition: all 0.25s ease-out;
+  transform: translateX(6px);
+  transition: all 0.2s ease;
   z-index: 5;
 }
 
@@ -3344,12 +3347,10 @@ body {
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
-  position: relative;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.swipe-action:last-child {
-  border-right: none;
+  border-radius: 6px;
+  padding: 12px 8px;
+  margin: 0;
+  border: none;
 }
 
 .swipe-action:active {
@@ -3357,50 +3358,34 @@ body {
 }
 
 .swipe-action i {
-  font-size: 20px;
-  margin-bottom: 6px;
+  font-size: 22px;
+  margin-bottom: 4px;
   color: white;
-  opacity: 0.9;
 }
 
 .swipe-action span {
   font-size: 10px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+  color: white;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
 }
 
 .delete-action {
-  background: #e74c3c;
-}
-
-.delete-action:hover {
-  background: #c0392b;
+  background: #ff4444;
 }
 
 .duplicate-action {
-  background: #34495e;
-}
-
-.duplicate-action:hover {
-  background: #2c3e50;
+  background: #666666;
 }
 
 .share-action {
-  background: #3498db;
-}
-
-.share-action:hover {
-  background: #2980b9;
+  background: #0088ff;
 }
 
 .category-action {
-  background: #27ae60;
-}
-
-.category-action:hover {
-  background: #229954;
+  background: #00cc66;
 }
 
 .note-card {
@@ -3408,7 +3393,7 @@ body {
   z-index: 2;
   background: var(--card-background);
   transform: translateX(0);
-  transition: transform 0.25s ease-out;
+  transition: transform 0.2s ease;
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
 }
@@ -3428,9 +3413,12 @@ body {
     width: 180px;
   }
   
+  .swipe-action {
+    padding: 10px 6px;
+  }
+  
   .swipe-action i {
-    font-size: 18px;
-    margin-bottom: 4px;
+    font-size: 20px;
   }
   
   .swipe-action span {
@@ -3443,13 +3431,17 @@ body {
     width: 160px;
   }
   
+  .swipe-action {
+    padding: 8px 4px;
+  }
+  
   .swipe-action i {
-    font-size: 16px;
+    font-size: 18px;
     margin-bottom: 3px;
   }
   
   .swipe-action span {
     font-size: 8px;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
   }
 }
