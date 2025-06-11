@@ -34,26 +34,16 @@ async function initializePage() {
   setupFirebaseListener()
 }
 
-// Setup Firebase listener to refresh notes data
+// Setup Firebase listener to refresh notes data once
 function setupFirebaseListener() {
   const checkAndSetupAuth = () => {
     if (window.auth && window.authFunctions && window.database) {
       window.auth.onAuthStateChanged((user) => {
         if (user && !window.authFunctions.isUserGuest()) {
-          // User is authenticated, refresh notes when data loads
+          // User is authenticated, refresh notes once after auth
           setTimeout(() => {
             refreshNotesData()
-          }, 1500);
-          
-          // Also refresh notes periodically
-          const refreshInterval = setInterval(() => {
-            refreshNotesData()
-          }, 3000);
-          
-          // Stop refreshing after 30 seconds to avoid infinite loops
-          setTimeout(() => {
-            clearInterval(refreshInterval)
-          }, 30000);
+          }, 2000);
         }
       });
     } else {
@@ -80,6 +70,18 @@ function refreshNotesData() {
         id: notes[0].id,
         title: notes[0].title,
         categories: notes[0].categories
+      })
+      
+      // Log all notes to see their structure
+      notes.forEach((note, index) => {
+        if (index < 3) { // Only log first 3 notes
+          console.log(`Note ${index + 1}:`, {
+            id: note.id,
+            title: note.title,
+            categories: note.categories,
+            hasCategories: Array.isArray(note.categories) && note.categories.length > 0
+          })
+        }
       })
     }
     

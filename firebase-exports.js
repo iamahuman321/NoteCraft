@@ -53,44 +53,26 @@ const getSharedNotes = () => Promise.reject(new Error("Firebase not initialized"
 const updateSharedNote = () => Promise.reject(new Error("Firebase not initialized"))
 const updatePresence = () => Promise.reject(new Error("Firebase not initialized"))
 
-export {
-  auth,
-  database,
-  googleProvider,
-  signInWithPopup,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  updateProfile,
-  ref,
-  set,
-  shareNote,
-  getInvitations,
-  acceptInvitation,
-  declineInvitation,
-  getSharedNotes,
-  updateSharedNote,
-  updatePresence,
-}
-
-export default {
-  auth,
-  database,
-  googleProvider,
-  signInWithPopup,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  updateProfile,
-  ref,
-  set,
-  shareNote,
-  getInvitations,
-  acceptInvitation,
-  declineInvitation,
-  getSharedNotes,
-  updateSharedNote,
-  updatePresence,
+// Browser compatibility - no ES modules
+if (typeof window !== 'undefined') {
+  window.firebaseExports = {
+    auth,
+    database,
+    googleProvider,
+    signInWithPopup,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    updateProfile,
+    ref,
+    set,
+    shareNote,
+    getInvitations,
+    acceptInvitation,
+    declineInvitation,
+    getSharedNotes,
+    updateSharedNote,
+    updatePresence,
+  }
 }
