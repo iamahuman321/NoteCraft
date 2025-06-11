@@ -1360,16 +1360,17 @@ body {
 
 .user-search-item {
   padding: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #404040;
   cursor: pointer;
   transition: var(--transition-fast);
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  background: #2d2d2d;
 }
 
 .user-search-item:hover {
-  background: var(--light-color);
+  background: #3a3a3a;
 }
 
 .user-search-item:last-child {
@@ -1387,12 +1388,12 @@ body {
 
 .user-search-name {
   font-weight: 600;
-  color: var(--text-color);
+  color: #ffffff;
 }
 
 .user-search-username {
   font-size: 0.875rem;
-  color: var(--text-muted);
+  color: #b0b0b0;
 }
 
 /* Selected Users */
@@ -1887,20 +1888,22 @@ body {
 .user-search-results {
   max-height: 200px;
   overflow-y: auto;
-  border: 1px solid var(--border-color);
+  border: 1px solid #404040;
   border-radius: var(--border-radius-sm);
-  background: var(--background-color);
+  background: #2d2d2d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .user-search-item {
   padding: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #404040;
   cursor: pointer;
   transition: var(--transition-fast);
+  background: #2d2d2d;
 }
 
 .user-search-item:hover {
-  background: var(--light-color);
+  background: #3a3a3a;
 }
 
 .user-search-item:last-child {
@@ -2602,13 +2605,14 @@ body {
 .search-results {
   max-height: 200px;
   overflow-y: auto;
-  border: 1px solid var(--border-color);
+  border: 1px solid #404040;
   border-radius: 8px;
   margin-top: 8px;
-  background: var(--bg-color);
+  background: #2d2d2d;
   display: none;
   position: relative;
   z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .search-results.show {
@@ -2617,9 +2621,10 @@ body {
 
 .user-search-item {
   padding: 12px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #404040;
   cursor: pointer;
   transition: background-color 0.2s;
+  background: #2d2d2d;
 }
 
 .user-search-item:last-child {
@@ -2627,7 +2632,7 @@ body {
 }
 
 .user-search-item:hover {
-  background-color: var(--hover-color);
+  background-color: #3a3a3a;
 }
 
 .user-info {
@@ -2638,17 +2643,18 @@ body {
 
 .user-name {
   font-weight: 600;
-  color: var(--text-color);
+  color: #ffffff;
+  font-size: 14px;
 }
 
 .user-username {
-  font-size: 14px;
-  color: var(--text-muted);
+  font-size: 13px;
+  color: #b0b0b0;
 }
 
 .user-email {
   font-size: 12px;
-  color: var(--text-muted);
+  color: #888888;
 }
 
 .selected-users {
