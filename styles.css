@@ -954,15 +954,16 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
+  display: flex !important;
+  justify-content: space-around;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0.5rem;
   background: var(--background-color);
   border-top: 1px solid var(--border-color);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
   z-index: 100;
-  overflow-x: auto;
+  min-height: 72px;
 }
 
 .toolbar-btn {
@@ -972,13 +973,14 @@ body {
   background: var(--light-color);
   color: var(--text-color);
   border-radius: 50%;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: var(--transition-fast);
   font-size: 1rem;
   flex-shrink: 0;
+  visibility: visible !important;
 }
 
 .toolbar-btn:hover {
@@ -1945,6 +1947,48 @@ body {
 
 .form-group {
   position: relative;
+}
+
+/* List Section Styles */
+.list-section {
+  margin-bottom: 1.5rem;
+}
+
+.list-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--light-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 0.5rem;
+}
+
+.list-type-label {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.delete-section-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: var(--danger-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.delete-section-btn:hover {
+  background: #dc2626;
 }
 
 /* List Item Styles */
