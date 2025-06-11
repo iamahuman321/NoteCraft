@@ -3386,16 +3386,33 @@ function resetVoiceRecording() {
   voiceRecording = null;
 }
 
+// Declare speech recognition variables if not already declared
+if (typeof speechRecognition === 'undefined') {
+  var speechRecognition = null;
+  var isListening = false;
+  var speechTimeout = null;
+  var recognizedText = '';
+}
+
 async function toggleVoiceRecording() {
+  console.log('toggleVoiceRecording called, isListening:', isListening);
+  
   if (!isListening) {
+    console.log('Starting speech recognition');
     startSpeechRecognition();
   } else {
+    console.log('Stopping speech recognition');
     stopSpeechRecognition();
   }
 }
 
 function startSpeechRecognition() {
+  console.log('startSpeechRecognition called');
+  console.log('speechRecognition:', speechRecognition);
+  console.log('isListening:', isListening);
+  
   if (speechRecognition && !isListening) {
+    console.log('Starting speech recognition...');
     recognizedText = '';
     speechRecognition.start();
     
@@ -3404,6 +3421,14 @@ function startSpeechRecognition() {
     
     if (recordBtn) recordBtn.classList.add('hidden');
     if (stopBtn) stopBtn.classList.remove('hidden');
+  } else if (!speechRecognition) {
+    console.log('Speech recognition not initialized, calling initializeSpeechRecognition');
+    initializeSpeechRecognition();
+    setTimeout(() => {
+      if (speechRecognition) {
+        startSpeechRecognition();
+      }
+    }, 100);
   }
 }
 
