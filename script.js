@@ -365,7 +365,7 @@ function setupEventListeners() {
   if (titleInput) titleInput.addEventListener("input", debounce(autoSaveWrapper, 500));
   if (contentTextarea) contentTextarea.addEventListener("input", debounce(autoSaveWrapper, 500));
   
-  // Toolbar buttons
+  // Toolbar buttons with debugging
   const imageBtn = document.getElementById("imageBtn");
   const voiceNoteBtn = document.getElementById("voiceNoteBtn");
   const listBtn = document.getElementById("listBtn");
@@ -373,16 +373,57 @@ function setupEventListeners() {
   const shareBtn = document.getElementById("shareBtn");
   const deleteBtn = document.getElementById("deleteBtn");
   
-  if (imageBtn) imageBtn.addEventListener("click", handleImageUpload);
-  if (voiceNoteBtn) {
-    voiceNoteBtn.addEventListener("click", toggleVoiceRecording);
-  }
-  if (listBtn) listBtn.addEventListener("click", showListTypeModal);
-  if (passwordBtn) passwordBtn.addEventListener("click", showPasswordModal);
-  if (shareBtn) shareBtn.addEventListener("click", showShareModal);
-  if (deleteBtn) deleteBtn.addEventListener("click", () => {
-    if (currentNote) showDeleteModal(currentNote);
+  console.log("Setting up toolbar buttons:", {
+    imageBtn: !!imageBtn,
+    voiceNoteBtn: !!voiceNoteBtn,
+    listBtn: !!listBtn,
+    passwordBtn: !!passwordBtn,
+    shareBtn: !!shareBtn,
+    deleteBtn: !!deleteBtn
   });
+  
+  if (imageBtn) {
+    imageBtn.addEventListener("click", (e) => {
+      console.log("Image button clicked");
+      e.preventDefault();
+      handleImageUpload();
+    });
+  }
+  if (voiceNoteBtn) {
+    voiceNoteBtn.addEventListener("click", (e) => {
+      console.log("Voice button clicked");
+      e.preventDefault();
+      toggleVoiceRecording();
+    });
+  }
+  if (listBtn) {
+    listBtn.addEventListener("click", (e) => {
+      console.log("List button clicked");
+      e.preventDefault();
+      showListTypeModal();
+    });
+  }
+  if (passwordBtn) {
+    passwordBtn.addEventListener("click", (e) => {
+      console.log("Password button clicked");
+      e.preventDefault();
+      showPasswordModal();
+    });
+  }
+  if (shareBtn) {
+    shareBtn.addEventListener("click", (e) => {
+      console.log("Share button clicked");
+      e.preventDefault();
+      showShareModal();
+    });
+  }
+  if (deleteBtn) {
+    deleteBtn.addEventListener("click", (e) => {
+      console.log("Delete button clicked");
+      e.preventDefault();
+      if (currentNote) showDeleteModal(currentNote);
+    });
+  }
 
   // Categories
   const addCategoryBtn = document.getElementById("addCategoryBtn");
