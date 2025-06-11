@@ -2554,6 +2554,38 @@ function updateLanguageDisplay(langCode) {
   }
 }
 
+// Show voice recording modal
+function showVoiceRecordingModal() {
+  const modal = document.getElementById('voiceRecordingModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('open');
+    
+    // Reset state
+    recognizedText = '';
+    isListening = false;
+    
+    // Update UI elements
+    const statusEl = document.getElementById('voiceStatus');
+    const transcriptEl = document.getElementById('voiceTranscript');
+    const actionsEl = document.getElementById('voiceActions');
+    const circleEl = document.getElementById('voiceVisualizer')?.querySelector('.voice-circle');
+    
+    if (statusEl) statusEl.textContent = 'Tap to start speech recognition';
+    if (transcriptEl) transcriptEl.textContent = '';
+    if (actionsEl) {
+      actionsEl.classList.add('hidden');
+      actionsEl.style.display = 'none';
+    }
+    if (circleEl) circleEl.classList.remove('recording');
+    
+    // Initialize speech recognition if not already done
+    if (!speechRecognition) {
+      initializeSpeechRecognition();
+    }
+  }
+}
+
 // Global functions for inline event handlers
 window.editNote = editNote;
 window.toggleNoteCategory = toggleNoteCategory;
@@ -2579,6 +2611,7 @@ window.saveVoiceRecording = saveVoiceRecording;
 window.showLanguageSelector = showLanguageSelector;
 window.hideLanguageSelector = hideLanguageSelector;
 window.selectLanguage = selectLanguage;
+window.showVoiceRecordingModal = showVoiceRecordingModal;
 
 // Search functionality
 function handleSearch() {
@@ -3345,17 +3378,7 @@ let recordedChunks = [];
 let recordingStartTime = null;
 let recordingTimer = null;
 
-function showVoiceRecordingModal() {
-  const modal = document.getElementById('voiceRecordingModal');
-  if (modal) {
-    modal.style.display = 'flex';
-    modal.classList.add('open');
-    initializeSpeechRecognition();
-    resetVoiceRecording();
-  } else {
-    showToast('Voice recording not available', 'error');
-  }
-}
+// Removed duplicate - function already exists above
 
 // Initialize speech recognition
 function initializeSpeechRecognition() {
@@ -3475,40 +3498,40 @@ function initializeSpeechRecognition() {
       
       // Filter out very short or low-quality results
       const minLength = 3;
-      const filteredText = recognizedText && recognizedText.trim().length >= minLength ? recognizedText : '';
       
-      if (statusEl) {
-        if (filteredText) {
-          statusEl.innerHTML = `<div style="color: var(--success-color); font-weight: 500;">✓ Speech converted to text - Adding to note...</div>`;
-        } else {
-          statusEl.textContent = 'No clear speech detected. Please try again.';
+      if (recognizedText && recognizedText.trim().length >= minLength) {
+        if (statusEl) {
+          statusEl.textContent = 'Speech captured! Add to note or speak more.';
+        }
+        
+        // Show action buttons
+        const actionsEl = document.getElementById('voiceActions');
+        if (actionsEl) {
+          actionsEl.classList.remove('hidden');
+          actionsEl.style.display = 'flex';
+        }
+        
+        // Update transcript display
+        const transcriptEl = document.getElementById('voiceTranscript');
+        if (transcriptEl) {
+          transcriptEl.textContent = recognizedText;
+        }
+      } else {
+        if (statusEl) {
+          statusEl.textContent = 'No clear speech detected. Try again.';
         }
       }
-      if (circleEl) circleEl.classList.remove('recording');
       
-      // Add recognized text to note if quality is sufficient
-      if (filteredText && currentNote) {
-        addSpeechToNote(filteredText);
-        
-        // Auto-close modal after successful conversion
-        setTimeout(() => {
-          const modal = document.getElementById('voiceRecordingModal');
-          if (modal) {
-            modal.style.display = 'none';
-            modal.classList.remove('open');
-          }
-          resetVoiceRecording();
-        }, 1000);
-      } else {
-        // Keep modal open for retry if no good speech detected
-        setTimeout(() => {
-          if (statusEl) statusEl.textContent = 'Tap to start speech recognition';
-          resetVoiceRecording();
-        }, 2000);
+      if (circleEl) {
+        circleEl.classList.remove('recording');
       }
     };
+    
+    return true;
   } else {
+    console.error('Speech recognition not supported');
     showToast('Speech recognition not supported in this browser', 'error');
+    return false;
   }
 }
 

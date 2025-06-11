@@ -172,7 +172,15 @@
                 </div>
 
                 <!-- Content -->
-                <textarea class="editor-body" id="contentTextarea" placeholder="Start writing your note..."></textarea>
+                <div class="editor-section">
+                    <div class="section-header">
+                        <h3>Content</h3>
+                        <button class="btn-icon" id="voiceRecordBtn" onclick="showVoiceRecordingModal()" title="Add voice note">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                    </div>
+                    <textarea class="editor-body" id="contentTextarea" placeholder="Start writing your note..."></textarea>
+                </div>
 
                 <!-- List Section -->
                 <div class="editor-section hidden" id="listSection">
