@@ -823,7 +823,7 @@ body {
   padding: 1rem;
 }
 
-.modal.show {
+.modal.open {
   opacity: 1;
   visibility: visible;
 }
@@ -840,7 +840,7 @@ body {
   transition: var(--transition);
 }
 
-.modal.show .modal-content {
+.modal.open .modal-content {
   transform: scale(1);
 }
 
@@ -2910,19 +2910,18 @@ body {
   right: 0;
   bottom: 0;
   z-index: 1000;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .modal.open {
-  display: flex !important;
   opacity: 1;
   visibility: visible;
-  background: rgba(0, 0, 0, 0.5);
 }
 
 .modal-overlay {
