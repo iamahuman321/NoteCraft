@@ -1509,8 +1509,12 @@ function showPasswordModal() {
   const passwordInput = document.getElementById("notePasswordInput");
   const removeBtn = document.getElementById("removePasswordBtn");
   
+  console.log("showPasswordModal called, modal element:", !!passwordModal);
   if (passwordModal) {
     passwordModal.classList.add("open");
+    console.log("Added 'open' class to passwordModal");
+    console.log("Modal classes:", passwordModal.className);
+    console.log("Modal display style:", window.getComputedStyle(passwordModal).display);
     
     // Show/hide remove button based on whether note has password
     if (removeBtn) {
@@ -1533,7 +1537,13 @@ function hidePasswordModal() {
 
 function showListTypeModal() {
   const listTypeModal = document.getElementById("listTypeModal");
-  if (listTypeModal) listTypeModal.classList.add("open");
+  console.log("showListTypeModal called, modal element:", !!listTypeModal);
+  if (listTypeModal) {
+    listTypeModal.classList.add("open");
+    console.log("Added 'open' class to listTypeModal");
+    console.log("Modal classes:", listTypeModal.className);
+    console.log("Modal display style:", window.getComputedStyle(listTypeModal).display);
+  }
 }
 
 function hideListTypeModal() {
