@@ -132,13 +132,29 @@ function loadLocalData() {
   // Load notes from localStorage
   const savedNotes = localStorage.getItem("notes");
   if (savedNotes) {
-    notes = JSON.parse(savedNotes);
+    try {
+      const parsedNotes = JSON.parse(savedNotes);
+      notes = Array.isArray(parsedNotes) ? parsedNotes : [];
+    } catch (error) {
+      console.error("Error parsing saved notes:", error);
+      notes = [];
+    }
+  } else {
+    notes = [];
   }
   
   // Load categories from localStorage
   const savedCategories = localStorage.getItem("categories");
   if (savedCategories) {
-    categories = JSON.parse(savedCategories);
+    try {
+      const parsedCategories = JSON.parse(savedCategories);
+      categories = Array.isArray(parsedCategories) ? parsedCategories : [{ id: "all", name: "All" }];
+    } catch (error) {
+      console.error("Error parsing saved categories:", error);
+      categories = [{ id: "all", name: "All" }];
+    }
+  } else {
+    categories = [{ id: "all", name: "All" }];
   }
   
   // Load settings from localStorage
@@ -146,6 +162,8 @@ function loadLocalData() {
   if (savedFilter) {
     currentFilter = savedFilter;
   }
+  
+  console.log("Local data loaded - notes:", notes.length, "categories:", categories.length);
 }
 
 function checkForSharedNoteToOpen() {
@@ -653,6 +671,12 @@ function renderNotes() {
 
   // Apply both search and filter
   let filteredNotes = getFilteredNotes();
+  
+  // Additional safety check
+  if (!Array.isArray(filteredNotes)) {
+    console.error("getFilteredNotes returned non-array:", filteredNotes);
+    filteredNotes = [];
+  }
 
   if (filteredNotes.length === 0) {
     let emptyMessage;
@@ -674,42 +698,55 @@ function renderNotes() {
     return;
   }
   
-  notesContainer.innerHTML = `
-    <div class="notes-grid">
-      ${filteredNotes.map(note => {
-        const preview = note.content ? (note.content.length > 100 ? note.content.substring(0, 100) + "..." : note.content) : "No content";
-        const dateStr = formatDate(note.updatedAt || note.createdAt || Date.now());
-        
-        const categoryTags = note.categories?.map(catId => {
-          const category = categories.find(c => c.id === catId);
-          return category ? `<span class="category-chip">${category.name}</span>` : "";
-        }).join("") || "";
+  try {
+    notesContainer.innerHTML = `
+      <div class="notes-grid">
+        ${filteredNotes.map(note => {
+          if (!note) return '';
+          
+          const preview = note.content ? (note.content.length > 100 ? note.content.substring(0, 100) + "..." : note.content) : "No content";
+          const dateStr = formatDate(note.updatedAt || note.createdAt || Date.now());
+          
+          const categoryTags = Array.isArray(note.categories) ? note.categories.map(catId => {
+            const category = Array.isArray(categories) ? categories.find(c => c.id === catId) : null;
+            return category ? `<span class="category-chip">${category.name}</span>` : "";
+          }).join("") : "";
 
-        const isShared = note.sharedId || (note.collaborators && Object.keys(note.collaborators).length > 0);
-        const collaboratorCount = note.collaborators ? Object.keys(note.collaborators).length : 0;
+          const isShared = note.sharedId || (note.collaborators && Object.keys(note.collaborators).length > 0);
+          const collaboratorCount = note.collaborators ? Object.keys(note.collaborators).length : 0;
 
-        // Highlight search terms
-        const highlightedTitle = highlightSearchTerms(note.title || "Untitled", searchQuery);
-        const highlightedPreview = highlightSearchTerms(preview, searchQuery);
+          // Highlight search terms
+          const highlightedTitle = highlightSearchTerms(note.title || "Untitled", searchQuery);
+          const highlightedPreview = highlightSearchTerms(preview, searchQuery);
 
-        return `
-          <div class="note-card" onclick="editNote(notes.find(n => n.id === '${note.id}'))">
-            <div class="note-title">
-              ${highlightedTitle}
-              ${isShared ? `<i class="fas fa-users share-icon" title="Shared with ${collaboratorCount} people"></i>` : ""}
+          return `
+            <div class="note-card" onclick="editNote(notes.find(n => n.id === '${note.id}'))">
+              <div class="note-title">
+                ${highlightedTitle}
+                ${isShared ? `<i class="fas fa-users share-icon" title="Shared with ${collaboratorCount} people"></i>` : ""}
+              </div>
+              <div class="note-preview">${highlightedPreview}</div>
+              <div class="note-meta">
+                <span>${dateStr}</span>
+                ${note.categories && note.categories.length > 0 ? `<span>${note.categories.length} categories</span>` : ""}
+                ${isShared ? `<span class="shared-indicator"><i class="fas fa-share-alt"></i> Shared</span>` : ""}
+              </div>
+              ${categoryTags ? `<div class="category-chips">${categoryTags}</div>` : ""}
             </div>
-            <div class="note-preview">${highlightedPreview}</div>
-            <div class="note-meta">
-              <span>${dateStr}</span>
-              ${note.categories && note.categories.length > 0 ? `<span>${note.categories.length} categories</span>` : ""}
-              ${isShared ? `<span class="shared-indicator"><i class="fas fa-share-alt"></i> Shared</span>` : ""}
-            </div>
-            ${categoryTags ? `<div class="category-chips">${categoryTags}</div>` : ""}
-          </div>
-        `;
-      }).join("")}
-    </div>
-  `;
+          `;
+        }).filter(html => html !== '').join("")}
+      </div>
+    `;
+  } catch (error) {
+    console.error("Error rendering notes:", error);
+    notesContainer.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Error loading notes</h3>
+        <p>Please refresh the page</p>
+      </div>
+    `;
+  }
 }
 
 function renderCategories() {
@@ -2425,16 +2462,22 @@ function clearSearch() {
 }
 
 function getFilteredNotes() {
-  let filteredNotes = notes;
+  // Ensure notes is always an array
+  if (!Array.isArray(notes)) {
+    console.warn("Notes array is not initialized, returning empty array");
+    return [];
+  }
+  
+  let filteredNotes = [...notes]; // Create a copy to avoid mutations
   
   // Apply category filter first
   if (currentFilter === "shared") {
-    filteredNotes = notes.filter(note => 
+    filteredNotes = filteredNotes.filter(note => 
       note.sharedId || (note.collaborators && Object.keys(note.collaborators).length > 0)
     );
   } else if (currentFilter !== "all") {
-    filteredNotes = notes.filter(note => 
-      note.categories && note.categories.includes(currentFilter)
+    filteredNotes = filteredNotes.filter(note => 
+      note.categories && Array.isArray(note.categories) && note.categories.includes(currentFilter)
     );
   }
   
@@ -2449,7 +2492,7 @@ function getFilteredNotes() {
       if (note.content && note.content.toLowerCase().includes(query)) return true;
       
       // Search in categories
-      if (note.categories) {
+      if (Array.isArray(note.categories) && Array.isArray(categories)) {
         const categoryNames = note.categories.map(catId => {
           const category = categories.find(c => c.id === catId);
           return category ? category.name.toLowerCase() : catId.toLowerCase();
@@ -2458,15 +2501,15 @@ function getFilteredNotes() {
       }
       
       // Search in list items
-      if (note.list && note.list.items) {
+      if (note.list && Array.isArray(note.list.items)) {
         const listText = note.list.items.map(item => item.text || "").join(" ").toLowerCase();
         if (listText.includes(query)) return true;
       }
       
       // Search in list sections
-      if (note.listSections) {
+      if (Array.isArray(note.listSections)) {
         const sectionsText = note.listSections.map(section => 
-          section.items ? section.items.map(item => item.text || "").join(" ") : ""
+          Array.isArray(section.items) ? section.items.map(item => item.text || "").join(" ") : ""
         ).join(" ").toLowerCase();
         if (sectionsText.includes(query)) return true;
       }
