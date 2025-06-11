@@ -104,10 +104,11 @@ body {
   right: 0;
   background: var(--background-color);
   border-bottom: none;
-  padding: 0.75rem 1rem 0 1rem;
+  padding: 12px 16px 0 16px;
   margin: 0;
   z-index: 999;
   box-shadow: none;
+  height: 52px;
 }
 
 /* Search Container */
@@ -556,7 +557,7 @@ body {
 /* Notes Container */
 .notes-container {
   padding: 1rem;
-  padding-top: 136px; /* Space for fixed header + search + filter sections */
+  padding-top: 184px; /* Space for fixed header (64px) + search (52px) + filter (68px) = 184px */
   padding-bottom: calc(var(--toolbar-height) + 1rem);
   min-height: calc(100vh - var(--header-height));
 }
@@ -630,12 +631,12 @@ body {
 /* Filter Chips */
 .filter-chips {
   position: fixed;
-  top: calc(var(--header-height) + 52px); /* Below header + search section with no gap */
+  top: calc(var(--header-height) + 52px);
   left: 0;
   right: 0;
   display: flex;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 12px 16px;
   overflow-x: auto;
   background: var(--background-color);
   border-bottom: 1px solid var(--border-color);
@@ -644,6 +645,7 @@ body {
   margin: 0;
   z-index: 998;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  height: 68px;
 }
 
 .filter-chip {
