@@ -3369,7 +3369,12 @@ function resetVoiceRecording() {
   const stopBtn = document.getElementById('voiceStopBtn');
   const playBtn = document.getElementById('voicePlayBtn');
   
-  if (statusEl) statusEl.textContent = 'Tap to start recording';
+  if (statusEl) statusEl.textContent = 'Tap to start speech recognition';
+  
+  // Reset speech recognition variables
+  isListening = false;
+  recognizedText = '';
+  speechRecognition = null;
   if (durationEl) durationEl.textContent = '00:00';
   if (circleEl) circleEl.classList.remove('recording');
   if (actionsEl) actionsEl.classList.add('hidden');
