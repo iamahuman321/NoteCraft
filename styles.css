@@ -400,16 +400,20 @@ body {
 /* Main Content */
 .main-content {
   margin-top: var(--header-height);
-  min-height: calc(100vh - var(--header-height));
+  height: calc(100vh - var(--header-height));
   padding: 0;
   max-width: 100%;
   background: var(--background-light);
+  overflow: hidden;
 }
 
 /* Pages */
 .page {
   display: none;
   animation: fadeIn 0.3s ease-in-out;
+  height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+  padding-top: 0;
 }
 
 .page.active {
@@ -424,7 +428,8 @@ body {
 /* Notes Container */
 .notes-container {
   padding: 1rem;
-  min-height: calc(100vh - var(--header-height) - 80px);
+  padding-top: 0;
+  min-height: calc(100vh - var(--header-height) - 128px); /* Account for search + filter sections */
 }
 
 .notes-grid {
