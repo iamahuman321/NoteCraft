@@ -3993,6 +3993,68 @@ function createCursorIndicator(textarea, cursorData) {
   }, 5000);
 }
 
+// Reset voice recording function
+function resetVoiceRecording() {
+  isListening = false;
+  recognizedText = '';
+  clearInterval(recordingTimer);
+  clearTimeout(speechTimeout);
+  
+  const modal = document.getElementById('voiceRecordingModal');
+  const statusEl = document.getElementById('voiceStatus');
+  const circleEl = document.getElementById('voiceVisualizer')?.querySelector('.voice-circle');
+  
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('open');
+  }
+  if (statusEl) statusEl.textContent = 'Tap to start speech recognition';
+  if (circleEl) circleEl.classList.remove('recording');
+  
+  // Stop speech recognition if active
+  if (speechRecognition && isListening) {
+    speechRecognition.stop();
+  }
+}
+
+// Initialize language display on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Set initial language display
+  const currentLang = localStorage.getItem('speechLanguage') || detectUserLanguage();
+  updateLanguageDisplay(currentLang);
+  
+  // Initialize speech recognition
+  initializeSpeechRecognition();
+});
+
+// Enhanced collaboration presence update
+function updateCollaboratorPresence(activeUsers) {
+  const statusDiv = document.getElementById('collaborationStatus');
+  if (!statusDiv) return;
+  
+  const currentUserId = getCurrentUser()?.uid;
+  const otherUsers = Object.entries(activeUsers || {})
+    .filter(([uid]) => uid !== currentUserId)
+    .filter(([, data]) => Date.now() - (data.timestamp || 0) < 30000); // Active in last 30 seconds
+  
+  if (otherUsers.length > 0) {
+    // Show colored dots for each active user
+    const userDots = otherUsers.map(([, data]) => 
+      `<div class="user-presence-dot" style="background: ${data.color || '#007bff'};"></div>`
+    ).join('');
+    
+    statusDiv.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: white;">
+        <div class="user-presence-dots">${userDots}</div>
+        ${otherUsers.length} other${otherUsers.length > 1 ? 's' : ''} editing
+      </div>
+    `;
+    statusDiv.style.display = 'block';
+  } else {
+    statusDiv.style.display = 'none';
+  }
+}
+
 // Export for window global
 window.renderNotes = renderNotes;
 window.renderCategories = renderCategories;
