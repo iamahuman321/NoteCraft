@@ -1,5 +1,5 @@
 // Service Worker for Notes App PWA
-const CACHE_NAME = 'notes-app-v1.2.0';
+const CACHE_NAME = 'notes-app-v1.3.0';
 const urlsToCache = [
   '/',
   '/index.html',
