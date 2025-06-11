@@ -3378,7 +3378,7 @@ function saveVoiceRecording() {
     const voiceNote = {
       id: generateId(),
       data: reader.result,
-      duration: document.getElementById('voiceDuration').textContent,
+      duration: document.getElementById('voiceDuration').textContent || '0:00',
       timestamp: Date.now()
     };
     
@@ -3388,6 +3388,9 @@ function saveVoiceRecording() {
     
     currentNote.voiceNotes.push(voiceNote);
     currentNote.lastModified = Date.now();
+    
+    console.log('Voice note added to currentNote:', voiceNote);
+    console.log('Total voice notes:', currentNote.voiceNotes.length);
     
     updateEditorContent();
     saveCurrentNote();
@@ -3406,17 +3409,29 @@ function saveVoiceRecording() {
 }
 
 function updateVoiceNotesSection() {
+  console.log('updateVoiceNotesSection called');
   const voiceSection = document.getElementById("voiceSection");
-  if (!voiceSection) return;
+  if (!voiceSection) {
+    console.log('voiceSection not found');
+    return;
+  }
+  
+  console.log('currentNote:', currentNote);
+  console.log('currentNote.voiceNotes:', currentNote?.voiceNotes);
   
   if (!currentNote || !currentNote.voiceNotes || currentNote.voiceNotes.length === 0) {
+    console.log('No voice notes to display, hiding section');
     voiceSection.classList.add("hidden");
     return;
   }
   
+  console.log('Showing voice section with', currentNote.voiceNotes.length, 'voice notes');
   voiceSection.classList.remove("hidden");
   const voiceContainer = document.getElementById("voiceContainer");
-  if (!voiceContainer) return;
+  if (!voiceContainer) {
+    console.log('voiceContainer not found');
+    return;
+  }
   
   voiceContainer.innerHTML = currentNote.voiceNotes
     .map((voiceNote, index) => `
@@ -3432,6 +3447,8 @@ function updateVoiceNotesSection() {
         <audio controls src="${voiceNote.data}"></audio>
       </div>
     `).join("");
+  
+  console.log('Voice notes HTML updated');
 }
 
 function deleteVoiceNote(index) {
