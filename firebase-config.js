@@ -292,6 +292,29 @@ function loadUserData(user) {
         // Always update localStorage with final categories
         localStorage.setItem("categories", JSON.stringify(finalCategories));
         
+        // Update CategoryManager if it exists
+        if (window.CategoryManager && window.CategoryManager._initialized) {
+          const currentCategories = window.CategoryManager.getCategories();
+          if (finalCategories.length > currentCategories.length) {
+            // Firebase has more categories, update CategoryManager
+            window.CategoryManager.updateCategories(finalCategories);
+            console.log("Updated CategoryManager with Firebase categories:", finalCategories.length);
+          } else if (currentCategories.length > finalCategories.length) {
+            console.log("Local has more categories, saving to Firebase:", currentCategories.length);
+            // Local has more categories, update finalCategories and save to Firebase
+            finalCategories.length = 0;
+            finalCategories.push(...currentCategories);
+            localStorage.setItem("categories", JSON.stringify(finalCategories));
+            
+            // Save to Firebase immediately
+            setTimeout(() => {
+              if (window.CategoryManager && typeof window.CategoryManager._saveToFirebase === 'function') {
+                window.CategoryManager._saveToFirebase();
+              }
+            }, 500);
+          }
+        }
+        
         // Save local categories to Firebase if they were preserved
         if (hasRecentLocalChanges || localCategories.length > firebaseCategories.length) {
           setTimeout(() => {

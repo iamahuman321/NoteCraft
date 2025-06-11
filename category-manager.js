@@ -162,29 +162,45 @@ window.CategoryManager = {
     try {
       const firebaseCategories = await this._loadFromFirebase();
       if (firebaseCategories && firebaseCategories.length >= 1) {
-        this._categories = firebaseCategories;
-        console.log("Categories refreshed from Firebase:", this._categories.length);
-        
-        // Update local storage immediately
-        localStorage.setItem("categories", JSON.stringify(this._categories));
-        sessionStorage.setItem("categoriesBackup", JSON.stringify(this._categories));
-        
-        // Update global categories variable
-        if (window.categories) {
-          window.categories.length = 0;
-          window.categories.push(...this._categories);
-        }
-        
-        // Trigger UI updates
-        if (typeof window.renderCategories === 'function') {
-          window.renderCategories();
-        }
-        if (typeof window.updateFilterChips === 'function') {
-          window.updateFilterChips();
+        // Only update if Firebase has more categories than local
+        if (firebaseCategories.length > this._categories.length) {
+          this._categories = firebaseCategories;
+          console.log("Categories refreshed from Firebase:", this._categories.length);
+          
+          // Update local storage immediately
+          localStorage.setItem("categories", JSON.stringify(this._categories));
+          sessionStorage.setItem("categoriesBackup", JSON.stringify(this._categories));
+          
+          // Update global categories variable
+          if (window.categories) {
+            window.categories.length = 0;
+            window.categories.push(...this._categories);
+          }
+          
+          // Trigger UI updates
+          if (typeof window.renderCategories === 'function') {
+            window.renderCategories();
+          }
+          if (typeof window.updateFilterChips === 'function') {
+            window.updateFilterChips();
+          }
+        } else {
+          console.log("Local categories are more recent, preserving them");
+          // Save local categories to Firebase
+          await this._saveToFirebase();
         }
       }
     } catch (error) {
       console.error("Error refreshing categories from Firebase:", error);
+    }
+  },
+  
+  // Update categories with new data (public method)
+  updateCategories(newCategories) {
+    if (Array.isArray(newCategories) && newCategories.length > 0) {
+      this._categories = newCategories;
+      localStorage.setItem("categories", JSON.stringify(this._categories));
+      sessionStorage.setItem("categoriesBackup", JSON.stringify(this._categories));
     }
   },
   
