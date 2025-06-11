@@ -191,6 +191,7 @@ window.CategoryManager = {
   // Add a new category
   async addCategory(name) {
     if (!name || this._categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+      console.log("Category already exists or name is empty");
       return false;
     }
     
@@ -201,6 +202,9 @@ window.CategoryManager = {
     };
     
     this._categories.push(newCategory);
+    console.log("Category added to internal storage, total categories:", this._categories.length);
+    console.log("Categories:", this._categories.map(c => c.name));
+    
     await this._saveToAllSources();
     return true;
   },
@@ -238,14 +242,23 @@ window.CategoryManager = {
   
   // Save to Firebase
   async _saveToFirebase() {
-    if (!window.database || !window.authFunctions) return;
+    if (!window.database || !window.authFunctions) {
+      console.log("Firebase or authFunctions not available for saving");
+      return;
+    }
     
     const currentUser = window.authFunctions.getCurrentUser();
     const isGuest = window.authFunctions.isUserGuest();
     
-    if (!currentUser || isGuest) return;
+    if (!currentUser || isGuest) {
+      console.log("No authenticated user or user is guest - cannot save to Firebase");
+      return;
+    }
     
     try {
+      console.log("Saving categories to Firebase:", this._categories.length, "categories");
+      console.log("Categories being saved:", this._categories.map(c => c.name));
+      
       // Save categories and trigger a complete user data update
       await window.database.ref(`users/${currentUser.uid}`).update({
         categories: this._categories,
@@ -258,6 +271,17 @@ window.CategoryManager = {
       // Force immediate localStorage update
       localStorage.setItem("categories", JSON.stringify(this._categories));
       sessionStorage.setItem("categoriesBackup", JSON.stringify(this._categories));
+      
+      // Verify the save by reading it back
+      setTimeout(async () => {
+        try {
+          const snapshot = await window.database.ref(`users/${currentUser.uid}/categories`).once('value');
+          const savedCategories = snapshot.val();
+          console.log("Verification: Categories in Firebase after save:", savedCategories?.length || 0);
+        } catch (error) {
+          console.error("Error verifying Firebase save:", error);
+        }
+      }, 500);
       
     } catch (error) {
       console.error("Error saving categories to Firebase:", error);
