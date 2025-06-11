@@ -2153,7 +2153,14 @@ function openImageViewer(imageSrc, imageIndex) {
 
 function closeImageViewer() {
   const modal = document.getElementById("imageViewerModal");
+  const img = document.getElementById("imageViewerImg");
+  
   if (modal) {
+    // Clear any pending error handlers
+    if (img) {
+      img.onerror = null;
+      img.onload = null;
+    }
     modal.classList.remove("open");
     document.body.style.overflow = "";
     currentImageSrc = null;
@@ -3908,18 +3915,25 @@ function saveVoiceRecording() {
 
 function updateVoiceNotesSection() {
   const voiceSection = document.getElementById("voiceSection");
-  if (!voiceSection) return;
+  if (!voiceSection) {
+    console.warn('Voice section element not found');
+    return;
+  }
   
-  if (!currentNote || !currentNote.voiceNotes || currentNote.voiceNotes.length === 0) {
+  if (!currentNote || !currentNote.voiceNotes || !Array.isArray(currentNote.voiceNotes) || currentNote.voiceNotes.length === 0) {
     voiceSection.classList.add("hidden");
     return;
   }
   
   voiceSection.classList.remove("hidden");
   const voiceContainer = document.getElementById("voiceContainer");
-  if (!voiceContainer) return;
+  if (!voiceContainer) {
+    console.warn('Voice container element not found');
+    return;
+  }
   
   voiceContainer.innerHTML = currentNote.voiceNotes
+    .filter(voiceNote => voiceNote && voiceNote.data) // Filter out invalid voice notes
     .map((voiceNote, index) => `
       <div class="voice-note-item">
         <div class="voice-note-header">
