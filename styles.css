@@ -43,10 +43,7 @@ body {
   background-color: var(--background-light);
   color: var(--text-color);
   line-height: 1.6;
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
+  overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -557,14 +554,10 @@ body {
 
 /* Main Content */
 .main-content {
-  position: fixed;
-  top: var(--header-height);
-  left: 0;
-  right: 0;
-  bottom: 0;
+  margin-top: var(--header-height);
+  min-height: calc(100vh - var(--header-height));
   padding: 0;
   background: var(--background-light);
-  overflow: hidden;
 }
 
 /* Pages */
@@ -584,21 +577,13 @@ body {
 
 /* Notes Container */
 .notes-container {
-  position: fixed;
-  top: 184px; /* Fixed position: header (64px) + search (52px) + filter (68px) = 184px */
-  left: 0;
-  right: 0;
-  bottom: calc(var(--toolbar-height) + 0px);
   padding: 1rem;
-  overflow-y: auto;
-  overflow-x: hidden;
+  padding-top: 184px; /* Space for fixed header (64px) + search (52px) + filter (68px) = 184px */
+  padding-bottom: calc(var(--toolbar-height) + 1rem);
+  min-height: calc(100vh - var(--header-height));
+  background: var(--background-light);
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  background: var(--background-light);
-  transform: translateZ(0); /* Hardware acceleration */
-  will-change: scroll-position;
-  overscroll-behavior: contain;
-  scroll-snap-type: y proximity;
 }
 
 .notes-grid {
@@ -606,8 +591,6 @@ body {
   grid-template-columns: 1fr;
   gap: 1rem;
   padding-bottom: 2rem;
-  scroll-margin-top: 1rem;
-  contain: layout style paint;
 }
 
 @media (min-width: 768px) {
