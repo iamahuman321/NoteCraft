@@ -1981,15 +1981,19 @@ function processImageUpload(event) {
       reader.onload = (e) => {
         if (!currentNote.images) currentNote.images = [];
         
-        // Create a completely unique image object for this specific note
-        const uniqueImageId = `${currentNote.id}_img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        // Create image object - for shared notes, don't tie to specific noteId
+        const uniqueImageId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const imageData = {
           id: uniqueImageId,
           name: file.name,
           data: e.target.result,
-          timestamp: Date.now(),
-          noteId: currentNote.id // Tie image to specific note
+          timestamp: Date.now()
         };
+        
+        // Only add noteId for non-shared notes
+        if (!currentNote.isShared) {
+          imageData.noteId = currentNote.id;
+        }
         
         currentNote.images.push(imageData);
         updateImagesSection();
@@ -2023,10 +2027,16 @@ function updateImagesSection() {
     return;
   }
   
-  // Filter images that belong only to this note and create deep copies
+  // For shared notes, show all images without filtering by noteId
+  // For regular notes, filter by noteId as before
   const noteImages = (currentNote.images || []).filter(img => {
-    // Include image if it has no noteId (legacy) or if noteId matches current note
-    return !img.noteId || img.noteId === currentNote.id;
+    if (currentNote.isShared) {
+      // For shared notes, show all images regardless of noteId
+      return true;
+    } else {
+      // For regular notes, include image if it has no noteId (legacy) or if noteId matches current note
+      return !img.noteId || img.noteId === currentNote.id;
+    }
   }).map(img => ({...img})); // Create deep copies to prevent reference issues
   
   if (noteImages.length === 0) {
