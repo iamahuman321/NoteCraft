@@ -1484,7 +1484,7 @@ function showShareModal() {
     const sendBtn = document.getElementById("sendInvitesBtn");
     
     if (selectedUsers) selectedUsers.innerHTML = "";
-    if (searchResults) searchResults.classList.remove("show");
+    if (searchResults) searchResults.classList.remove("open");
     if (userSearchInput) userSearchInput.value = "";
     if (sendBtn) sendBtn.disabled = true;
   }
@@ -2254,7 +2254,7 @@ async function searchUsers(query) {
   console.log("Searching for users with query:", query);
   
   if (query.length < 2) {
-    searchResults.classList.remove("show");
+    searchResults.classList.remove("open");
     return;
   }
   
@@ -2262,7 +2262,7 @@ async function searchUsers(query) {
   if (!currentUser || !window.database) {
     console.log("No current user or database");
     searchResults.innerHTML = "<div class='user-search-item'>Sign in required</div>";
-    searchResults.classList.add("show");
+    searchResults.classList.add("open");
     return;
   }
   
@@ -2328,7 +2328,7 @@ async function searchUsers(query) {
       console.log("Search results HTML set:", searchResults.innerHTML);
     }
     
-    searchResults.classList.add("show");
+    searchResults.classList.add("open");
     console.log("Search results classes:", searchResults.className);
   } catch (error) {
     console.error("Error searching users:", error);
@@ -2476,7 +2476,7 @@ function selectUser(uid, name, username) {
   const searchInput = document.getElementById("userSearchInput");
   const searchResults = document.getElementById("searchResults");
   if (searchInput) searchInput.value = "";
-  if (searchResults) searchResults.classList.remove("show");
+  if (searchResults) searchResults.classList.remove("open");
 }
 
 function removeSelectedUser(uid) {
