@@ -234,15 +234,6 @@ function checkForSharedNoteToOpen() {
 }
 
 function setupEventListeners() {
-  // Add voice note button test on page load
-  setTimeout(() => {
-    const voiceBtn = document.getElementById("voiceNoteBtn");
-    console.log('Voice note button check on load:', !!voiceBtn);
-    if (voiceBtn) {
-      console.log('Button visible:', voiceBtn.offsetParent !== null);
-      console.log('Button computed style:', window.getComputedStyle(voiceBtn).display);
-    }
-  }, 1000);
 
   // Hamburger menu
   const hamburgerBtn = document.getElementById("hamburgerBtn");
@@ -342,17 +333,7 @@ function setupEventListeners() {
   
   if (imageBtn) imageBtn.addEventListener("click", handleImageUpload);
   if (voiceNoteBtn) {
-    console.log('Voice note button found, adding event listener');
-    voiceNoteBtn.addEventListener("click", () => {
-      console.log('Voice note button clicked');
-      try {
-        toggleVoiceRecording();
-      } catch (error) {
-        console.error('Error in toggleVoiceRecording:', error);
-      }
-    });
-  } else {
-    console.log('Voice note button NOT found');
+    voiceNoteBtn.addEventListener("click", toggleVoiceRecording);
   }
   if (listBtn) listBtn.addEventListener("click", showListTypeModal);
   if (passwordBtn) passwordBtn.addEventListener("click", showPasswordModal);
@@ -3530,36 +3511,23 @@ if (typeof speechRecognition === 'undefined') {
 }
 
 async function toggleVoiceRecording() {
-  console.log('toggleVoiceRecording called, isListening:', isListening);
-  
   // Show the voice recording modal
   const modal = document.getElementById('voiceRecordingModal');
-  console.log('Modal element found:', !!modal);
   
   if (modal && !isListening) {
-    console.log('Setting modal display and adding open class');
     modal.style.display = 'flex';
     modal.classList.add('open');
-    console.log('Modal display style:', modal.style.display);
-    console.log('Modal classes:', modal.className);
     
     // Reset the modal state
     const statusEl = document.getElementById('voiceStatus');
     if (statusEl) {
-      statusEl.textContent = 'Tap to start speech recognition';
-      console.log('Status element updated');
-    } else {
-      console.log('Status element not found');
+      statusEl.textContent = 'Listening for speech...';
     }
     
     // Start speech recognition
-    console.log('Starting speech recognition');
     startSpeechRecognition();
   } else if (isListening) {
-    console.log('Stopping speech recognition');
     stopSpeechRecognition();
-  } else if (!modal) {
-    console.error('Voice recording modal not found in DOM');
   }
 }
 
