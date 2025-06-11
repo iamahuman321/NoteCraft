@@ -522,75 +522,15 @@
         </div>
     </div>
 
-    <!-- Language Selector Modal -->
-    <div class="modal" id="languageSelectorModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Select Speech Language</h2>
-                <button class="modal-close" onclick="hideLanguageSelector()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="language-options">
-                    <div class="language-option" data-lang="en-US" onclick="selectLanguage('en-US')">
-                        <div class="language-flag">🇺🇸</div>
-                        <div class="language-info">
-                            <div class="language-name">English (US)</div>
-                            <div class="language-description">American English</div>
-                        </div>
-                    </div>
-                    <div class="language-option" data-lang="en-GB" onclick="selectLanguage('en-GB')">
-                        <div class="language-flag">🇬🇧</div>
-                        <div class="language-info">
-                            <div class="language-name">English (UK)</div>
-                            <div class="language-description">British English</div>
-                        </div>
-                    </div>
-                    <div class="language-option" data-lang="hi-IN" onclick="selectLanguage('hi-IN')">
-                        <div class="language-flag">🇮🇳</div>
-                        <div class="language-info">
-                            <div class="language-name">हिन्दी</div>
-                            <div class="language-description">Hindi (India)</div>
-                        </div>
-                    </div>
-                    <div class="language-option" data-lang="gu-IN" onclick="selectLanguage('gu-IN')">
-                        <div class="language-flag">🇮🇳</div>
-                        <div class="language-info">
-                            <div class="language-name">ગુજરાતી</div>
-                            <div class="language-description">Gujarati (India)</div>
-                        </div>
-                    </div>
-                    <div class="language-option" data-lang="nb-NO" onclick="selectLanguage('nb-NO')">
-                        <div class="language-flag">🇳🇴</div>
-                        <div class="language-info">
-                            <div class="language-name">Norsk</div>
-                            <div class="language-description">Norwegian (Norway)</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="mixed-language-info">
-                    <p><strong>Mixed Language Support:</strong> You can speak in multiple languages within the same note. The system will automatically detect and process mixed language content.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Voice Recording Modal -->
     <div class="modal" id="voiceRecordingModal">
-        <div class="modal-overlay" onclick="resetVoiceRecording()"></div>
+        <div class="modal-overlay" onclick="stopVoiceRecording()"></div>
         <div class="modal-content voice-modal">
             <div class="modal-header">
                 <h3>Speech to Text</h3>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <button class="btn btn-outline voice-lang-btn" onclick="showLanguageSelector()">
-                        <i class="fas fa-language"></i>
-                        <span id="currentLanguageDisplay">English</span>
-                    </button>
-                    <button class="modal-close" onclick="resetVoiceRecording()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
+                <button class="modal-close" onclick="stopVoiceRecording()">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="modal-body voice-body">
                 <div class="voice-visualizer" id="voiceVisualizer">
