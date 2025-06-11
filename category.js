@@ -35,7 +35,9 @@ function showToast(message) {
 }
 
 function saveData() {
+  // Add timestamp to track when categories were last modified locally
   localStorage.setItem("categories", JSON.stringify(categories))
+  localStorage.setItem("categoriesLastModified", Date.now().toString())
   
   // Force update global categories if available
   if (window.categories) {
@@ -49,10 +51,10 @@ function saveData() {
     const isGuest = window.authFunctions.isUserGuest()
     
     if (currentUser && !isGuest) {
-      // Force immediate Firebase sync
+      // Force immediate Firebase sync with a slight delay to ensure localStorage is written
       setTimeout(() => {
         window.authFunctions.saveUserData()
-      }, 100)
+      }, 200)
     }
   }
 }
@@ -145,6 +147,7 @@ function addCategory() {
   const newCategory = {
     id: generateId(),
     name: name,
+    createdAt: Date.now()
   }
 
   categories.push(newCategory)

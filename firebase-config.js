@@ -234,16 +234,26 @@ function loadUserData(user) {
         const userNotes = userData.notes || [];
         const firebaseCategories = userData.categories || [{ id: "all", name: "All" }];
         
-        // Get current local categories to merge with Firebase data
+        // Get current local categories and modification timestamp
         const localCategories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }];
+        const lastLocalModified = parseInt(localStorage.getItem("categoriesLastModified")) || 0;
+        const firebaseLastModified = userData.categoriesLastModified || 0;
         
-        // Merge categories - keep local categories that aren't in Firebase
-        const mergedCategories = [...firebaseCategories];
-        localCategories.forEach(localCat => {
-          if (!mergedCategories.find(fbCat => fbCat.id === localCat.id)) {
-            mergedCategories.push(localCat);
-          }
-        });
+        // Determine which categories to use based on timestamp and content
+        let finalCategories;
+        if (lastLocalModified > firebaseLastModified) {
+          // Local categories are newer
+          finalCategories = localCategories;
+          console.log("Using local categories (newer timestamp)");
+        } else if (localCategories.length > firebaseCategories.length) {
+          // Local has more categories
+          finalCategories = localCategories;
+          console.log("Using local categories (more items)");
+        } else {
+          // Use Firebase categories
+          finalCategories = firebaseCategories;
+          console.log("Using Firebase categories");
+        }
 
         // Force update global arrays
         if (window.notes) {
@@ -255,18 +265,20 @@ function loadUserData(user) {
 
         if (window.categories) {
           window.categories.length = 0;
-          window.categories.push(...mergedCategories);
+          window.categories.push(...finalCategories);
         } else {
-          window.categories = mergedCategories;
+          window.categories = finalCategories;
         }
 
-        // Update localStorage with merged data
+        // Update localStorage
         localStorage.setItem("notes", JSON.stringify(userNotes));
-        localStorage.setItem("categories", JSON.stringify(mergedCategories));
+        localStorage.setItem("categories", JSON.stringify(finalCategories));
         
-        // Save merged categories back to Firebase if there were new local ones
-        if (mergedCategories.length > firebaseCategories.length) {
-          saveUserData();
+        // Save local categories to Firebase if they were used
+        if (localHasMoreCategories || categoriesDiffer) {
+          setTimeout(() => {
+            saveUserData();
+          }, 500);
         }
 
         // Set data loaded flag
@@ -309,6 +321,7 @@ function saveUserData() {
   if (currentUser && !isGuest) {
     const notes = JSON.parse(localStorage.getItem("notes")) || []
     const categories = JSON.parse(localStorage.getItem("categories")) || []
+    const categoriesLastModified = localStorage.getItem("categoriesLastModified") || Date.now()
 
     const userRef = window.database.ref(`users/${currentUser.uid}`)
 
@@ -316,6 +329,7 @@ function saveUserData() {
       .update({
         notes: notes,
         categories: categories,
+        categoriesLastModified: parseInt(categoriesLastModified),
         lastUpdated: Date.now(),
       })
       .catch((error) => {
