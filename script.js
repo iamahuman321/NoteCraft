@@ -3510,10 +3510,21 @@ if (typeof speechRecognition === 'undefined') {
 async function toggleVoiceRecording() {
   console.log('toggleVoiceRecording called, isListening:', isListening);
   
-  if (!isListening) {
+  // Show the voice recording modal
+  const modal = document.getElementById('voiceRecordingModal');
+  if (modal && !isListening) {
+    modal.style.display = 'flex';
+    modal.classList.add('open');
+    console.log('Voice recording modal shown');
+    
+    // Reset the modal state
+    const statusEl = document.getElementById('voiceStatus');
+    if (statusEl) statusEl.textContent = 'Tap to start speech recognition';
+    
+    // Start speech recognition
     console.log('Starting speech recognition');
     startSpeechRecognition();
-  } else {
+  } else if (isListening) {
     console.log('Stopping speech recognition');
     stopSpeechRecognition();
   }
@@ -3620,14 +3631,16 @@ async function startVoiceRecording() {
 function stopVoiceRecording() {
   if (isListening) {
     stopSpeechRecognition();
-  } else {
-    // Close modal if not listening
-    const modal = document.getElementById('voiceRecordingModal');
-    if (modal) {
-      modal.style.display = 'none';
-      modal.classList.remove('open');
-    }
   }
+  
+  // Always close modal when stop is called
+  const modal = document.getElementById('voiceRecordingModal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('open');
+  }
+  
+  resetVoiceRecording();
 }
 
 function updateRecordingDuration() {
