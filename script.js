@@ -2650,14 +2650,20 @@ function setupRealtimeCollaboration(sharedId) {
       
       // Update collaborator presence indicators
       updateCollaboratorPresence(sharedNote.activeUsers || {});
+      
+      // Update cursor indicators
+      updateCursorIndicators(sharedNote.cursors || {});
     }
   });
   
   // Store the listener for cleanup
   sharedNoteListeners.set(sharedId, listener);
   
+  // Setup cursor tracking for this user
+  setupCursorTracking(sharedId);
+  
   // Update presence to show user is actively editing
-  updatePresence(sharedId, { status: 'editing' });
+  updatePresence(sharedId, { status: 'editing', color: getUserCursorColor() });
   
   // Show collaboration status indicator
   showCollaborationStatus();
@@ -3261,7 +3267,11 @@ function initializeSpeechRecognition() {
     speechRecognition.continuous = true;
     speechRecognition.interimResults = true;
     speechRecognition.maxAlternatives = 5; // More alternatives for best accuracy
-    speechRecognition.lang = navigator.language || 'en-US'; // Auto-detect user's language
+    
+    // Multi-language support with auto-detection
+    const supportedLanguages = ['en-US', 'hi-IN', 'gu-IN', 'nb-NO', 'en-GB'];
+    const currentLang = localStorage.getItem('speechLanguage') || detectUserLanguage();
+    speechRecognition.lang = currentLang;
     
     // Precision settings
     if (speechRecognition.audioTrack) {
@@ -3309,8 +3319,8 @@ function initializeSpeechRecognition() {
         }
         
         if (result.isFinal) {
-          // Apply intelligent text formatting
-          finalTranscript += formatSpeechText(bestTranscript);
+          // Apply mixed language intelligent formatting
+          finalTranscript += formatMixedLanguageText(bestTranscript);
         } else {
           interimTranscript += bestTranscript;
         }
@@ -3395,6 +3405,68 @@ function initializeSpeechRecognition() {
   } else {
     showToast('Speech recognition not supported in this browser', 'error');
   }
+}
+
+// Language detection and management
+function detectUserLanguage() {
+  const userLang = navigator.language || navigator.userLanguage;
+  const langMap = {
+    'gu': 'gu-IN',
+    'hi': 'hi-IN', 
+    'nb': 'nb-NO',
+    'no': 'nb-NO',
+    'en': 'en-US'
+  };
+  
+  const detected = langMap[userLang.split('-')[0]] || 'en-US';
+  console.log('Detected language:', detected);
+  return detected;
+}
+
+function switchSpeechLanguage(langCode) {
+  localStorage.setItem('speechLanguage', langCode);
+  if (speechRecognition) {
+    speechRecognition.lang = langCode;
+    console.log('Speech language switched to:', langCode);
+  }
+}
+
+// Mixed language processing - enhanced formatting
+function formatMixedLanguageText(text) {
+  if (!text) return '';
+  
+  // Enhanced punctuation mapping for multiple languages
+  const multiLangPunctuationMap = {
+    // English
+    ' period': '.', ' comma': ',', ' question mark': '?', ' exclamation mark': '!',
+    // Hindi/Gujarati
+    ' पूर्ण विराम': '.', ' अल्प विराम': ',', ' प्रश्न चिह्न': '?',
+    ' पूर्णविराम': '.', ' અલ્પવિરામ': ',', ' પ્રશ્નચિહ્ન': '?',
+    // Norwegian
+    ' punktum': '.', ' komma': ',', ' spørsmålstegn': '?', ' utropstegn': '!',
+    // Common mixed patterns
+    ' full stop': '.', ' dot': '.', ' new line': '\n', ' new paragraph': '\n\n'
+  };
+  
+  let formatted = text.trim().replace(/\s+/g, ' ');
+  
+  // Apply multi-language punctuation
+  for (const [spoken, symbol] of Object.entries(multiLangPunctuationMap)) {
+    const regex = new RegExp(spoken, 'gi');
+    formatted = formatted.replace(regex, symbol);
+  }
+  
+  // Smart capitalization for mixed scripts
+  formatted = formatted.replace(/(^|[.!?]\s+)([a-z])/g, (match, p1, p2) => {
+    return p1 + p2.toUpperCase();
+  });
+  
+  // Add period if no punctuation
+  if (formatted.length > 0 && !/[.!?।॥]$/.test(formatted)) {
+    formatted += '.';
+  }
+  
+  return formatted;
 }
 
 // Intelligent text formatting for speech recognition
@@ -3735,6 +3807,138 @@ function deleteVoiceNote(index) {
   updateVoiceNotesSection();
   saveCurrentNote();
   showToast('Voice note deleted', 'success');
+}
+
+// Get user cursor color based on user ID
+function getUserCursorColor() {
+  const currentUser = getCurrentUser();
+  if (!currentUser) return '#007bff';
+  
+  const colors = ['#007bff', '#28a745', '#dc3545', '#ffc107', '#6f42c1', '#fd7e14', '#20c997', '#e83e8c'];
+  const colorIndex = currentUser.uid.charCodeAt(0) % colors.length;
+  return colors[colorIndex];
+}
+
+// Setup cursor tracking for current user
+function setupCursorTracking(sharedId) {
+  const contentTextarea = document.getElementById('contentTextarea');
+  if (!contentTextarea) return;
+  
+  let cursorTimeout;
+  const userColor = getUserCursorColor();
+  const currentUser = getCurrentUser();
+  
+  const updateCursorPosition = () => {
+    if (!currentUser || !sharedId) return;
+    
+    const position = contentTextarea.selectionStart;
+    const selectionEnd = contentTextarea.selectionEnd;
+    
+    // Update cursor position in Firebase
+    const cursorData = {
+      position: position,
+      selectionEnd: selectionEnd,
+      color: userColor,
+      timestamp: Date.now()
+    };
+    
+    if (window.database) {
+      const cursorsRef = window.database.ref(`sharedNotes/${sharedId}/cursors/${currentUser.uid}`);
+      cursorsRef.set(cursorData);
+      
+      // Auto-cleanup old cursor position
+      clearTimeout(cursorTimeout);
+      cursorTimeout = setTimeout(() => {
+        cursorsRef.remove();
+      }, 5000); // Remove after 5 seconds of inactivity
+    }
+  };
+  
+  // Track cursor position on various events
+  contentTextarea.addEventListener('keyup', updateCursorPosition);
+  contentTextarea.addEventListener('click', updateCursorPosition);
+  contentTextarea.addEventListener('focus', updateCursorPosition);
+  contentTextarea.addEventListener('selectionchange', updateCursorPosition);
+  
+  // Cleanup on blur
+  contentTextarea.addEventListener('blur', () => {
+    if (window.database && currentUser && sharedId) {
+      const cursorsRef = window.database.ref(`sharedNotes/${sharedId}/cursors/${currentUser.uid}`);
+      cursorsRef.remove();
+    }
+  });
+}
+
+// Update cursor indicators for other users
+function updateCursorIndicators(cursors) {
+  const contentTextarea = document.getElementById('contentTextarea');
+  if (!contentTextarea || !cursors) return;
+  
+  const currentUser = getCurrentUser();
+  if (!currentUser) return;
+  
+  // Remove existing cursor indicators
+  const existingIndicators = document.querySelectorAll('.cursor-indicator');
+  existingIndicators.forEach(indicator => indicator.remove());
+  
+  // Add cursor indicators for other users
+  Object.entries(cursors).forEach(([userId, cursorData]) => {
+    if (userId === currentUser.uid || !cursorData) return;
+    
+    // Check if cursor data is recent (within 10 seconds)
+    if (Date.now() - (cursorData.timestamp || 0) > 10000) return;
+    
+    createCursorIndicator(contentTextarea, cursorData);
+  });
+}
+
+// Create visual cursor indicator
+function createCursorIndicator(textarea, cursorData) {
+  if (!cursorData || typeof cursorData.position !== 'number') return;
+  
+  const indicator = document.createElement('div');
+  indicator.className = 'cursor-indicator';
+  indicator.style.cssText = `
+    position: absolute;
+    width: 2px;
+    height: 20px;
+    background-color: ${cursorData.color || '#007bff'};
+    border-radius: 1px;
+    animation: cursor-blink 1s infinite;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 0 3px ${cursorData.color || '#007bff'};
+  `;
+  
+  // Calculate cursor position
+  const textBeforeCursor = textarea.value.substring(0, cursorData.position);
+  const lines = textBeforeCursor.split('\n');
+  const lineNumber = lines.length - 1;
+  const columnNumber = lines[lines.length - 1].length;
+  
+  // Estimate position (basic implementation)
+  const lineHeight = 20; // Approximate line height
+  const charWidth = 8; // Approximate character width
+  
+  const top = lineNumber * lineHeight + 10;
+  const left = columnNumber * charWidth + 10;
+  
+  indicator.style.top = `${top}px`;
+  indicator.style.left = `${left}px`;
+  
+  // Add to textarea container
+  const container = textarea.parentElement;
+  if (container.style.position !== 'relative') {
+    container.style.position = 'relative';
+  }
+  container.appendChild(indicator);
+  
+  // Remove after a few seconds
+  setTimeout(() => {
+    if (indicator.parentElement) {
+      indicator.remove();
+    }
+  }, 5000);
 }
 
 // Export for window global
