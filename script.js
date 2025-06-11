@@ -679,7 +679,7 @@ function saveSharedNote() {
       
       // Also update local note
       const existingIndex = notes.findIndex(n => n.id === currentNote.id);
-      if (existingIndex >= 0) {
+      if (existingIndex >= 0 && existingIndex < notes.length) {
         notes[existingIndex] = currentNote;
         localStorage.setItem("notes", JSON.stringify(notes));
       }
@@ -1831,7 +1831,7 @@ function updateListItemInSection(sectionId, itemIndex, value) {
   if (!currentNote?.listSections) return;
   
   const section = currentNote.listSections.find(s => s.id === sectionId);
-  if (!section?.items?.[itemIndex]) return;
+  if (!section?.items || itemIndex < 0 || itemIndex >= section.items.length) return;
   
   section.items[itemIndex].text = value;
   
@@ -2652,9 +2652,9 @@ function handleSearch() {
   searchQuery = searchInput.value.trim();
   
   if (searchQuery) {
-    searchClear.classList.remove("hidden");
+    if (searchClear) searchClear.classList.remove("hidden");
   } else {
-    searchClear.classList.add("hidden");
+    if (searchClear) searchClear.classList.add("hidden");
   }
   
   renderNotes();
@@ -2666,7 +2666,7 @@ function clearSearch() {
   
   if (searchInput) searchInput.value = "";
   searchQuery = "";
-  searchClear.classList.add("hidden");
+  if (searchClear) searchClear.classList.add("hidden");
   
   renderNotes();
 }
@@ -2990,7 +2990,7 @@ function setupHomePageSync() {
         
         // Update local notes with the changed shared note
         const existingIndex = notes.findIndex(n => n.sharedId === sharedNoteId);
-        if (existingIndex !== -1) {
+        if (existingIndex !== -1 && existingIndex < notes.length) {
           notes[existingIndex] = {
             ...notes[existingIndex],
             title: sharedNoteData.title || '',
@@ -3038,9 +3038,10 @@ function updateCollaboratorPresence(activeUsers) {
   if (!currentUser) return;
   
   // Filter out current user and get only active collaborators
-  const collaborators = Object.entries(activeUsers)
-    .filter(([uid, userData]) => uid !== currentUser.uid && userData.status === 'editing')
-    .slice(0, 3); // Show max 3 collaborators
+  const collaborators = activeUsers && typeof activeUsers === 'object' ? 
+    Object.entries(activeUsers)
+      .filter(([uid, userData]) => uid !== currentUser.uid && userData && userData.status === 'editing')
+      .slice(0, 3) : []; // Show max 3 collaborators
   
   if (collaborators.length === 0) {
     activeCollaborators.innerHTML = '';
