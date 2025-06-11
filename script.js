@@ -1993,7 +1993,16 @@ function processImageUpload(event) {
         
         currentNote.images.push(imageData);
         updateImagesSection();
-        saveCurrentNote();
+        
+        // For shared notes, immediately sync the image addition
+        if (currentNote.isShared && collaborativeEditingEnabled) {
+          isAutoSave = true;
+          saveCurrentNote();
+          isAutoSave = false;
+        } else {
+          saveCurrentNote();
+        }
+        
         showToast("Image added successfully", "success");
       };
       reader.readAsDataURL(file);
@@ -2097,7 +2106,16 @@ function deleteImage(index) {
   if (actualIndex >= 0 && actualIndex < currentNote.images.length) {
     currentNote.images.splice(actualIndex, 1);
     updateImagesSection();
-    saveCurrentNote();
+    
+    // For shared notes, immediately sync the image deletion
+    if (currentNote.isShared && collaborativeEditingEnabled) {
+      isAutoSave = true;
+      saveCurrentNote();
+      isAutoSave = false;
+    } else {
+      saveCurrentNote();
+    }
+    
     showToast("Image deleted successfully", "success");
   }
 }
@@ -2838,7 +2856,11 @@ function setupRealtimeCollaboration(sharedId) {
         updateListSection();
       }
       
+      // Force update images section to reflect real-time changes
       updateImagesSection();
+      
+      // Log image synchronization for debugging
+      console.log(`Updated images section with ${(currentNote.images || []).length} images for note: ${currentNote.id}`);
       
       // Update the note in local notes array
       const noteIndex = notes.findIndex(n => n.id === currentNote.id);
