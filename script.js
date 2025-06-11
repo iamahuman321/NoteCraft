@@ -1561,11 +1561,6 @@ function hideListTypeModal() {
 }
 
 function showDeleteModal(note) {
-  if (!note) {
-    console.warn('Cannot show delete modal: note is null or undefined');
-    return;
-  }
-  
   const deleteModal = document.getElementById("deleteModal");
   if (deleteModal) deleteModal.classList.add("open");
   
@@ -2007,14 +2002,9 @@ function updateImagesSection() {
   const imagesSection = document.getElementById("imagesSection");
   const imageGrid = document.getElementById("imageGrid");
   
-  // Safety check for currentNote and required DOM elements
+  // Safety check for currentNote
   if (!currentNote) {
     if (imagesSection) imagesSection.classList.add("hidden");
-    return;
-  }
-  
-  if (!imageGrid) {
-    console.warn('Image grid element not found');
     return;
   }
   
@@ -2111,11 +2101,6 @@ let currentImageSrc = null;
 let currentImageIndex = null;
 
 function openImageViewer(imageSrc, imageIndex) {
-  if (!imageSrc || typeof imageSrc !== 'string') {
-    console.warn('Cannot open image viewer: invalid image source');
-    return;
-  }
-  
   console.log("Opening image viewer:", imageSrc, imageIndex);
   currentImageSrc = imageSrc;
   currentImageIndex = imageIndex;
@@ -2125,42 +2110,22 @@ function openImageViewer(imageSrc, imageIndex) {
   
   console.log("Modal found:", !!modal, "Image found:", !!img);
   
-  if (!modal || !img) {
+  if (modal && img) {
+    img.src = imageSrc;
+    modal.classList.add("open");
+    
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = "hidden";
+    
+    console.log("Image viewer opened successfully");
+  } else {
     console.error("Modal or image element not found");
-    showToast('Image viewer not available', 'error');
-    return;
   }
-  
-  // Handle image loading errors
-  img.onerror = function() {
-    console.error('Failed to load image:', imageSrc);
-    showToast('Failed to load image', 'error');
-    closeImageViewer();
-  };
-  
-  img.onload = function() {
-    console.log("Image loaded successfully");
-  };
-  
-  img.src = imageSrc;
-  modal.classList.add("open");
-  
-  // Prevent body scroll when modal is open
-  document.body.style.overflow = "hidden";
-  
-  console.log("Image viewer opened successfully");
 }
 
 function closeImageViewer() {
   const modal = document.getElementById("imageViewerModal");
-  const img = document.getElementById("imageViewerImg");
-  
   if (modal) {
-    // Clear any pending error handlers
-    if (img) {
-      img.onerror = null;
-      img.onload = null;
-    }
     modal.classList.remove("open");
     document.body.style.overflow = "";
     currentImageSrc = null;
@@ -3915,25 +3880,18 @@ function saveVoiceRecording() {
 
 function updateVoiceNotesSection() {
   const voiceSection = document.getElementById("voiceSection");
-  if (!voiceSection) {
-    console.warn('Voice section element not found');
-    return;
-  }
+  if (!voiceSection) return;
   
-  if (!currentNote || !currentNote.voiceNotes || !Array.isArray(currentNote.voiceNotes) || currentNote.voiceNotes.length === 0) {
+  if (!currentNote || !currentNote.voiceNotes || currentNote.voiceNotes.length === 0) {
     voiceSection.classList.add("hidden");
     return;
   }
   
   voiceSection.classList.remove("hidden");
   const voiceContainer = document.getElementById("voiceContainer");
-  if (!voiceContainer) {
-    console.warn('Voice container element not found');
-    return;
-  }
+  if (!voiceContainer) return;
   
   voiceContainer.innerHTML = currentNote.voiceNotes
-    .filter(voiceNote => voiceNote && voiceNote.data) // Filter out invalid voice notes
     .map((voiceNote, index) => `
       <div class="voice-note-item">
         <div class="voice-note-header">
