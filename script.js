@@ -4089,9 +4089,82 @@ function validateNoteData(note) {
   return true;
 }
 
+// Data validation and repair function
+function validateAndRepairData() {
+  try {
+    // Validate notes array
+    if (!Array.isArray(notes)) {
+      console.warn("Notes array corrupted, attempting repair");
+      const backupNotes = localStorage.getItem('backup_notes');
+      notes = backupNotes ? JSON.parse(backupNotes) : [];
+    }
+    
+    // Validate and repair individual notes
+    notes = notes.filter(note => {
+      if (!validateNoteData(note)) {
+        console.warn("Removing invalid note:", note);
+        return false;
+      }
+      
+      // Ensure required fields exist
+      if (!note.id) note.id = generateId();
+      if (!note.title) note.title = "Untitled Note";
+      if (!note.content) note.content = "";
+      if (!note.categories) note.categories = [];
+      if (!note.images) note.images = [];
+      if (!note.createdAt) note.createdAt = Date.now();
+      if (!note.updatedAt) note.updatedAt = Date.now();
+      
+      return true;
+    });
+    
+    // Validate categories
+    if (!Array.isArray(categories)) {
+      categories = [{ id: "all", name: "All" }];
+    }
+    
+    // Save repaired data
+    localStorage.setItem("notes", JSON.stringify(notes));
+    localStorage.setItem("categories", JSON.stringify(categories));
+    
+  } catch (error) {
+    console.error("Data validation failed:", error);
+  }
+}
+
+// Enhanced auto-save with error recovery
+function robustAutoSave() {
+  const maxRetries = 3;
+  let retryCount = 0;
+  
+  function attemptSave() {
+    try {
+      if (currentNote && !isReceivingUpdate) {
+        saveCurrentNote();
+        retryCount = 0; // Reset on success
+      }
+    } catch (error) {
+      console.error(`Auto-save failed (attempt ${retryCount + 1}):`, error);
+      retryCount++;
+      
+      if (retryCount < maxRetries) {
+        setTimeout(attemptSave, 1000 * retryCount); // Exponential backoff
+      } else {
+        showToast("Auto-save failed. Please save manually.", "warning");
+        retryCount = 0;
+      }
+    }
+  }
+  
+  attemptSave();
+}
+
 // Initialize connection monitoring
 document.addEventListener('DOMContentLoaded', () => {
   updateConnectionStatus();
+  
+  // Initial data validation
+  validateAndRepairData();
   
   // Monitor Firebase connection
   if (window.database) {
@@ -4105,9 +4178,13 @@ document.addEventListener('DOMContentLoaded', () => {
       updateConnectionStatus();
     });
   }
+  
+  // Set up periodic data validation
+  setInterval(validateAndRepairData, 300000); // Every 5 minutes
 });
 
 // Export for window global
 window.renderNotes = renderNotes;
 window.renderCategories = renderCategories;
 window.testVoiceModal = testVoiceModal;
+window.validateAndRepairData = validateAndRepairData;

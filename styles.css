@@ -3238,3 +3238,67 @@ body {
     color: #333 !important;
   }
 }
+
+/* Connection Status Indicator */
+.connection-status {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  font-size: 8px;
+  line-height: 1;
+  transition: var(--transition-fast);
+}
+
+.connection-status.online,
+.connection-status.firebase-connected {
+  color: #28a745;
+}
+
+.connection-status.offline,
+.connection-status.firebase-disconnected {
+  color: #dc3545;
+}
+
+/* Enhanced Error States */
+.error-state {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.error-state .error-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #dc3545;
+}
+
+.retry-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.retry-button:hover {
+  background: var(--accent-hover);
+}
+
+/* Loading States */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
