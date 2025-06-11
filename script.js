@@ -21,6 +21,12 @@ let currentShoppingCategory = null;
 let searchQuery = "";
 let filteredNotes = [];
 
+// Connection and error handling
+let isOnline = navigator.onLine;
+let connectionStatus = 'online';
+let retryAttempts = 0;
+let maxRetryAttempts = 3;
+
 // Translations
 const translations = {
   en: {
@@ -603,25 +609,30 @@ function verifyNotePassword(note) {
 function saveCurrentNote() {
   if (!currentNote || isReceivingUpdate) return; // Don't save during real-time updates
   
-  const titleInput = document.getElementById("titleInput");
-  const contentTextarea = document.getElementById("contentTextarea");
-  
-  if (titleInput) currentNote.title = titleInput.value;
-  if (contentTextarea) currentNote.content = contentTextarea.value;
-  
-  // Save the current list type with the note
-  if (currentNote.list && currentNote.list.length > 0) {
-    currentNote.listType = currentListType;
-  }
-  
-  currentNote.updatedAt = Date.now();
-  
-  if (currentNote.isShared && currentNote.sharedId) {
-    console.log("Saving shared note:", currentNote.sharedId);
-    saveSharedNote();
-  } else {
-    console.log("Saving local note:", currentNote.id);
-    saveLocalNote();
+  try {
+    const titleInput = document.getElementById("titleInput");
+    const contentTextarea = document.getElementById("contentTextarea");
+    
+    if (titleInput) currentNote.title = titleInput.value;
+    if (contentTextarea) currentNote.content = contentTextarea.value;
+    
+    // Save the current list type with the note
+    if (currentNote.list && currentNote.list.length > 0) {
+      currentNote.listType = currentListType;
+    }
+    
+    currentNote.updatedAt = Date.now();
+    
+    if (currentNote.isShared && currentNote.sharedId) {
+      console.log("Saving shared note:", currentNote.sharedId);
+      saveSharedNote();
+    } else {
+      console.log("Saving local note:", currentNote.id);
+      saveLocalNote();
+    }
+  } catch (error) {
+    console.error("Error saving note:", error);
+    showToast("Failed to save note. Please try again.", "error");
   }
 }
 
@@ -3018,8 +3029,8 @@ function setupFastAutoSave() {
     }
   }
   
-  // Save every 100ms for near real-time collaborative editing
-  const fastAutoSave = debounce(fastSave, 100);
+  // Save every 500ms for balanced performance and real-time feel
+  const fastAutoSave = debounce(fastSave, 500);
   
   if (titleInput) {
     titleInput.removeEventListener('input', fastAutoSave);
@@ -4029,6 +4040,72 @@ function testVoiceModal() {
     console.error('Modal not found');
   }
 }
+
+// Connection status monitoring
+function updateConnectionStatus() {
+  const statusIndicator = document.createElement('div');
+  statusIndicator.id = 'connectionStatus';
+  statusIndicator.className = `connection-status ${connectionStatus}`;
+  statusIndicator.textContent = isOnline ? '●' : '●';
+  statusIndicator.title = isOnline ? 'Online' : 'Offline';
+  
+  // Remove existing indicator
+  const existing = document.getElementById('connectionStatus');
+  if (existing) existing.remove();
+  
+  // Add to header
+  const headerRight = document.querySelector('.header-right');
+  if (headerRight) {
+    headerRight.insertBefore(statusIndicator, headerRight.firstChild);
+  }
+}
+
+// Enhanced error handling with retry
+async function withRetry(operation, context = 'operation') {
+  for (let attempt = 0; attempt <= maxRetryAttempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      console.error(`${context} failed (attempt ${attempt + 1}):`, error);
+      
+      if (attempt === maxRetryAttempts) {
+        showToast(`${context} failed after ${maxRetryAttempts + 1} attempts`, "error");
+        throw error;
+      }
+      
+      // Exponential backoff
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+    }
+  }
+}
+
+// Input validation
+function validateNoteData(note) {
+  if (!note || typeof note !== 'object') return false;
+  if (note.title && typeof note.title !== 'string') return false;
+  if (note.content && typeof note.content !== 'string') return false;
+  if (note.categories && !Array.isArray(note.categories)) return false;
+  if (note.images && !Array.isArray(note.images)) return false;
+  return true;
+}
+
+// Initialize connection monitoring
+document.addEventListener('DOMContentLoaded', () => {
+  updateConnectionStatus();
+  
+  // Monitor Firebase connection
+  if (window.database) {
+    const connectedRef = window.database.ref('.info/connected');
+    connectedRef.on('value', (snapshot) => {
+      if (snapshot.val() === true) {
+        connectionStatus = 'firebase-connected';
+      } else {
+        connectionStatus = 'firebase-disconnected';
+      }
+      updateConnectionStatus();
+    });
+  }
+});
 
 // Export for window global
 window.renderNotes = renderNotes;
