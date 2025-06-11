@@ -3236,6 +3236,7 @@ let recordingTimer = null;
 function showVoiceRecordingModal() {
   const modal = document.getElementById('voiceRecordingModal');
   if (modal) {
+    modal.style.display = 'flex';
     modal.classList.add('open');
     resetVoiceRecording();
   } else {
@@ -3331,6 +3332,7 @@ function stopVoiceRecording() {
   
   const modal = document.getElementById('voiceRecordingModal');
   if (modal) {
+    modal.style.display = 'none';
     modal.classList.remove('open');
   }
 }
