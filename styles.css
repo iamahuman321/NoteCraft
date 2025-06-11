@@ -3313,7 +3313,7 @@ body {
   height: 100px;
 }
 
-/* Minimal Icon-Only Swipe Actions */
+/* Theme-Matched Minimal Swipe Actions */
 .note-card-container {
   position: relative;
   overflow: hidden;
@@ -3324,16 +3324,26 @@ body {
 
 .note-card-swipe-actions {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 160px;
+  top: 8px;
+  right: 8px;
+  bottom: 8px;
+  width: 180px;
   display: flex;
-  background: var(--background-color);
+  gap: 8px;
+  background: var(--dark-color);
+  border-radius: 8px;
+  padding: 8px;
   opacity: 0;
-  transform: translateX(4px);
+  transform: translateX(12px);
   transition: all 0.2s ease;
   z-index: 5;
+  pointer-events: none;
+}
+
+.note-card-swipe-actions.revealed {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: all;
 }
 
 .swipe-action {
@@ -3343,24 +3353,19 @@ body {
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
-  border-left: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px 8px;
   margin: 0;
-  padding: 0;
-  border-radius: 0;
-}
-
-.swipe-action:first-child {
-  border-left: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .swipe-action:active {
-  transform: scale(0.9);
+  transform: scale(0.92);
 }
 
 .swipe-action i {
-  font-size: 24px;
+  font-size: 20px;
   color: white;
-  opacity: 0.9;
 }
 
 .swipe-action span {
@@ -3368,19 +3373,19 @@ body {
 }
 
 .delete-action {
-  background: #dc3545;
+  background: #ff4444;
 }
 
 .duplicate-action {
-  background: #6c757d;
+  background: var(--text-secondary);
 }
 
 .share-action {
-  background: #007bff;
+  background: var(--light-color);
 }
 
 .category-action {
-  background: #28a745;
+  background: var(--border-color);
 }
 
 .note-card {
@@ -3394,31 +3399,38 @@ body {
 }
 
 .note-card.swiping {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
-.note-card-swipe-actions.revealed {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* Mobile Clean */
+/* Mobile Responsive */
 @media (max-width: 768px) {
   .note-card-swipe-actions {
-    width: 140px;
+    width: 160px;
+    gap: 6px;
+    padding: 6px;
+  }
+  
+  .swipe-action {
+    padding: 14px 6px;
   }
   
   .swipe-action i {
-    font-size: 22px;
+    font-size: 18px;
   }
 }
 
 @media (max-width: 480px) {
   .note-card-swipe-actions {
-    width: 120px;
+    width: 140px;
+    gap: 4px;
+    padding: 4px;
+  }
+  
+  .swipe-action {
+    padding: 12px 4px;
   }
   
   .swipe-action i {
-    font-size: 20px;
+    font-size: 16px;
   }
 }

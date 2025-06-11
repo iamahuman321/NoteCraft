@@ -4224,26 +4224,29 @@ function setupSwipeToReveal() {
       // Allow both left swipe (negative) and right swipe back (positive)
       if (deltaX < 0) {
         // Left swipe - reveal actions
-        const translateX = Math.max(deltaX, -160);
+        const translateX = Math.max(deltaX, -180);
         noteCard.style.transform = `translateX(${translateX}px)`;
         
-        if (Math.abs(translateX) > 60) {
+        if (Math.abs(translateX) > 70) {
           actions.style.opacity = '1';
           actions.style.transform = 'translateX(0)';
+          actions.classList.add('revealed');
           hasRevealed = true;
         } else {
           actions.style.opacity = '0';
-          actions.style.transform = 'translateX(4px)';
+          actions.style.transform = 'translateX(12px)';
+          actions.classList.remove('revealed');
           hasRevealed = false;
         }
       } else if (deltaX > 0 && hasRevealed) {
         // Right swipe - close actions
-        const translateX = Math.max(-160 + deltaX, -160);
+        const translateX = Math.max(-180 + deltaX, -180);
         noteCard.style.transform = `translateX(${translateX}px)`;
         
-        if (translateX > -80) {
+        if (translateX > -90) {
           actions.style.opacity = '0';
-          actions.style.transform = 'translateX(4px)';
+          actions.style.transform = 'translateX(12px)';
+          actions.classList.remove('revealed');
           hasRevealed = false;
         }
       }
@@ -4256,7 +4259,7 @@ function setupSwipeToReveal() {
       
       if (hasRevealed) {
         // Keep actions visible
-        noteCard.style.transform = 'translateX(-160px)';
+        noteCard.style.transform = 'translateX(-180px)';
         actions.style.opacity = '1';
         actions.style.transform = 'translateX(0)';
         actions.classList.add('revealed');
@@ -4264,7 +4267,7 @@ function setupSwipeToReveal() {
         // Snap back
         noteCard.style.transform = 'translateX(0)';
         actions.style.opacity = '0';
-        actions.style.transform = 'translateX(4px)';
+        actions.style.transform = 'translateX(12px)';
         actions.classList.remove('revealed');
       }
     });
@@ -4274,7 +4277,7 @@ function setupSwipeToReveal() {
       if (hasRevealed && !e.target.closest('.note-card-swipe-actions')) {
         noteCard.style.transform = 'translateX(0)';
         actions.style.opacity = '0';
-        actions.style.transform = 'translateX(4px)';
+        actions.style.transform = 'translateX(12px)';
         actions.classList.remove('revealed');
         hasRevealed = false;
       }
@@ -4286,7 +4289,7 @@ function setupSwipeToReveal() {
         e.stopPropagation();
         noteCard.style.transform = 'translateX(0)';
         actions.style.opacity = '0';
-        actions.style.transform = 'translateX(4px)';
+        actions.style.transform = 'translateX(12px)';
         actions.classList.remove('revealed');
         hasRevealed = false;
       }
