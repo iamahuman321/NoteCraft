@@ -2379,63 +2379,16 @@ body {
   }
 }
 
-/* Dark Theme Variables */
-[data-theme="dark"] {
-  --primary-color: #ff4757;
-  --primary-hover: #ff3742;
-  --secondary-color: #a4b0be;
-  --success-color: #2ed573;
-  --danger-color: #ff4757;
-  --warning-color: #ffa502;
-  --light-color: #2f3542;
-  --dark-color: #ffffff;
-  --border-color: #40407a;
-  --text-color: #f1f2f6;
-  --text-muted: #a4b0be;
-  --secondary-text-color: #a4b0be;
-  --background-color: #2f3542;
-  --background-light: #1e2025;
-  --bg-color: #2f3542;
-  --bg-secondary: #40407a;
-  --bg-tertiary: #3c4560;
-  --surface-color: #40407a;
-  --header-height: 64px;
-  --sidebar-width: 300px;
-  --border-radius: 12px;
-  --border-radius-sm: 8px;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --primary-light: rgba(255, 71, 87, 0.1);
-  --success-light: rgba(46, 213, 115, 0.1);
-  --border-light: #40407a;
-}
-
 /* Dark theme support */
 @media (prefers-color-scheme: dark) {
   :root {
-    --primary-color: #ff4757;
-    --primary-hover: #ff3742;
-    --secondary-color: #a4b0be;
-    --success-color: #2ed573;
-    --danger-color: #ff4757;
-    --warning-color: #ffa502;
-    --light-color: #2f3542;
+    --background-color: #1a1a1a;
+    --background-light: #121212;
+    --text-color: #ffffff;
+    --text-muted: #a0a0a0;
+    --border-color: #333333;
+    --light-color: #2a2a2a;
     --dark-color: #ffffff;
-    --border-color: #40407a;
-    --text-color: #f1f2f6;
-    --text-muted: #a4b0be;
-    --secondary-text-color: #a4b0be;
-    --background-color: #2f3542;
-    --background-light: #1e2025;
-    --bg-color: #2f3542;
-    --bg-secondary: #40407a;
-    --bg-tertiary: #3c4560;
-    --surface-color: #40407a;
-    --primary-light: rgba(255, 71, 87, 0.1);
-    --success-light: rgba(46, 213, 115, 0.1);
-    --border-light: #40407a;
   }
 }
 
@@ -2732,225 +2685,41 @@ body {
   }
 }
 
-/* Comprehensive Dark Mode Fixes */
-[data-theme="dark"] .btn-icon,
-[data-theme="dark"] .hamburger-btn,
-[data-theme="dark"] .search-btn,
-[data-theme="dark"] .search-clear {
-  background: var(--bg-secondary);
-  color: var(--text-color);
+/* Specific Dark Mode Fixes - Only for visibility issues */
+
+/* Fix image viewer close button visibility in dark mode */
+@media (prefers-color-scheme: dark) {
+  .image-viewer-close {
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #333 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+  
+  .image-viewer-close:hover {
+    background: white !important;
+    color: #000 !important;
+  }
 }
 
-[data-theme="dark"] .btn-icon:hover,
-[data-theme="dark"] .hamburger-btn:hover,
-[data-theme="dark"] .search-btn:hover,
-[data-theme="dark"] .search-clear:hover {
-  background: var(--bg-tertiary);
-  color: var(--primary-color);
-}
-
-[data-theme="dark"] .form-input,
-[data-theme="dark"] .form-textarea,
-[data-theme="dark"] .search-input,
-[data-theme="dark"] input,
-[data-theme="dark"] textarea,
-[data-theme="dark"] select {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-[data-theme="dark"] .form-input:focus,
-[data-theme="dark"] .form-textarea:focus,
-[data-theme="dark"] .search-input:focus,
-[data-theme="dark"] input:focus,
-[data-theme="dark"] textarea:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(255, 71, 87, 0.2);
-}
-
-[data-theme="dark"] .form-input::placeholder,
-[data-theme="dark"] .form-textarea::placeholder,
-[data-theme="dark"] .search-input::placeholder,
-[data-theme="dark"] input::placeholder,
-[data-theme="dark"] textarea::placeholder {
-  color: var(--text-muted);
-}
-
-[data-theme="dark"] .modal-content,
-[data-theme="dark"] .modal {
-  background: var(--background-color);
-  border-color: var(--border-color);
-}
-
-[data-theme="dark"] .modal-overlay {
-  background: rgba(0, 0, 0, 0.8);
-}
-
-[data-theme="dark"] .filter-chip {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-[data-theme="dark"] .filter-chip.active,
-[data-theme="dark"] .filter-chip:hover {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: white;
-}
-
-[data-theme="dark"] .category-chip {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-[data-theme="dark"] .toast {
-  background: #333;
-  color: white;
-}
-
-[data-theme="dark"] .toast.success {
-  background: var(--success-color);
-  color: white;
-}
-
-[data-theme="dark"] .toast.error {
-  background: var(--danger-color);
-  color: white;
-}
-
-[data-theme="dark"] .toast.warning {
-  background: var(--warning-color);
-  color: #333;
-}
-
-[data-theme="dark"] .sidebar {
-  background: var(--background-color);
-  border-color: var(--border-color);
-}
-
-[data-theme="dark"] .nav-item {
-  color: var(--text-color);
-}
-
-[data-theme="dark"] .nav-item:hover,
-[data-theme="dark"] .nav-item.active {
-  background: var(--bg-secondary);
-  color: var(--primary-color);
-}
-
-[data-theme="dark"] .list-item {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
-}
-
-[data-theme="dark"] .list-item input[type="text"] {
-  background: transparent;
-  color: var(--text-color);
-  border: none;
-}
-
-[data-theme="dark"] .image-item {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
-}
-
-[data-theme="dark"] .image-delete {
-  background: var(--danger-color);
-  color: white;
-}
-
-[data-theme="dark"] .image-viewer-close {
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="dark"] .image-viewer-close:hover {
-  background: white;
-  color: #000;
-}
-
-[data-theme="dark"] .search-results {
-  background: var(--background-color);
-  border-color: var(--border-color);
-}
-
-[data-theme="dark"] .user-search-item {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-[data-theme="dark"] .user-search-item:hover {
-  background: var(--bg-tertiary);
-}
-
-[data-theme="dark"] .selected-user {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
-}
-
-[data-theme="dark"] .shopping-category,
-[data-theme="dark"] .shopping-item {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-[data-theme="dark"] .shopping-item input {
-  background: transparent;
-  color: var(--text-color);
-}
-
-[data-theme="dark"] .empty-state {
-  color: var(--text-muted);
-}
-
-[data-theme="dark"] .empty-state i {
-  color: var(--text-muted);
-}
-
-[data-theme="dark"] .collaboration-status {
-  background: var(--primary-color);
-  color: white;
-}
-
-[data-theme="dark"] .collaborator-avatar {
-  background: var(--primary-color);
-  color: white;
-}
-
-/* Fix toolbar positioning and visibility in dark mode */
-[data-theme="dark"] .bottom-toolbar,
-[data-theme="dark"] .editor-toolbar {
-  background: var(--background-color);
-  border-color: var(--border-color);
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
-}
-
-/* Ensure content doesn't get cut off under toolbars */
-.editor-page,
-.notes-page {
-  padding-bottom: calc(var(--toolbar-height) + env(safe-area-inset-bottom, 0px));
-}
-
-/* Fix modal positioning and dark mode styling */
-[data-theme="dark"] .modal-header {
-  border-color: var(--border-color);
-}
-
-[data-theme="dark"] .modal-footer {
-  border-color: var(--border-color);
-}
-
-[data-theme="dark"] .modal-close {
-  color: var(--text-muted);
-}
-
-[data-theme="dark"] .modal-close:hover {
-  background: var(--bg-secondary);
-  color: var(--text-color);
+/* Fix toast notification text visibility in dark mode */
+@media (prefers-color-scheme: dark) {
+  .toast {
+    background: #333 !important;
+    color: white !important;
+  }
+  
+  .toast.success {
+    background: var(--success-color) !important;
+    color: white !important;
+  }
+  
+  .toast.error {
+    background: var(--danger-color) !important;
+    color: white !important;
+  }
+  
+  .toast.warning {
+    background: var(--warning-color) !important;
+    color: #333 !important;
+  }
 }
