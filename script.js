@@ -3029,8 +3029,8 @@ function setupFastAutoSave() {
     }
   }
   
-  // Save every 500ms for balanced performance and real-time feel
-  const fastAutoSave = debounce(fastSave, 500);
+  // Save every 750ms for optimal performance and real-time feel
+  const fastAutoSave = debounce(fastSave, 750);
   
   if (titleInput) {
     titleInput.removeEventListener('input', fastAutoSave);
@@ -4043,21 +4043,9 @@ function testVoiceModal() {
 
 // Connection status monitoring
 function updateConnectionStatus() {
-  const statusIndicator = document.createElement('div');
-  statusIndicator.id = 'connectionStatus';
-  statusIndicator.className = `connection-status ${connectionStatus}`;
-  statusIndicator.textContent = isOnline ? '●' : '●';
-  statusIndicator.title = isOnline ? 'Online' : 'Offline';
-  
-  // Remove existing indicator
+  // Remove the connection status indicator completely for cleaner UI
   const existing = document.getElementById('connectionStatus');
   if (existing) existing.remove();
-  
-  // Add to header
-  const headerRight = document.querySelector('.header-right');
-  if (headerRight) {
-    headerRight.insertBefore(statusIndicator, headerRight.firstChild);
-  }
 }
 
 // Enhanced error handling with retry
