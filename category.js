@@ -7,6 +7,10 @@ let notes = JSON.parse(localStorage.getItem("notes")) || []
 // Initialize the page with CategoryManager
 async function initializePage() {
   console.log("Initializing category page...")
+  console.log("Initial notes count:", notes.length)
+  
+  // Load latest notes immediately
+  refreshNotesData()
   
   // Wait for CategoryManager to be available
   if (window.CategoryManager) {
@@ -67,8 +71,18 @@ function refreshNotesData() {
     // Always update notes, not just when count differs
     notes.length = 0
     notes.push(...latestNotes)
-    console.log("Refreshed notes data on category page:", notes.length)
-    console.log("Notes with categories:", notes.filter(n => n.categories && n.categories.length > 0).length)
+    console.log("Category page - Refreshed notes data:", notes.length)
+    console.log("Category page - Notes with categories:", notes.filter(n => n.categories && n.categories.length > 0).length)
+    
+    // Log sample note for debugging
+    if (notes.length > 0) {
+      console.log("Category page - Sample note:", {
+        id: notes[0].id,
+        title: notes[0].title,
+        categories: notes[0].categories
+      })
+    }
+    
     renderCategories() // Re-render with updated notes
   } catch (error) {
     console.error("Error refreshing notes data:", error)
