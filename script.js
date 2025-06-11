@@ -1773,7 +1773,14 @@ function updateImagesSection() {
   const imagesSection = document.getElementById("imagesSection");
   const imageGrid = document.getElementById("imageGrid");
   
-  if (!currentNote?.images || currentNote.images.length === 0) {
+  // Safety check for currentNote
+  if (!currentNote) {
+    if (imagesSection) imagesSection.classList.add("hidden");
+    return;
+  }
+  
+  // Ensure images is an array
+  if (!Array.isArray(currentNote.images) || currentNote.images.length === 0) {
     if (imagesSection) imagesSection.classList.add("hidden");
     return;
   }
@@ -1781,35 +1788,52 @@ function updateImagesSection() {
   if (imagesSection) imagesSection.classList.remove("hidden");
   
   if (imageGrid) {
-    // Ensure we have a fresh copy of images for this specific note
-    const noteImages = currentNote.images || [];
-    
-    imageGrid.innerHTML = noteImages.map((image, index) => {
-      // Handle both old format (string) and new format (object)
-      const imageSrc = typeof image === 'string' ? image : image.data;
-      const imageId = typeof image === 'object' ? image.id : `img_${index}`;
+    try {
+      imageGrid.innerHTML = currentNote.images.map((image, index) => {
+        // Handle both old format (string) and new format (object)
+        const imageSrc = typeof image === 'string' ? image : (image?.data || '');
+        const imageId = typeof image === 'object' && image?.id ? image.id : `img_${index}`;
+        
+        if (!imageSrc) return ''; // Skip if no valid image source
+        
+        return `
+          <div class="image-item" data-image-id="${imageId}">
+            <img src="${imageSrc}" alt="Note Image" class="clickable-image" data-index="${index}" style="cursor: pointer;" />
+            <button class="image-delete" onclick="deleteImage(${index})">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        `;
+      }).filter(html => html !== '').join("");
       
-      return `
-        <div class="image-item" data-image-id="${imageId}">
-          <img src="${imageSrc}" alt="Note Image" class="clickable-image" data-index="${index}" style="cursor: pointer;" />
-          <button class="image-delete" onclick="deleteImage(${index})">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      `;
-    }).join("");
-    
-    // Add click event listeners to images
-    const clickableImages = imageGrid.querySelectorAll('.clickable-image');
-    clickableImages.forEach((img, index) => {
-      img.addEventListener('click', () => {
-        const currentImages = currentNote.images || [];
-        if (currentImages[index]) {
-          const imageSrc = typeof currentImages[index] === 'string' ? currentImages[index] : currentImages[index].data;
-          openImageViewer(imageSrc, index);
-        }
+      // Add click event listeners to images
+      const clickableImages = imageGrid.querySelectorAll('.clickable-image');
+      console.log("Found clickable images:", clickableImages.length);
+      
+      clickableImages.forEach((img, index) => {
+        img.addEventListener('click', (e) => {
+          console.log("Image clicked:", index);
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const actualIndex = parseInt(img.dataset.index);
+          console.log("Actual index:", actualIndex);
+          
+          if (currentNote.images && currentNote.images[actualIndex]) {
+            const image = currentNote.images[actualIndex];
+            const imageSrc = typeof image === 'string' ? image : image.data;
+            console.log("Opening image with src:", imageSrc ? "valid" : "invalid");
+            openImageViewer(imageSrc, actualIndex);
+          } else {
+            console.error("Image not found at index:", actualIndex);
+          }
+        });
       });
-    });
+      
+    } catch (error) {
+      console.error('Error updating images section:', error);
+      if (imageGrid) imageGrid.innerHTML = '<p>Error loading images</p>';
+    }
   }
 }
 
@@ -1830,11 +1854,14 @@ let currentImageSrc = null;
 let currentImageIndex = null;
 
 function openImageViewer(imageSrc, imageIndex) {
+  console.log("Opening image viewer:", imageSrc, imageIndex);
   currentImageSrc = imageSrc;
   currentImageIndex = imageIndex;
   
   const modal = document.getElementById("imageViewerModal");
   const img = document.getElementById("imageViewerImg");
+  
+  console.log("Modal found:", !!modal, "Image found:", !!img);
   
   if (modal && img) {
     img.src = imageSrc;
@@ -1842,6 +1869,10 @@ function openImageViewer(imageSrc, imageIndex) {
     
     // Prevent body scroll when modal is open
     document.body.style.overflow = "hidden";
+    
+    console.log("Image viewer opened successfully");
+  } else {
+    console.error("Modal or image element not found");
   }
 }
 
