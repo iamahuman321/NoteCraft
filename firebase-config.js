@@ -316,6 +316,16 @@ function loadUserData(user) {
         }, 50);
 
         console.log("User data loaded successfully")
+        
+        // Refresh CategoryManager with loaded data
+        if (window.CategoryManager) {
+          window.CategoryManager.refreshFromFirebase().then(() => {
+            // Re-render categories after refresh
+            if (typeof window.renderCategories === "function") {
+              window.renderCategories()
+            }
+          });
+        }
       } else {
         // First time user - initialize with default data
         const defaultCategories = [{ id: "all", name: "All" }]

@@ -3,15 +3,48 @@ window.CategoryManager = {
   // Internal storage
   _categories: [{ id: "all", name: "All" }],
   _initialized: false,
+  _authReady: false,
   
   // Initialize the category manager
   async init() {
     if (this._initialized) return;
     
+    // Wait for auth state to be ready
+    await this._waitForAuth();
+    
     // Try to load from multiple sources
     await this._loadFromBestSource();
     this._initialized = true;
     console.log("CategoryManager initialized with", this._categories.length, "categories");
+  },
+  
+  // Wait for authentication to be ready
+  async _waitForAuth() {
+    return new Promise((resolve) => {
+      if (window.authFunctions && window.database && window.auth) {
+        // If auth is ready, check current state
+        const currentUser = window.authFunctions.getCurrentUser();
+        if (currentUser !== undefined) {
+          this._authReady = true;
+          resolve();
+          return;
+        }
+      }
+      
+      // Wait for auth state change
+      const checkAuth = () => {
+        if (window.auth && window.authFunctions && window.database) {
+          window.auth.onAuthStateChanged(() => {
+            this._authReady = true;
+            resolve();
+          });
+        } else {
+          setTimeout(checkAuth, 100);
+        }
+      };
+      
+      checkAuth();
+    });
   },
   
   // Load categories from the best available source
@@ -43,17 +76,35 @@ window.CategoryManager = {
   
   // Load from Firebase
   async _loadFromFirebase() {
-    if (!window.database || !window.authFunctions) return null;
+    if (!window.database || !window.authFunctions) {
+      console.log("Firebase or authFunctions not available");
+      return null;
+    }
     
     const currentUser = window.authFunctions.getCurrentUser();
     const isGuest = window.authFunctions.isUserGuest();
     
-    if (!currentUser || isGuest) return null;
+    if (!currentUser || isGuest) {
+      console.log("No authenticated user or user is guest");
+      return null;
+    }
     
-    const snapshot = await window.database.ref(`users/${currentUser.uid}`).once('value');
-    const userData = snapshot.val();
-    
-    return userData?.categories || null;
+    try {
+      console.log("Loading categories from Firebase for user:", currentUser.uid);
+      const snapshot = await window.database.ref(`users/${currentUser.uid}`).once('value');
+      const userData = snapshot.val();
+      
+      if (userData?.categories) {
+        console.log("Categories loaded from Firebase:", userData.categories.length);
+        return userData.categories;
+      } else {
+        console.log("No categories found in Firebase");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error loading from Firebase:", error);
+      return null;
+    }
   },
   
   // Load from localStorage
@@ -79,6 +130,25 @@ window.CategoryManager = {
   // Get all categories
   getCategories() {
     return [...this._categories];
+  },
+  
+  // Refresh categories from Firebase (called after user data loads)
+  async refreshFromFirebase() {
+    if (!this._authReady) return;
+    
+    try {
+      const firebaseCategories = await this._loadFromFirebase();
+      if (firebaseCategories && firebaseCategories.length > this._categories.length) {
+        this._categories = firebaseCategories;
+        console.log("Categories refreshed from Firebase:", this._categories.length);
+        
+        // Update local storage
+        localStorage.setItem("categories", JSON.stringify(this._categories));
+        sessionStorage.setItem("categoriesBackup", JSON.stringify(this._categories));
+      }
+    } catch (error) {
+      console.error("Error refreshing categories from Firebase:", error);
+    }
   },
   
   // Add a new category
