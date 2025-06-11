@@ -2371,17 +2371,34 @@ async function sendInvitations() {
       content: currentNote.content || "",
       categories: currentNote.categories || [],
       images: currentNote.images || [],
+      listSections: currentNote.listSections || [],
+      // Keep legacy list for backwards compatibility
       list: currentNote.list || [],
+      listType: currentNote.listType || 'bulleted',
+      voiceNotes: currentNote.voiceNotes || [],
       createdAt: currentNote.createdAt || Date.now(),
       updatedAt: Date.now(),
-      owner: currentUser.uid,
-      collaborators: {}
+      lastModified: Date.now(),
+      ownerId: currentUser.uid,
+      collaborators: {},
+      activeUsers: {}
     };
     
     // Add owner as collaborator
     sharedNoteData.collaborators[currentUser.uid] = {
       role: 'owner',
+      name: currentUser.displayName || currentUser.email?.split('@')[0] || 'Owner',
+      email: currentUser.email || '',
       joinedAt: Date.now()
+    };
+    
+    // Initialize owner's presence
+    sharedNoteData.activeUsers[currentUser.uid] = {
+      name: currentUser.displayName || currentUser.email?.split('@')[0] || 'Owner',
+      email: currentUser.email || '',
+      status: 'editing',
+      lastActive: Date.now(),
+      currentField: null
     };
     
     console.log("Shared note data:", sharedNoteData);
@@ -2861,9 +2878,26 @@ function cleanupRealtimeCollaboration(sharedId) {
     sharedNoteListeners.delete(sharedId);
   }
   
+  // Clear presence interval
+  if (window.presenceInterval) {
+    clearInterval(window.presenceInterval);
+    window.presenceInterval = null;
+  }
+  
+  // Remove user presence from shared note
+  const currentUser = window.authFunctions?.getCurrentUser();
+  if (currentUser && window.database && sharedId) {
+    const presenceRef = window.database.ref(`sharedNotes/${sharedId}/activeUsers/${currentUser.uid}`);
+    presenceRef.remove().catch(() => {
+      // Silently handle errors
+    });
+  }
+  
   // Update presence to show user is no longer editing
   if (window.authFunctions?.updatePresence) {
-    window.authFunctions.updatePresence(sharedId, { status: 'idle' });
+    window.authFunctions.updatePresence(sharedId, { status: 'idle' }).catch(() => {
+      // Silently handle errors
+    });
   }
   
   // Hide collaboration status indicator

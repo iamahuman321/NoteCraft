@@ -318,17 +318,22 @@ async function acceptInvitation(invitationId, sharedId) {
       console.log("Adding shared note to user's notes...");
       const localNote = {
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        title: sharedNote.title,
-        content: sharedNote.content,
+        title: sharedNote.title || 'Untitled Note',
+        content: sharedNote.content || '',
         categories: sharedNote.categories || [],
         images: sharedNote.images || [],
+        listSections: sharedNote.listSections || [],
+        // Keep legacy list for backwards compatibility
         list: sharedNote.list || [],
-        createdAt: sharedNote.createdAt,
-        updatedAt: sharedNote.updatedAt,
+        listType: sharedNote.listType || 'bulleted',
+        voiceNotes: sharedNote.voiceNotes || [],
+        createdAt: sharedNote.createdAt || Date.now(),
+        updatedAt: sharedNote.updatedAt || Date.now(),
+        lastModified: sharedNote.lastModified || Date.now(),
         sharedId: sharedId,
         isShared: true,
-        collaborators: sharedNote.collaborators,
-        owner: sharedNote.owner
+        collaborators: sharedNote.collaborators || {},
+        ownerId: sharedNote.ownerId || sharedNote.owner
       };
       
       // Add to user's notes in Firebase
