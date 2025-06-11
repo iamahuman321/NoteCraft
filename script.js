@@ -234,6 +234,16 @@ function checkForSharedNoteToOpen() {
 }
 
 function setupEventListeners() {
+  // Add voice note button test on page load
+  setTimeout(() => {
+    const voiceBtn = document.getElementById("voiceNoteBtn");
+    console.log('Voice note button check on load:', !!voiceBtn);
+    if (voiceBtn) {
+      console.log('Button visible:', voiceBtn.offsetParent !== null);
+      console.log('Button computed style:', window.getComputedStyle(voiceBtn).display);
+    }
+  }, 1000);
+
   // Hamburger menu
   const hamburgerBtn = document.getElementById("hamburgerBtn");
   const sidebar = document.getElementById("sidebar");
@@ -3773,6 +3783,20 @@ function deleteVoiceNote(index) {
   showToast('Voice note deleted', 'success');
 }
 
+// Test function for voice modal
+function testVoiceModal() {
+  console.log('Test voice modal called');
+  const modal = document.getElementById('voiceRecordingModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('open');
+    console.log('Test modal opened successfully');
+  } else {
+    console.error('Modal not found');
+  }
+}
+
 // Export for window global
 window.renderNotes = renderNotes;
 window.renderCategories = renderCategories;
+window.testVoiceModal = testVoiceModal;
