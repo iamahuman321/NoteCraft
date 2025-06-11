@@ -1377,7 +1377,10 @@ function hideShareModal() {
 
 function showCategoryModal() {
   const categoryModal = document.getElementById("categoryModal");
-  if (categoryModal) categoryModal.classList.add("show");
+  if (categoryModal) {
+    categoryModal.style.display = "flex";
+    categoryModal.classList.add("show");
+  }
   renderModalCategories();
 }
 
