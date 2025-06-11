@@ -4,35 +4,52 @@
 let categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }]
 const notes = JSON.parse(localStorage.getItem("notes")) || []
 
-// Wait for Firebase to be ready and load user data
+// Initialize Firebase and load categories
 function waitForFirebaseAndLoadData() {
-  if (window.authFunctions && window.database) {
-    const currentUser = window.authFunctions.getCurrentUser()
-    const isGuest = window.authFunctions.isUserGuest()
+  console.log("Waiting for Firebase to be ready...")
+  
+  if (window.firebase && window.auth && window.database) {
+    console.log("Firebase is ready, checking auth state...")
     
-    if (currentUser && !isGuest) {
-      // Load categories from Firebase
-      const userRef = window.database.ref(`users/${currentUser.uid}`)
-      userRef.once('value').then((snapshot) => {
-        const userData = snapshot.val()
-        if (userData && userData.categories) {
-          categories = userData.categories
-          localStorage.setItem("categories", JSON.stringify(categories))
-          renderCategories()
-          console.log("Categories loaded from Firebase:", categories.length)
-        }
-      }).catch((error) => {
-        console.error("Error loading categories from Firebase:", error)
-      })
-    }
+    // Wait for auth state to be determined
+    window.auth.onAuthStateChanged((user) => {
+      if (user && !window.authFunctions?.isUserGuest()) {
+        console.log("User authenticated, loading categories from Firebase...")
+        
+        // Load categories from Firebase
+        const userRef = window.database.ref(`users/${user.uid}`)
+        userRef.once('value').then((snapshot) => {
+          const userData = snapshot.val()
+          if (userData && userData.categories) {
+            categories = userData.categories
+            localStorage.setItem("categories", JSON.stringify(categories))
+            sessionStorage.setItem("categoriesBackup", JSON.stringify(categories))
+            renderCategories()
+            console.log("Categories loaded from Firebase:", categories.length)
+          } else {
+            // Initialize with default categories if none exist
+            renderCategories()
+            console.log("No categories found in Firebase, using defaults")
+          }
+        }).catch((error) => {
+          console.error("Error loading categories from Firebase:", error)
+          renderCategories() // Fallback to localStorage
+        })
+      } else {
+        console.log("User not authenticated or is guest, using localStorage")
+        renderCategories()
+      }
+    })
   } else {
     // Retry if Firebase not ready
     setTimeout(waitForFirebaseAndLoadData, 500)
   }
 }
 
-// Start loading when page loads
-document.addEventListener("DOMContentLoaded", waitForFirebaseAndLoadData)
+// Start initialization when page loads
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(waitForFirebaseAndLoadData, 100)
+})
 
 // Translations
 const translations = {
