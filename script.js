@@ -3257,9 +3257,23 @@ function initializeSpeechRecognition() {
     speechRecognition = new SpeechRecognition();
     console.log('Speech recognition instance created:', speechRecognition);
     
+    // Configure for maximum accuracy and precision
     speechRecognition.continuous = true;
     speechRecognition.interimResults = true;
-    speechRecognition.lang = 'en-US';
+    speechRecognition.maxAlternatives = 5; // More alternatives for best accuracy
+    speechRecognition.lang = navigator.language || 'en-US'; // Auto-detect user's language
+    
+    // Precision settings
+    if (speechRecognition.audioTrack) {
+      speechRecognition.audioTrack = true; // Enable audio processing improvements
+    }
+    if (speechRecognition.grammars) {
+      // Add grammar hints for better recognition of common words
+      const grammar = '#JSGF V1.0; grammar punctuation; public <punctuation> = period | comma | question mark | exclamation point | new line;';
+      const speechRecognitionList = new (window.SpeechGrammarList || window.webkitSpeechGrammarList)();
+      speechRecognitionList.addFromString(grammar, 1);
+      speechRecognition.grammars = speechRecognitionList;
+    }
     
     speechRecognition.onstart = () => {
       console.log('Speech recognition started');
@@ -3280,29 +3294,46 @@ function initializeSpeechRecognition() {
       let finalTranscript = '';
       
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
+        // Use the most confident result for better accuracy
+        const result = event.results[i];
+        let bestTranscript = result[0].transcript;
+        let bestConfidence = result[0].confidence || 0;
+        
+        // Check alternatives for higher confidence
+        for (let j = 0; j < result.length; j++) {
+          const confidence = result[j].confidence || 0;
+          if (confidence > bestConfidence) {
+            bestTranscript = result[j].transcript;
+            bestConfidence = confidence;
+          }
+        }
+        
+        if (result.isFinal) {
+          // Apply intelligent text formatting
+          finalTranscript += formatSpeechText(bestTranscript);
         } else {
-          interimTranscript += transcript;
+          interimTranscript += bestTranscript;
         }
       }
       
       recognizedText = finalTranscript;
       
-      // Show live transcription
+      // Show live transcription with confidence indicator
       const statusEl = document.getElementById('voiceStatus');
       if (statusEl && (finalTranscript || interimTranscript)) {
-        statusEl.innerHTML = `<div style="font-size: 14px; margin-top: 10px; padding: 10px; background: var(--bg-secondary); border-radius: 6px; text-align: left;">${finalTranscript}<span style="color: var(--text-secondary);">${interimTranscript}</span></div>`;
+        statusEl.innerHTML = `<div style="font-size: 14px; margin-top: 10px; padding: 10px; background: var(--bg-secondary); border-radius: 6px; text-align: left; line-height: 1.4;">
+          <div style="color: var(--text-primary); font-weight: 500;">${finalTranscript}</div>
+          <div style="color: var(--text-secondary); font-style: italic;">${interimTranscript}</div>
+        </div>`;
       }
       
-      // Reset timeout for auto-stop
+      // Extend timeout for longer speech
       clearTimeout(speechTimeout);
       speechTimeout = setTimeout(() => {
         if (isListening) {
           stopSpeechRecognition();
         }
-      }, 3000); // Stop after 3 seconds of silence
+      }, 2000); // Reduced to 2 seconds for better responsiveness
     };
     
     speechRecognition.onerror = (event) => {
@@ -3326,29 +3357,96 @@ function initializeSpeechRecognition() {
       
       const statusEl = document.getElementById('voiceStatus');
       const circleEl = document.getElementById('voiceVisualizer').querySelector('.voice-circle');
-      const actionsEl = document.getElementById('voiceActions');
       
-      if (statusEl) statusEl.textContent = recognizedText ? 'Speech recognized - Adding to note...' : 'No speech detected';
+      // Filter out very short or low-quality results
+      const minLength = 3;
+      const filteredText = recognizedText && recognizedText.trim().length >= minLength ? recognizedText : '';
+      
+      if (statusEl) {
+        if (filteredText) {
+          statusEl.innerHTML = `<div style="color: var(--success-color); font-weight: 500;">✓ Speech converted to text - Adding to note...</div>`;
+        } else {
+          statusEl.textContent = 'No clear speech detected. Please try again.';
+        }
+      }
       if (circleEl) circleEl.classList.remove('recording');
       
-      // Add recognized text to note
-      if (recognizedText && currentNote) {
-        addSpeechToNote(recognizedText);
+      // Add recognized text to note if quality is sufficient
+      if (filteredText && currentNote) {
+        addSpeechToNote(filteredText);
+        
+        // Auto-close modal after successful conversion
+        setTimeout(() => {
+          const modal = document.getElementById('voiceRecordingModal');
+          if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('open');
+          }
+          resetVoiceRecording();
+        }, 1000);
+      } else {
+        // Keep modal open for retry if no good speech detected
+        setTimeout(() => {
+          if (statusEl) statusEl.textContent = 'Tap to start speech recognition';
+          resetVoiceRecording();
+        }, 2000);
       }
-      
-      // Auto-close modal after adding text
-      setTimeout(() => {
-        const modal = document.getElementById('voiceRecordingModal');
-        if (modal) {
-          modal.style.display = 'none';
-          modal.classList.remove('open');
-        }
-        resetVoiceRecording();
-      }, 1500);
     };
   } else {
     showToast('Speech recognition not supported in this browser', 'error');
   }
+}
+
+// Intelligent text formatting for speech recognition
+function formatSpeechText(text) {
+  if (!text) return '';
+  
+  // Remove extra spaces and normalize
+  let formatted = text.trim().replace(/\s+/g, ' ');
+  
+  // Convert common spoken punctuation to actual punctuation
+  const punctuationMap = {
+    ' period': '.',
+    ' comma': ',',
+    ' question mark': '?',
+    ' exclamation mark': '!',
+    ' exclamation point': '!',
+    ' colon': ':',
+    ' semicolon': ';',
+    ' dash': ' - ',
+    ' hyphen': '-',
+    ' new line': '\n',
+    ' new paragraph': '\n\n',
+    ' quote': '"',
+    ' unquote': '"',
+    ' open parenthesis': ' (',
+    ' close parenthesis': ')',
+    ' open bracket': ' [',
+    ' close bracket': ']'
+  };
+  
+  // Apply punctuation replacements
+  for (const [spoken, symbol] of Object.entries(punctuationMap)) {
+    const regex = new RegExp(spoken, 'gi');
+    formatted = formatted.replace(regex, symbol);
+  }
+  
+  // Capitalize first letter of sentences
+  formatted = formatted.replace(/(^|[.!?]\s+)([a-z])/g, (match, p1, p2) => {
+    return p1 + p2.toUpperCase();
+  });
+  
+  // Capitalize first letter if text doesn't start with punctuation
+  if (formatted.length > 0 && /^[a-z]/.test(formatted)) {
+    formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }
+  
+  // Add period at end if no punctuation exists
+  if (formatted.length > 0 && !/[.!?]$/.test(formatted)) {
+    formatted += '.';
+  }
+  
+  return formatted;
 }
 
 function addSpeechToNote(text) {
@@ -3357,14 +3455,15 @@ function addSpeechToNote(text) {
   const contentTextarea = document.getElementById('contentTextarea');
   if (contentTextarea) {
     const currentContent = contentTextarea.value;
-    const newContent = currentContent ? `${currentContent}\n${text.trim()}` : text.trim();
+    const formattedText = formatSpeechText(text);
+    const newContent = currentContent ? `${currentContent}\n${formattedText}` : formattedText;
     
     contentTextarea.value = newContent;
     currentNote.content = newContent;
     currentNote.lastModified = Date.now();
     
     saveCurrentNote();
-    showToast('Speech added to note', 'success');
+    showToast('Speech converted to text and added to note', 'success');
   }
 }
 
