@@ -2967,10 +2967,12 @@ body {
 }
 
 .voice-actions {
-  display: flex;
+  display: flex !important;
   gap: 1rem;
   justify-content: center;
   margin-top: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border-color);
 }
 
 .voice-actions .btn {

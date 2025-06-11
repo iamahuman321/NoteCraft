@@ -3330,6 +3330,12 @@ async function startVoiceRecording() {
       
       clearInterval(recordingTimer);
       stream.getTracks().forEach(track => track.stop());
+      
+      // Auto-save the voice note after a short delay
+      setTimeout(() => {
+        console.log('Auto-saving voice note...');
+        saveVoiceRecording();
+      }, 1000);
     };
     
     console.log('Starting MediaRecorder...');
