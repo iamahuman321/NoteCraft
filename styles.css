@@ -581,7 +581,7 @@ body {
   top: 184px; /* Fixed position: header (64px) + search (52px) + filter (68px) = 184px */
   left: 0;
   right: 0;
-  bottom: 80px; /* Match the toolbar height to create same spacing as top */
+  bottom: 96px; /* FAB (64px) + padding (32px) = 96px for visual balance */
   padding: 1rem;
   overflow-y: auto;
   overflow-x: hidden;
