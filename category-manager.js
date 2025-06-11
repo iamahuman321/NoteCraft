@@ -9,37 +9,62 @@ window.CategoryManager = {
   async init() {
     if (this._initialized) return;
     
-    // Wait for auth state to be ready
-    await this._waitForAuth();
+    // Load from localStorage immediately for fast UI
+    const localCategories = this._loadFromLocalStorage();
+    if (localCategories && localCategories.length > 1) {
+      this._categories = localCategories;
+    }
     
-    // Try to load from multiple sources
-    await this._loadFromBestSource();
     this._initialized = true;
     console.log("CategoryManager initialized with", this._categories.length, "categories");
+    
+    // Set up Firebase listener for future updates
+    this._setupFirebaseListener();
+  },
+  
+  // Set up Firebase authentication listener
+  _setupFirebaseListener() {
+    const checkAndSetupAuth = () => {
+      if (window.auth && window.authFunctions && window.database) {
+        window.auth.onAuthStateChanged((user) => {
+          if (user && !window.authFunctions.isUserGuest()) {
+            // User is authenticated, refresh from Firebase when data loads
+            setTimeout(() => {
+              this.refreshFromFirebase();
+            }, 1000);
+          }
+        });
+      } else {
+        setTimeout(checkAndSetupAuth, 500);
+      }
+    };
+    
+    checkAndSetupAuth();
   },
   
   // Wait for authentication to be ready
   async _waitForAuth() {
     return new Promise((resolve) => {
-      if (window.authFunctions && window.database && window.auth) {
-        // If auth is ready, check current state
-        const currentUser = window.authFunctions.getCurrentUser();
-        if (currentUser !== undefined) {
+      const maxWait = 10000; // 10 seconds max wait
+      const startTime = Date.now();
+      
+      const checkAuth = () => {
+        if (Date.now() - startTime > maxWait) {
+          console.log("CategoryManager: Auth wait timeout, proceeding with local data");
           this._authReady = true;
           resolve();
           return;
         }
-      }
-      
-      // Wait for auth state change
-      const checkAuth = () => {
+        
         if (window.auth && window.authFunctions && window.database) {
-          window.auth.onAuthStateChanged(() => {
+          // Listen for auth state changes
+          const unsubscribe = window.auth.onAuthStateChanged((user) => {
             this._authReady = true;
+            unsubscribe(); // Remove the listener
             resolve();
           });
         } else {
-          setTimeout(checkAuth, 100);
+          setTimeout(checkAuth, 200);
         }
       };
       
@@ -134,17 +159,29 @@ window.CategoryManager = {
   
   // Refresh categories from Firebase (called after user data loads)
   async refreshFromFirebase() {
-    if (!this._authReady) return;
-    
     try {
       const firebaseCategories = await this._loadFromFirebase();
-      if (firebaseCategories && firebaseCategories.length > this._categories.length) {
+      if (firebaseCategories && firebaseCategories.length >= 1) {
         this._categories = firebaseCategories;
         console.log("Categories refreshed from Firebase:", this._categories.length);
         
-        // Update local storage
+        // Update local storage immediately
         localStorage.setItem("categories", JSON.stringify(this._categories));
         sessionStorage.setItem("categoriesBackup", JSON.stringify(this._categories));
+        
+        // Update global categories variable
+        if (window.categories) {
+          window.categories.length = 0;
+          window.categories.push(...this._categories);
+        }
+        
+        // Trigger UI updates
+        if (typeof window.renderCategories === 'function') {
+          window.renderCategories();
+        }
+        if (typeof window.updateFilterChips === 'function') {
+          window.updateFilterChips();
+        }
       }
     } catch (error) {
       console.error("Error refreshing categories from Firebase:", error);
@@ -209,12 +246,19 @@ window.CategoryManager = {
     if (!currentUser || isGuest) return;
     
     try {
+      // Save categories and trigger a complete user data update
       await window.database.ref(`users/${currentUser.uid}`).update({
         categories: this._categories,
         categoriesLastModified: Date.now(),
         lastUpdated: Date.now()
       });
+      
       console.log("Categories saved to Firebase successfully");
+      
+      // Force immediate localStorage update
+      localStorage.setItem("categories", JSON.stringify(this._categories));
+      sessionStorage.setItem("categoriesBackup", JSON.stringify(this._categories));
+      
     } catch (error) {
       console.error("Error saving categories to Firebase:", error);
     }
