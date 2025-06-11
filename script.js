@@ -331,10 +331,19 @@ function setupEventListeners() {
   const deleteBtn = document.getElementById("deleteBtn");
   
   if (imageBtn) imageBtn.addEventListener("click", handleImageUpload);
-  if (voiceNoteBtn) voiceNoteBtn.addEventListener("click", () => {
-    console.log('Voice note button clicked');
-    toggleVoiceRecording();
-  });
+  if (voiceNoteBtn) {
+    console.log('Voice note button found, adding event listener');
+    voiceNoteBtn.addEventListener("click", () => {
+      console.log('Voice note button clicked');
+      try {
+        toggleVoiceRecording();
+      } catch (error) {
+        console.error('Error in toggleVoiceRecording:', error);
+      }
+    });
+  } else {
+    console.log('Voice note button NOT found');
+  }
   if (listBtn) listBtn.addEventListener("click", showListTypeModal);
   if (passwordBtn) passwordBtn.addEventListener("click", showPasswordModal);
   if (shareBtn) shareBtn.addEventListener("click", showShareModal);
@@ -3515,14 +3524,23 @@ async function toggleVoiceRecording() {
   
   // Show the voice recording modal
   const modal = document.getElementById('voiceRecordingModal');
+  console.log('Modal element found:', !!modal);
+  
   if (modal && !isListening) {
+    console.log('Setting modal display and adding open class');
     modal.style.display = 'flex';
     modal.classList.add('open');
-    console.log('Voice recording modal shown');
+    console.log('Modal display style:', modal.style.display);
+    console.log('Modal classes:', modal.className);
     
     // Reset the modal state
     const statusEl = document.getElementById('voiceStatus');
-    if (statusEl) statusEl.textContent = 'Tap to start speech recognition';
+    if (statusEl) {
+      statusEl.textContent = 'Tap to start speech recognition';
+      console.log('Status element updated');
+    } else {
+      console.log('Status element not found');
+    }
     
     // Start speech recognition
     console.log('Starting speech recognition');
@@ -3530,6 +3548,8 @@ async function toggleVoiceRecording() {
   } else if (isListening) {
     console.log('Stopping speech recognition');
     stopSpeechRecognition();
+  } else if (!modal) {
+    console.error('Voice recording modal not found in DOM');
   }
 }
 
