@@ -40,6 +40,16 @@ function setupFirebaseListener() {
           setTimeout(() => {
             refreshNotesData()
           }, 1500);
+          
+          // Also refresh notes periodically
+          const refreshInterval = setInterval(() => {
+            refreshNotesData()
+          }, 3000);
+          
+          // Stop refreshing after 30 seconds to avoid infinite loops
+          setTimeout(() => {
+            clearInterval(refreshInterval)
+          }, 30000);
         }
       });
     } else {
@@ -54,12 +64,12 @@ function setupFirebaseListener() {
 function refreshNotesData() {
   try {
     const latestNotes = JSON.parse(localStorage.getItem("notes")) || []
-    if (latestNotes.length !== notes.length) {
-      notes.length = 0
-      notes.push(...latestNotes)
-      console.log("Refreshed notes data on category page:", notes.length)
-      renderCategories() // Re-render with updated notes
-    }
+    // Always update notes, not just when count differs
+    notes.length = 0
+    notes.push(...latestNotes)
+    console.log("Refreshed notes data on category page:", notes.length)
+    console.log("Notes with categories:", notes.filter(n => n.categories && n.categories.length > 0).length)
+    renderCategories() // Re-render with updated notes
   } catch (error) {
     console.error("Error refreshing notes data:", error)
   }
@@ -153,6 +163,9 @@ function renderCategories() {
 
   const userCategories = categories.filter((c) => c.id !== "all")
 
+  console.log("Rendering categories:", userCategories.length)
+  console.log("Total notes available:", notes.length)
+
   if (userCategories.length === 0) {
     categoriesList.innerHTML = `
       <div class="empty-state">
@@ -168,16 +181,19 @@ function renderCategories() {
           (note) => Array.isArray(note.categories) && note.categories.includes(category.id),
         )
 
+        console.log(`Category ${category.name} has ${notesInCategory.length} notes`)
+
         // Render notes list or empty message
         const notesHtml =
           notesInCategory.length === 0
             ? `<div class="empty-state"><p>${t("noNotes")}</p></div>`
-            : `<ul class="notes-list">${notesInCategory.map((note) => `<li class="note-item" onclick="openNoteEditor('${note.id}')">${note.title || "Untitled"}</li>`).join("")}</ul>`
+            : `<ul class="notes-list">${notesInCategory.map((note) => `<li class="note-item" onclick="openNoteEditor('${note.id}')">${escapeHtml(note.title || "Untitled")}</li>`).join("")}</ul>`
 
         return `
           <div class="category-item">
             <div class="category-header" onclick="toggleCategoryNotes(this)">
-              <span class="category-name">${category.name}</span>
+              <span class="category-name">${escapeHtml(category.name)}</span>
+              <span class="note-count">(${notesInCategory.length})</span>
               <button class="category-delete" onclick="event.stopPropagation(); deleteCategoryItem('${category.id}')" title="Delete category">
                 <i class="fas fa-times"></i>
               </button>
@@ -191,6 +207,13 @@ function renderCategories() {
       })
       .join("")
   }
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+  const div = document.createElement('div')
+  div.textContent = text
+  return div.innerHTML
 }
 
 function toggleCategoryNotes(headerElement) {
