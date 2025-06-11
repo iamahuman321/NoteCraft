@@ -784,23 +784,46 @@ function renderNotes() {
           const highlightedPreview = highlightSearchTerms(preview, searchQuery);
 
           return `
-            <div class="note-card" onclick="editNote(notes.find(n => n.id === '${note.id}'))">
-              <div class="note-title">
-                ${highlightedTitle}
-                ${isShared ? `<i class="fas fa-users share-icon" title="Shared with ${collaboratorCount} people"></i>` : ""}
+            <div class="note-card-container" data-note-id="${note.id}">
+              <div class="note-card-swipe-actions">
+                <div class="swipe-action delete-action" onclick="deleteNote('${note.id}'); event.stopPropagation();">
+                  <i class="fas fa-trash"></i>
+                  <span>Delete</span>
+                </div>
+                <div class="swipe-action duplicate-action" onclick="duplicateNote('${note.id}'); event.stopPropagation();">
+                  <i class="fas fa-copy"></i>
+                  <span>Duplicate</span>
+                </div>
+                <div class="swipe-action share-action" onclick="shareNote('${note.id}'); event.stopPropagation();">
+                  <i class="fas fa-share-alt"></i>
+                  <span>Share</span>
+                </div>
+                <div class="swipe-action category-action" onclick="editNoteCategories('${note.id}'); event.stopPropagation();">
+                  <i class="fas fa-folder"></i>
+                  <span>Category</span>
+                </div>
               </div>
-              <div class="note-preview">${highlightedPreview}</div>
-              <div class="note-meta">
-                <span>${dateStr}</span>
-                ${note.categories && note.categories.length > 0 ? `<span>${note.categories.length} categories</span>` : ""}
-                ${isShared ? `<span class="shared-indicator"><i class="fas fa-share-alt"></i> Shared</span>` : ""}
+              <div class="note-card" onclick="editNote(notes.find(n => n.id === '${note.id}'))">
+                <div class="note-title">
+                  ${highlightedTitle}
+                  ${isShared ? `<i class="fas fa-users share-icon" title="Shared with ${collaboratorCount} people"></i>` : ""}
+                </div>
+                <div class="note-preview">${highlightedPreview}</div>
+                <div class="note-meta">
+                  <span>${dateStr}</span>
+                  ${note.categories && note.categories.length > 0 ? `<span>${note.categories.length} categories</span>` : ""}
+                  ${isShared ? `<span class="shared-indicator"><i class="fas fa-share-alt"></i> Shared</span>` : ""}
+                </div>
+                ${categoryTags ? `<div class="category-chips">${categoryTags}</div>` : ""}
               </div>
-              ${categoryTags ? `<div class="category-chips">${categoryTags}</div>` : ""}
             </div>
           `;
         }).filter(html => html !== '').join("")}
       </div>
     `;
+    
+    // Initialize swipe functionality after rendering
+    setTimeout(() => setupSwipeToReveal(), 100);
   } catch (error) {
     console.error("Error rendering notes:", error);
     notesContainer.innerHTML = `
@@ -4171,8 +4194,122 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(validateAndRepairData, 300000); // Every 5 minutes
 });
 
+// Swipe functionality for mobile note management
+function setupSwipeToReveal() {
+  const noteContainers = document.querySelectorAll('.note-card-container');
+  
+  noteContainers.forEach(container => {
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+    let hasRevealed = false;
+    
+    const noteCard = container.querySelector('.note-card');
+    const actions = container.querySelector('.note-card-swipe-actions');
+    
+    // Touch events
+    container.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      isDragging = true;
+      noteCard.style.transition = 'none';
+    });
+    
+    container.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      
+      currentX = e.touches[0].clientX;
+      const deltaX = currentX - startX;
+      
+      // Only allow left swipe (negative delta)
+      if (deltaX < 0) {
+        const translateX = Math.max(deltaX, -120); // Limit swipe distance
+        noteCard.style.transform = `translateX(${translateX}px)`;
+        
+        // Show actions when swiped enough
+        if (Math.abs(translateX) > 60) {
+          actions.style.opacity = '1';
+          hasRevealed = true;
+        } else {
+          actions.style.opacity = '0';
+          hasRevealed = false;
+        }
+      }
+    });
+    
+    container.addEventListener('touchend', () => {
+      isDragging = false;
+      noteCard.style.transition = 'transform 0.3s ease-out';
+      
+      if (hasRevealed) {
+        // Keep actions visible
+        noteCard.style.transform = 'translateX(-120px)';
+        actions.style.opacity = '1';
+      } else {
+        // Snap back
+        noteCard.style.transform = 'translateX(0)';
+        actions.style.opacity = '0';
+      }
+    });
+    
+    // Click outside to close
+    container.addEventListener('click', (e) => {
+      if (hasRevealed && !e.target.closest('.note-card-swipe-actions')) {
+        noteCard.style.transform = 'translateX(0)';
+        actions.style.opacity = '0';
+        hasRevealed = false;
+      }
+    });
+  });
+}
+
+// Note management functions
+function duplicateNote(noteId) {
+  const originalNote = notes.find(n => n.id === noteId);
+  if (!originalNote) return;
+  
+  const duplicatedNote = {
+    ...originalNote,
+    id: generateId(),
+    title: `${originalNote.title} (Copy)`,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    isShared: false,
+    sharedId: null,
+    collaborators: null
+  };
+  
+  notes.unshift(duplicatedNote);
+  localStorage.setItem("notes", JSON.stringify(notes));
+  
+  if (window.authFunctions && typeof window.authFunctions.saveUserData === 'function') {
+    window.authFunctions.saveUserData();
+  }
+  
+  showToast("Note duplicated successfully", "success");
+  renderNotes();
+}
+
+function shareNote(noteId) {
+  const note = notes.find(n => n.id === noteId);
+  if (!note) return;
+  
+  currentNote = note;
+  showShareModal();
+}
+
+function editNoteCategories(noteId) {
+  const note = notes.find(n => n.id === noteId);
+  if (!note) return;
+  
+  currentNote = note;
+  showCategoryModal();
+}
+
 // Export for window global
 window.renderNotes = renderNotes;
 window.renderCategories = renderCategories;
 window.testVoiceModal = testVoiceModal;
 window.validateAndRepairData = validateAndRepairData;
+window.duplicateNote = duplicateNote;
+window.shareNote = shareNote;
+window.editNoteCategories = editNoteCategories;
