@@ -331,7 +331,10 @@ function setupEventListeners() {
   const deleteBtn = document.getElementById("deleteBtn");
   
   if (imageBtn) imageBtn.addEventListener("click", handleImageUpload);
-  if (voiceNoteBtn) voiceNoteBtn.addEventListener("click", showVoiceRecordingModal);
+  if (voiceNoteBtn) voiceNoteBtn.addEventListener("click", () => {
+    console.log('Voice note button clicked');
+    toggleVoiceRecording();
+  });
   if (listBtn) listBtn.addEventListener("click", showListTypeModal);
   if (passwordBtn) passwordBtn.addEventListener("click", showPasswordModal);
   if (shareBtn) shareBtn.addEventListener("click", showShareModal);
