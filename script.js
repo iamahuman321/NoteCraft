@@ -4212,6 +4212,7 @@ function setupSwipeToReveal() {
       startX = e.touches[0].clientX;
       isDragging = true;
       noteCard.style.transition = 'none';
+      noteCard.classList.add('swiping');
     });
     
     container.addEventListener('touchmove', (e) => {
@@ -4220,16 +4221,25 @@ function setupSwipeToReveal() {
       currentX = e.touches[0].clientX;
       const deltaX = currentX - startX;
       
-      // Only allow left swipe (negative delta)
+      // Allow both left swipe (negative) and right swipe back (positive)
       if (deltaX < 0) {
-        const translateX = Math.max(deltaX, -120); // Limit swipe distance
+        // Left swipe - reveal actions
+        const translateX = Math.max(deltaX, -120);
         noteCard.style.transform = `translateX(${translateX}px)`;
         
-        // Show actions when swiped enough
         if (Math.abs(translateX) > 60) {
           actions.style.opacity = '1';
           hasRevealed = true;
         } else {
+          actions.style.opacity = '0';
+          hasRevealed = false;
+        }
+      } else if (deltaX > 0 && hasRevealed) {
+        // Right swipe - close actions
+        const translateX = Math.max(-120 + deltaX, -120);
+        noteCard.style.transform = `translateX(${translateX}px)`;
+        
+        if (translateX > -60) {
           actions.style.opacity = '0';
           hasRevealed = false;
         }
@@ -4238,24 +4248,39 @@ function setupSwipeToReveal() {
     
     container.addEventListener('touchend', () => {
       isDragging = false;
-      noteCard.style.transition = 'transform 0.3s ease-out';
+      noteCard.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+      noteCard.classList.remove('swiping');
       
       if (hasRevealed) {
         // Keep actions visible
-        noteCard.style.transform = 'translateX(-120px)';
+        noteCard.style.transform = 'translateX(-140px)';
         actions.style.opacity = '1';
+        actions.classList.add('revealed');
       } else {
         // Snap back
         noteCard.style.transform = 'translateX(0)';
         actions.style.opacity = '0';
+        actions.classList.remove('revealed');
       }
     });
     
-    // Click outside to close
+    // Click outside to close or tap to close
     container.addEventListener('click', (e) => {
       if (hasRevealed && !e.target.closest('.note-card-swipe-actions')) {
         noteCard.style.transform = 'translateX(0)';
         actions.style.opacity = '0';
+        actions.classList.remove('revealed');
+        hasRevealed = false;
+      }
+    });
+    
+    // Close when clicking on note card while revealed
+    noteCard.addEventListener('click', (e) => {
+      if (hasRevealed) {
+        e.stopPropagation();
+        noteCard.style.transform = 'translateX(0)';
+        actions.style.opacity = '0';
+        actions.classList.remove('revealed');
         hasRevealed = false;
       }
     });

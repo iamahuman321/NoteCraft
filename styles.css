@@ -3313,11 +3313,13 @@ body {
   height: 100px;
 }
 
-/* Swipe to reveal actions */
+/* Swipe to reveal actions - Dark theme optimized */
 .note-card-container {
   position: relative;
   overflow: hidden;
   margin-bottom: 1rem;
+  border-radius: var(--border-radius);
+  background: var(--card-background);
 }
 
 .note-card-swipe-actions {
@@ -3325,70 +3327,84 @@ body {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 120px;
+  width: 140px;
   display: flex;
-  align-items: center;
-  background: var(--background-color);
+  align-items: stretch;
+  background: var(--dark-color);
   opacity: 0;
-  transition: opacity 0.3s ease-out;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
 }
 
 .swipe-action {
   flex: 1;
-  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease-out;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 0.75rem;
   color: white;
   border: none;
   outline: none;
+  position: relative;
+  backdrop-filter: blur(8px);
+}
+
+.swipe-action::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0);
+  transition: background 0.2s ease;
+  z-index: -1;
+}
+
+.swipe-action:hover::before {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.swipe-action:active {
+  transform: scale(0.95);
 }
 
 .swipe-action i {
-  font-size: 1.2rem;
-  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+  margin-bottom: 0.3rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 .swipe-action span {
   font-size: 0.65rem;
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .delete-action {
-  background: #dc3545;
-}
-
-.delete-action:hover {
-  background: #c82333;
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .duplicate-action {
-  background: #6c757d;
-}
-
-.duplicate-action:hover {
-  background: #5a6268;
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .share-action {
-  background: #007bff;
-}
-
-.share-action:hover {
-  background: #0056b3;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .category-action {
-  background: #28a745;
-}
-
-.category-action:hover {
-  background: #1e7e34;
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .note-card {
@@ -3396,18 +3412,42 @@ body {
   z-index: 2;
   background: var(--card-background);
   transform: translateX(0);
-  transition: transform 0.3s ease-out;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Ensure swipe actions are hidden by default */
-.note-card-container .note-card-swipe-actions {
-  opacity: 0;
+/* Enhanced visual feedback during swipe */
+.note-card.swiping {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-/* Mobile-specific optimizations */
+/* Smooth reveal animation */
+.note-card-swipe-actions.revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Mobile-first responsive design */
 @media (max-width: 768px) {
-  .swipe-action {
-    width: 30px;
+  .note-card-swipe-actions {
+    width: 120px;
+  }
+  
+  .swipe-action span {
+    font-size: 0.6rem;
+  }
+  
+  .swipe-action i {
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .note-card-swipe-actions {
+    width: 100px;
   }
   
   .swipe-action span {
@@ -3415,11 +3455,7 @@ body {
   }
   
   .swipe-action i {
-    font-size: 1rem;
+    font-size: 1.2rem;
     margin-bottom: 0;
-  }
-  
-  .note-card-swipe-actions {
-    width: 120px;
   }
 }
