@@ -3317,9 +3317,14 @@ async function startVoiceRecording() {
       const stopBtn = document.getElementById('voiceStopBtn');
       const playBtn = document.getElementById('voicePlayBtn');
       
-      if (statusEl) statusEl.textContent = 'Recording complete';
+      if (statusEl) statusEl.textContent = 'Recording complete - Click "Add to Note" to save';
       if (circleEl) circleEl.classList.remove('recording');
-      if (actionsEl) actionsEl.classList.remove('hidden');
+      if (actionsEl) {
+        actionsEl.classList.remove('hidden');
+        console.log('Voice actions buttons shown');
+      } else {
+        console.log('Voice actions element not found');
+      }
       if (stopBtn) stopBtn.classList.add('hidden');
       if (playBtn) playBtn.classList.remove('hidden');
       
