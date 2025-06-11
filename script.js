@@ -1422,8 +1422,10 @@ function hideShareModal() {
 }
 
 function showCategoryModal() {
-  // Use the category manager to get the best available categories
-  categories = CategoryManager.get();
+  // Sync categories from CategoryManager if available
+  if (window.CategoryManager) {
+    categories = window.CategoryManager.getCategories();
+  }
   
   const categoryModal = document.getElementById("categoryModal");
   if (categoryModal) {
