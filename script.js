@@ -1462,7 +1462,7 @@ function showShareModal() {
   
   const shareModal = document.getElementById("shareModal");
   if (shareModal) {
-    shareModal.classList.add("show");
+    shareModal.classList.add("open");
     
     // Load current collaborators
     loadCurrentCollaborators();
@@ -1482,7 +1482,7 @@ function showShareModal() {
 
 function hideShareModal() {
   const shareModal = document.getElementById("shareModal");
-  if (shareModal) shareModal.classList.remove("show");
+  if (shareModal) shareModal.classList.remove("open");
 }
 
 function showCategoryModal() {
@@ -1510,7 +1510,7 @@ function showPasswordModal() {
   const removeBtn = document.getElementById("removePasswordBtn");
   
   if (passwordModal) {
-    passwordModal.classList.add("show");
+    passwordModal.classList.add("open");
     
     // Show/hide remove button based on whether note has password
     if (removeBtn) {
@@ -1528,22 +1528,22 @@ function showPasswordModal() {
 
 function hidePasswordModal() {
   const passwordModal = document.getElementById("passwordModal");
-  if (passwordModal) passwordModal.classList.remove("show");
+  if (passwordModal) passwordModal.classList.remove("open");
 }
 
 function showListTypeModal() {
   const listTypeModal = document.getElementById("listTypeModal");
-  if (listTypeModal) listTypeModal.classList.add("show");
+  if (listTypeModal) listTypeModal.classList.add("open");
 }
 
 function hideListTypeModal() {
   const listTypeModal = document.getElementById("listTypeModal");
-  if (listTypeModal) listTypeModal.classList.remove("show");
+  if (listTypeModal) listTypeModal.classList.remove("open");
 }
 
 function showDeleteModal(note) {
   const deleteModal = document.getElementById("deleteModal");
-  if (deleteModal) deleteModal.classList.add("show");
+  if (deleteModal) deleteModal.classList.add("open");
   
   const deletePasswordContainer = document.getElementById("deletePasswordContainer");
   if (note.password && deletePasswordContainer) {
@@ -1555,7 +1555,7 @@ function showDeleteModal(note) {
 
 function hideDeleteModal() {
   const deleteModal = document.getElementById("deleteModal");
-  if (deleteModal) deleteModal.classList.remove("show");
+  if (deleteModal) deleteModal.classList.remove("open");
 }
 
 function showUsernameModal() {
