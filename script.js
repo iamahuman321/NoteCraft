@@ -1567,7 +1567,7 @@ function updateListSection() {
           ${section.type === 'checklist' ? `<input type="checkbox" ${item.completed ? 'checked' : ''} class="item-checkbox" data-section-id="${section.id}" data-item-index="${itemIndex}" />` : ''}
           ${section.type === 'numbered' ? `<span class="list-number">${itemIndex + 1}.</span>` : ''}
           ${section.type === 'bulleted' ? `<span class="list-bullet">•</span>` : ''}
-          <input type="text" value="${escapeHtml(item.text || '')}" class="item-input" data-section-id="${section.id}" data-item-index="${itemIndex}" />
+          <input type="text" value="${(item.text || '').replace(/"/g, '&quot;')}" class="item-input" data-section-id="${section.id}" data-item-index="${itemIndex}" placeholder="Enter item text" />
           <button class="btn-icon delete-item-btn" data-section-id="${section.id}" data-item-index="${itemIndex}">
             <i class="fas fa-times"></i>
           </button>
