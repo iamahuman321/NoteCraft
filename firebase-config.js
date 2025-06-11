@@ -644,24 +644,39 @@ async function updateSharedNote(sharedId, updates) {
 }
 
 async function updatePresence(sharedId, data) {
-  if (!currentUser) return
+  if (!currentUser || !sharedId) return
 
-  const presenceRef = window.database.ref(`sharedNotes/${sharedId}/activeUsers/${currentUser.uid}`)
-  
-  await presenceRef.set({
-    name: currentUser.displayName || currentUser.email.split('@')[0],
-    lastActive: Date.now(),
-    status: 'editing',
-    ...data
-  })
+  try {
+    const presenceRef = window.database.ref(`sharedNotes/${sharedId}/activeUsers/${currentUser.uid}`)
+    
+    const presenceData = {
+      name: currentUser.displayName || currentUser.email?.split('@')[0] || 'Anonymous',
+      email: currentUser.email || '',
+      lastActive: Date.now(),
+      status: data?.status || 'editing',
+      currentField: data?.currentField || null,
+      ...data
+    }
+    
+    await presenceRef.set(presenceData)
 
-  // Remove presence on disconnect
-  presenceRef.onDisconnect().remove()
-  
-  // Clean up any existing interval
-  if (window.presenceInterval) {
-    clearInterval(window.presenceInterval);
-    window.presenceInterval = null;
+    // Remove presence on disconnect
+    presenceRef.onDisconnect().remove()
+    
+    // Setup heartbeat to maintain presence
+    if (!window.presenceInterval) {
+      window.presenceInterval = setInterval(() => {
+        if (currentUser && sharedId) {
+          presenceRef.update({ lastActive: Date.now() }).catch(() => {
+            // Silently handle errors
+          });
+        }
+      }, 10000); // Update every 10 seconds
+    }
+    
+    console.log('Presence updated for user:', currentUser.uid, 'in note:', sharedId);
+  } catch (error) {
+    console.error('Error updating presence:', error);
   }
 }
 

@@ -2801,6 +2801,7 @@ function setupRealtimeCollaboration(sharedId) {
         contentTextarea.value = currentNote.content || '';
       }
       
+      // Update category chips
       updateCategoryChips();
       
       // Only update list section if user is not actively interacting with it
@@ -3046,11 +3047,17 @@ function updateCollaboratorPresence(activeUsers) {
   const currentUser = window.authFunctions?.getCurrentUser();
   if (!currentUser) return;
   
-  // Filter out current user and get only active collaborators
+  // Filter out current user and get only recently active collaborators (within last 30 seconds)
+  const now = Date.now();
   const collaborators = activeUsers && typeof activeUsers === 'object' ? 
     Object.entries(activeUsers)
-      .filter(([uid, userData]) => uid !== currentUser.uid && userData && userData.status === 'editing')
-      .slice(0, 3) : []; // Show max 3 collaborators
+      .filter(([uid, userData]) => {
+        if (uid === currentUser.uid || !userData) return false;
+        // Check if user was active within last 30 seconds
+        const lastActive = userData.lastActive || 0;
+        return (now - lastActive) < 30000 && userData.status === 'editing';
+      })
+      .slice(0, 5) : []; // Show max 5 collaborators
   
   if (collaborators.length === 0) {
     activeCollaborators.innerHTML = '';
@@ -3067,10 +3074,14 @@ function updateCollaboratorPresence(activeUsers) {
   }
   
   activeCollaborators.innerHTML = collaborators.map(([uid, userData]) => {
-    const initials = (userData.name || 'U').charAt(0).toUpperCase();
-    const fieldIndicator = userData.currentField === 'titleInput' ? '📝' : 
-                          userData.currentField === 'contentTextarea' ? '✏️' : '';
-    return `<div class="collaborator-avatar" title="${userData.name || 'Unknown'} ${fieldIndicator}">${initials}</div>`;
+    const name = userData.name || userData.email?.split('@')[0] || 'User';
+    const initials = name.substring(0, 2).toUpperCase();
+    const fieldIndicator = userData.currentField === 'titleInput' ? ' (title)' : 
+                          userData.currentField === 'contentTextarea' ? ' (content)' : '';
+    const timeSinceActive = Math.floor((now - (userData.lastActive || 0)) / 1000);
+    const activeText = timeSinceActive < 5 ? 'now' : `${timeSinceActive}s ago`;
+    
+    return `<div class="collaborator-avatar" title="${name}${fieldIndicator} - active ${activeText}">${initials}</div>`;
   }).join('');
 }
 
