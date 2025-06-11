@@ -1376,6 +1376,9 @@ function hideShareModal() {
 }
 
 function showCategoryModal() {
+  // Reload categories from localStorage in case they were updated
+  categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }];
+  
   const categoryModal = document.getElementById("categoryModal");
   if (categoryModal) {
     categoryModal.style.display = "flex";
@@ -1450,9 +1453,27 @@ function hideNameModal() {
 // Modal action functions
 function renderModalCategories() {
   const modalCategories = document.getElementById("modalCategories");
-  if (!modalCategories) return;
+  if (!modalCategories) {
+    console.log("Modal categories element not found");
+    return;
+  }
   
-  modalCategories.innerHTML = categories.filter(c => c.id !== "all").map(category => `
+  console.log("Current categories:", categories);
+  console.log("Current note categories:", currentNote?.categories);
+  
+  const userCategories = categories.filter(c => c.id !== "all");
+  console.log("User categories to display:", userCategories);
+  
+  if (userCategories.length === 0) {
+    modalCategories.innerHTML = `
+      <div class="empty-state">
+        <p>No categories available. Create categories first from the Categories page.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  modalCategories.innerHTML = userCategories.map(category => `
     <div class="modal-category-item ${currentNote?.categories?.includes(category.id) ? 'selected' : ''}" 
          onclick="toggleNoteCategory('${category.id}')">
       <input type="checkbox" ${currentNote?.categories?.includes(category.id) ? 'checked' : ''} />
