@@ -1,54 +1,35 @@
 // Categories page JavaScript for category.html
 
-// Load categories and notes from localStorage or initialize with default
-let categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }]
+// Global variables
+let categories = [{ id: "all", name: "All" }]
 const notes = JSON.parse(localStorage.getItem("notes")) || []
 
-// Initialize Firebase and load categories
-function waitForFirebaseAndLoadData() {
-  console.log("Waiting for Firebase to be ready...")
+// Initialize the page with CategoryManager
+async function initializePage() {
+  console.log("Initializing category page...")
   
-  if (window.firebase && window.auth && window.database) {
-    console.log("Firebase is ready, checking auth state...")
-    
-    // Wait for auth state to be determined
-    window.auth.onAuthStateChanged((user) => {
-      if (user && !window.authFunctions?.isUserGuest()) {
-        console.log("User authenticated, loading categories from Firebase...")
-        
-        // Load categories from Firebase
-        const userRef = window.database.ref(`users/${user.uid}`)
-        userRef.once('value').then((snapshot) => {
-          const userData = snapshot.val()
-          if (userData && userData.categories) {
-            categories = userData.categories
-            localStorage.setItem("categories", JSON.stringify(categories))
-            sessionStorage.setItem("categoriesBackup", JSON.stringify(categories))
-            renderCategories()
-            console.log("Categories loaded from Firebase:", categories.length)
-          } else {
-            // Initialize with default categories if none exist
-            renderCategories()
-            console.log("No categories found in Firebase, using defaults")
-          }
-        }).catch((error) => {
-          console.error("Error loading categories from Firebase:", error)
-          renderCategories() // Fallback to localStorage
-        })
-      } else {
-        console.log("User not authenticated or is guest, using localStorage")
-        renderCategories()
-      }
-    })
+  // Wait for CategoryManager to be available
+  if (window.CategoryManager) {
+    try {
+      await window.CategoryManager.init()
+      categories = window.CategoryManager.getCategories()
+      renderCategories()
+      console.log("Categories loaded via CategoryManager:", categories.length)
+    } catch (error) {
+      console.error("Error initializing CategoryManager:", error)
+      // Fallback to localStorage
+      categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }]
+      renderCategories()
+    }
   } else {
-    // Retry if Firebase not ready
-    setTimeout(waitForFirebaseAndLoadData, 500)
+    // Retry if CategoryManager not ready
+    setTimeout(initializePage, 100)
   }
 }
 
 // Start initialization when page loads
 document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(waitForFirebaseAndLoadData, 100)
+  setTimeout(initializePage, 100)
 })
 
 // Translations
@@ -186,51 +167,73 @@ function toggleCategoryNotes(headerElement) {
   }
 }
 
-function addCategory() {
+async function addCategory() {
   const input = document.getElementById("categoryInput")
   if (!input) return
   
   const name = input.value.trim()
-
   if (!name) return
 
-  if (categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
-    showToast(t("categoryExists"))
-    return
-  }
+  if (window.CategoryManager) {
+    const success = await window.CategoryManager.addCategory(name)
+    if (success) {
+      categories = window.CategoryManager.getCategories()
+      renderCategories()
+      input.value = ""
+      showToast(t("categoryAdded"))
+    } else {
+      showToast(t("categoryExists"))
+    }
+  } else {
+    // Fallback to original method
+    if (categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      showToast(t("categoryExists"))
+      return
+    }
 
-  const newCategory = {
-    id: generateId(),
-    name: name,
-    createdAt: Date.now()
-  }
+    const newCategory = {
+      id: generateId(),
+      name: name,
+      createdAt: Date.now()
+    }
 
-  categories.push(newCategory)
-  saveData()
-  renderCategories()
-  input.value = ""
-  showToast(t("categoryAdded"))
+    categories.push(newCategory)
+    saveData()
+    renderCategories()
+    input.value = ""
+    showToast(t("categoryAdded"))
+  }
 }
 
-function deleteCategoryItem(categoryId) {
+async function deleteCategoryItem(categoryId) {
   // Don't allow deletion of "all" category
   if (categoryId === "all") return
   
-  categories = categories.filter((c) => c.id !== categoryId)
-  
-  // Remove category from all notes
-  const updatedNotes = notes.map(note => {
-    if (note.categories && note.categories.includes(categoryId)) {
-      note.categories = note.categories.filter(catId => catId !== categoryId)
+  if (window.CategoryManager) {
+    const success = await window.CategoryManager.deleteCategory(categoryId)
+    if (success) {
+      categories = window.CategoryManager.getCategories()
+      renderCategories()
+      showToast(t("categoryDeleted"))
     }
-    return note
-  })
-  
-  localStorage.setItem("notes", JSON.stringify(updatedNotes))
-  
-  saveData()
-  renderCategories()
-  showToast(t("categoryDeleted"))
+  } else {
+    // Fallback to original method
+    categories = categories.filter((c) => c.id !== categoryId)
+    
+    // Remove category from all notes
+    const updatedNotes = notes.map(note => {
+      if (note.categories && note.categories.includes(categoryId)) {
+        note.categories = note.categories.filter(catId => catId !== categoryId)
+      }
+      return note
+    })
+    
+    localStorage.setItem("notes", JSON.stringify(updatedNotes))
+    
+    saveData()
+    renderCategories()
+    showToast(t("categoryDeleted"))
+  }
 }
 
 function generateId() {
