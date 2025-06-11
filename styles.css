@@ -3313,106 +3313,100 @@ body {
   height: 100px;
 }
 
-/* Premium Mobile App Swipe Actions */
+/* Clean Mobile App Swipe Actions */
 .note-card-container {
   position: relative;
   overflow: hidden;
   margin-bottom: 1rem;
-  border-radius: 16px;
+  border-radius: var(--border-radius);
   background: var(--card-background);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .note-card-swipe-actions {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  bottom: 6px;
-  width: 200px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 240px;
   display: flex;
-  gap: 4px;
-  padding: 8px;
-  background: rgba(20, 20, 25, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 12px;
+  background: var(--background-color);
   opacity: 0;
-  transform: translateX(20px);
-  transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  z-index: 10;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  transform: translateX(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 5;
 }
 
 .swipe-action {
   flex: 1;
-  height: 100%;
-  min-height: 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.15s ease;
   position: relative;
-  overflow: hidden;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  border-left: 1px solid var(--border-color);
 }
 
-.swipe-action::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
-  opacity: 0;
-  transition: opacity 0.2s ease;
+.swipe-action:first-child {
+  border-left: none;
 }
 
 .swipe-action:active {
-  transform: scale(0.94);
-}
-
-.swipe-action:active::before {
-  opacity: 1;
+  transform: scale(0.96);
 }
 
 .swipe-action i {
-  font-size: 16px;
-  margin-bottom: 2px;
-  color: white;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+  font-size: 18px;
+  margin-bottom: 4px;
+  transition: transform 0.15s ease;
 }
 
 .swipe-action span {
   font-size: 11px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  line-height: 1;
+  font-weight: 500;
+  text-transform: capitalize;
+  opacity: 0.8;
+}
+
+.swipe-action:active i {
+  transform: scale(0.9);
 }
 
 .delete-action {
-  background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
-  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+  background: #dc3545;
+  color: white;
+}
+
+.delete-action:hover {
+  background: #c82333;
 }
 
 .duplicate-action {
-  background: linear-gradient(135deg, #5f6368 0%, #4a4d52 100%);
-  box-shadow: 0 4px 12px rgba(95, 99, 104, 0.25);
+  background: var(--text-secondary);
+  color: white;
+}
+
+.duplicate-action:hover {
+  background: #495057;
 }
 
 .share-action {
-  background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
-  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+  background: #007bff;
+  color: white;
+}
+
+.share-action:hover {
+  background: #0056b3;
 }
 
 .category-action {
-  background: linear-gradient(135deg, #34a853 0%, #137333 100%);
-  box-shadow: 0 4px 12px rgba(52, 168, 83, 0.3);
+  background: #28a745;
+  color: white;
+}
+
+.category-action:hover {
+  background: #1e7e34;
 }
 
 .note-card {
@@ -3420,14 +3414,13 @@ body {
   z-index: 2;
   background: var(--card-background);
   transform: translateX(0);
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border-radius: 16px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .note-card.swiping {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .note-card-swipe-actions.revealed {
@@ -3435,21 +3428,14 @@ body {
   transform: translateX(0);
 }
 
-/* Responsive Mobile Optimization */
+/* Mobile Responsive */
 @media (max-width: 768px) {
   .note-card-swipe-actions {
-    width: 180px;
-    gap: 3px;
-    padding: 6px;
-  }
-  
-  .swipe-action {
-    min-height: 44px;
-    border-radius: 8px;
+    width: 200px;
   }
   
   .swipe-action i {
-    font-size: 15px;
+    font-size: 16px;
   }
   
   .swipe-action span {
@@ -3460,22 +3446,14 @@ body {
 @media (max-width: 480px) {
   .note-card-swipe-actions {
     width: 160px;
-    gap: 2px;
-    padding: 4px;
-  }
-  
-  .swipe-action {
-    min-height: 40px;
-    border-radius: 6px;
   }
   
   .swipe-action i {
-    font-size: 14px;
-    margin-bottom: 1px;
+    font-size: 15px;
+    margin-bottom: 2px;
   }
   
   .swipe-action span {
     font-size: 9px;
-    letter-spacing: 0.2px;
   }
 }
