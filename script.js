@@ -266,6 +266,7 @@ function setupEventListeners() {
   // Search functionality
   const searchInput = document.getElementById("searchInput");
   const searchBtn = document.getElementById("searchBtn");
+  const searchVoiceBtn = document.getElementById("searchVoiceBtn");
   const searchClear = document.getElementById("searchClear");
 
   if (searchInput) {
@@ -277,7 +278,8 @@ function setupEventListeners() {
       }
     });
   }
-  if (searchBtn) searchBtn.addEventListener("click", handleSearch);
+  if (searchBtn) searchBtn.addEventListener("click", showAdvancedSearchModal);
+  if (searchVoiceBtn) searchVoiceBtn.addEventListener("click", startVoiceSearch);
   if (searchClear) searchClear.addEventListener("click", clearSearch);
   if (navNotes) navNotes.addEventListener("click", (e) => {
     e.preventDefault();
@@ -322,12 +324,14 @@ function setupEventListeners() {
   
   // Toolbar buttons
   const imageBtn = document.getElementById("imageBtn");
+  const voiceNoteBtn = document.getElementById("voiceNoteBtn");
   const listBtn = document.getElementById("listBtn");
   const passwordBtn = document.getElementById("passwordBtn");
   const shareBtn = document.getElementById("shareBtn");
   const deleteBtn = document.getElementById("deleteBtn");
   
   if (imageBtn) imageBtn.addEventListener("click", handleImageUpload);
+  if (voiceNoteBtn) voiceNoteBtn.addEventListener("click", showVoiceRecordingModal);
   if (listBtn) listBtn.addEventListener("click", showListTypeModal);
   if (passwordBtn) passwordBtn.addEventListener("click", showPasswordModal);
   if (shareBtn) shareBtn.addEventListener("click", showShareModal);
@@ -2890,6 +2894,508 @@ function updateCollaboratorPresence(activeUsers) {
                           userData.currentField === 'contentTextarea' ? '✏️' : '';
     return `<div class="collaborator-avatar" title="${userData.name || 'Unknown'} ${fieldIndicator}">${initials}</div>`;
   }).join('');
+}
+
+// Advanced Search Functions
+let advancedSearchFilters = {};
+
+function showAdvancedSearchModal() {
+  const modal = document.getElementById('advancedSearchModal');
+  if (modal) {
+    // Populate categories in dropdown
+    const categorySelect = document.getElementById('advancedSearchCategory');
+    if (categorySelect && appData.categories) {
+      categorySelect.innerHTML = '<option value="">All categories</option>';
+      appData.categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.id;
+        option.textContent = category.name;
+        categorySelect.appendChild(option);
+      });
+    }
+    
+    modal.classList.add('open');
+  }
+}
+
+function hideAdvancedSearchModal() {
+  const modal = document.getElementById('advancedSearchModal');
+  if (modal) {
+    modal.classList.remove('open');
+  }
+}
+
+function clearAdvancedSearch() {
+  document.getElementById('advancedSearchContent').value = '';
+  document.getElementById('advancedSearchFromDate').value = '';
+  document.getElementById('advancedSearchToDate').value = '';
+  document.getElementById('advancedSearchCategory').value = '';
+  document.getElementById('advancedSearchType').value = '';
+  document.getElementById('advancedSearchSort').value = 'date';
+  
+  advancedSearchFilters = {};
+  document.getElementById('searchInput').value = '';
+  handleSearch();
+}
+
+function performAdvancedSearch() {
+  const content = document.getElementById('advancedSearchContent').value.trim();
+  const fromDate = document.getElementById('advancedSearchFromDate').value;
+  const toDate = document.getElementById('advancedSearchToDate').value;
+  const category = document.getElementById('advancedSearchCategory').value;
+  const type = document.getElementById('advancedSearchType').value;
+  const sort = document.getElementById('advancedSearchSort').value;
+  
+  advancedSearchFilters = {
+    content,
+    fromDate: fromDate ? new Date(fromDate) : null,
+    toDate: toDate ? new Date(toDate) : null,
+    category,
+    type,
+    sort
+  };
+  
+  // Update search input with content if provided
+  if (content) {
+    document.getElementById('searchInput').value = content;
+  }
+  
+  handleAdvancedSearch();
+  hideAdvancedSearchModal();
+}
+
+function handleAdvancedSearch() {
+  let filteredNotes = [...appData.notes];
+  
+  // Apply filters
+  if (advancedSearchFilters.content) {
+    const query = advancedSearchFilters.content.toLowerCase();
+    filteredNotes = filteredNotes.filter(note => 
+      (note.title && note.title.toLowerCase().includes(query)) ||
+      (note.content && note.content.toLowerCase().includes(query)) ||
+      (note.list && note.list.some(item => item.text.toLowerCase().includes(query)))
+    );
+  }
+  
+  if (advancedSearchFilters.fromDate) {
+    filteredNotes = filteredNotes.filter(note => 
+      new Date(note.lastModified || note.timestamp) >= advancedSearchFilters.fromDate
+    );
+  }
+  
+  if (advancedSearchFilters.toDate) {
+    const endDate = new Date(advancedSearchFilters.toDate);
+    endDate.setHours(23, 59, 59, 999);
+    filteredNotes = filteredNotes.filter(note => 
+      new Date(note.lastModified || note.timestamp) <= endDate
+    );
+  }
+  
+  if (advancedSearchFilters.category) {
+    filteredNotes = filteredNotes.filter(note => 
+      note.categories && note.categories.includes(advancedSearchFilters.category)
+    );
+  }
+  
+  if (advancedSearchFilters.type) {
+    switch (advancedSearchFilters.type) {
+      case 'text':
+        filteredNotes = filteredNotes.filter(note => 
+          !note.images?.length && !note.list?.length && !note.voiceNotes?.length
+        );
+        break;
+      case 'images':
+        filteredNotes = filteredNotes.filter(note => note.images?.length > 0);
+        break;
+      case 'lists':
+        filteredNotes = filteredNotes.filter(note => note.list?.length > 0);
+        break;
+      case 'voice':
+        filteredNotes = filteredNotes.filter(note => note.voiceNotes?.length > 0);
+        break;
+      case 'shared':
+        filteredNotes = filteredNotes.filter(note => note.shared);
+        break;
+      case 'password':
+        filteredNotes = filteredNotes.filter(note => note.password);
+        break;
+    }
+  }
+  
+  // Apply sorting
+  switch (advancedSearchFilters.sort) {
+    case 'title':
+      filteredNotes.sort((a, b) => (a.title || 'Untitled').localeCompare(b.title || 'Untitled'));
+      break;
+    case 'created':
+      filteredNotes.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      break;
+    case 'relevance':
+      // Sort by relevance if there's a content search
+      if (advancedSearchFilters.content) {
+        const query = advancedSearchFilters.content.toLowerCase();
+        filteredNotes.sort((a, b) => {
+          const aRelevance = getRelevanceScore(a, query);
+          const bRelevance = getRelevanceScore(b, query);
+          return bRelevance - aRelevance;
+        });
+      }
+      break;
+    default: // 'date'
+      filteredNotes.sort((a, b) => new Date(b.lastModified || b.timestamp) - new Date(a.lastModified || a.timestamp));
+  }
+  
+  renderFilteredNotes(filteredNotes);
+}
+
+function getRelevanceScore(note, query) {
+  let score = 0;
+  const title = (note.title || '').toLowerCase();
+  const content = (note.content || '').toLowerCase();
+  
+  // Title matches get higher score
+  if (title.includes(query)) score += 10;
+  if (title.startsWith(query)) score += 5;
+  
+  // Content matches
+  if (content.includes(query)) score += 5;
+  
+  // List item matches
+  if (note.list) {
+    note.list.forEach(item => {
+      if (item.text.toLowerCase().includes(query)) score += 3;
+    });
+  }
+  
+  return score;
+}
+
+function renderFilteredNotes(notes) {
+  const notesContainer = document.getElementById('notesContainer');
+  if (!notesContainer) return;
+  
+  if (notes.length === 0) {
+    notesContainer.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-search"></i>
+        <h3>No notes found</h3>
+        <p>Try adjusting your search criteria</p>
+        <button class="btn btn-primary" onclick="clearAdvancedSearch()">Clear Search</button>
+      </div>
+    `;
+    return;
+  }
+  
+  let html = '';
+  notes.forEach(note => {
+    const hasPassword = note.password;
+    const categories = note.categories || [];
+    const categoryText = categories.length > 0 ? 
+      categories.map(catId => {
+        const cat = appData.categories.find(c => c.id === catId);
+        return cat ? cat.name : '';
+      }).filter(name => name).join(', ') : '';
+    
+    const date = formatDate(note.lastModified || note.timestamp);
+    const title = escapeHtml(note.title || 'Untitled');
+    const preview = getContentPreview(note);
+    const highlightedTitle = highlightSearchTerms(title, advancedSearchFilters.content || '');
+    const highlightedPreview = highlightSearchTerms(preview, advancedSearchFilters.content || '');
+    
+    html += `
+      <div class="note-item" onclick="editNote(appData.notes.find(n => n.id === '${note.id}'))">
+        <div class="note-content">
+          <div class="note-header">
+            <h3 class="note-title">${highlightedTitle}</h3>
+            <div class="note-indicators">
+              ${hasPassword ? '<i class="fas fa-lock" title="Password protected"></i>' : ''}
+              ${note.images?.length ? '<i class="fas fa-image" title="Has images"></i>' : ''}
+              ${note.list?.length ? '<i class="fas fa-list" title="Has list"></i>' : ''}
+              ${note.voiceNotes?.length ? '<i class="fas fa-microphone" title="Has voice notes"></i>' : ''}
+              ${note.shared ? '<i class="fas fa-share-alt" title="Shared"></i>' : ''}
+            </div>
+          </div>
+          <p class="note-preview">${highlightedPreview}</p>
+          <div class="note-meta">
+            <span class="note-date">${date}</span>
+            ${categoryText ? `<span class="note-categories">${categoryText}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  notesContainer.innerHTML = html;
+}
+
+function getContentPreview(note) {
+  if (note.content) {
+    return note.content.length > 100 ? note.content.substring(0, 100) + '...' : note.content;
+  }
+  if (note.list?.length) {
+    const firstItems = note.list.slice(0, 3).map(item => item.text).join(', ');
+    return firstItems.length > 100 ? firstItems.substring(0, 100) + '...' : firstItems;
+  }
+  if (note.voiceNotes?.length) {
+    return `Voice note (${note.voiceNotes.length} recording${note.voiceNotes.length > 1 ? 's' : ''})`;
+  }
+  return 'No content';
+}
+
+// Voice Search Functions
+let voiceSearchRecognition = null;
+
+function startVoiceSearch() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Voice search is not supported in this browser', 'error');
+    return;
+  }
+  
+  const modal = document.getElementById('voiceSearchModal');
+  if (modal) {
+    modal.classList.add('open');
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    voiceSearchRecognition = new SpeechRecognition();
+    
+    voiceSearchRecognition.continuous = false;
+    voiceSearchRecognition.interimResults = true;
+    voiceSearchRecognition.lang = 'en-US';
+    
+    const transcriptEl = document.getElementById('voiceSearchTranscript');
+    const statusEl = document.getElementById('voiceSearchStatus');
+    const voiceBtn = document.getElementById('searchVoiceBtn');
+    
+    if (voiceBtn) voiceBtn.classList.add('recording');
+    
+    voiceSearchRecognition.onstart = () => {
+      if (statusEl) statusEl.textContent = 'Listening...';
+      if (transcriptEl) transcriptEl.textContent = '';
+    };
+    
+    voiceSearchRecognition.onresult = (event) => {
+      let finalTranscript = '';
+      let interimTranscript = '';
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+      
+      if (transcriptEl) {
+        transcriptEl.innerHTML = finalTranscript + '<span style="color: #999;">' + interimTranscript + '</span>';
+      }
+      
+      if (finalTranscript) {
+        document.getElementById('searchInput').value = finalTranscript.trim();
+        handleSearch();
+        stopVoiceSearch();
+      }
+    };
+    
+    voiceSearchRecognition.onerror = (event) => {
+      console.error('Voice search error:', event.error);
+      showToast('Voice search error: ' + event.error, 'error');
+      stopVoiceSearch();
+    };
+    
+    voiceSearchRecognition.onend = () => {
+      stopVoiceSearch();
+    };
+    
+    voiceSearchRecognition.start();
+  }
+}
+
+function stopVoiceSearch() {
+  if (voiceSearchRecognition) {
+    voiceSearchRecognition.stop();
+    voiceSearchRecognition = null;
+  }
+  
+  const modal = document.getElementById('voiceSearchModal');
+  if (modal) {
+    modal.classList.remove('open');
+  }
+  
+  const voiceBtn = document.getElementById('searchVoiceBtn');
+  if (voiceBtn) voiceBtn.classList.remove('recording');
+}
+
+// Voice Note Functions
+let voiceRecording = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordingStartTime = null;
+let recordingTimer = null;
+
+function showVoiceRecordingModal() {
+  const modal = document.getElementById('voiceRecordingModal');
+  if (modal) {
+    modal.classList.add('open');
+    resetVoiceRecording();
+  }
+}
+
+function resetVoiceRecording() {
+  const statusEl = document.getElementById('voiceStatus');
+  const durationEl = document.getElementById('voiceDuration');
+  const circleEl = document.getElementById('voiceVisualizer').querySelector('.voice-circle');
+  const actionsEl = document.getElementById('voiceActions');
+  const recordBtn = document.getElementById('voiceRecordBtn');
+  const stopBtn = document.getElementById('voiceStopBtn');
+  const playBtn = document.getElementById('voicePlayBtn');
+  
+  if (statusEl) statusEl.textContent = 'Tap to start recording';
+  if (durationEl) durationEl.textContent = '00:00';
+  if (circleEl) circleEl.classList.remove('recording');
+  if (actionsEl) actionsEl.classList.add('hidden');
+  if (recordBtn) recordBtn.classList.remove('hidden');
+  if (stopBtn) stopBtn.classList.add('hidden');
+  if (playBtn) playBtn.classList.add('hidden');
+  
+  recordedChunks = [];
+  voiceRecording = null;
+}
+
+async function toggleVoiceRecording() {
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+    await startVoiceRecording();
+  } else {
+    stopVoiceRecording();
+  }
+}
+
+async function startVoiceRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    recordedChunks = [];
+    
+    const statusEl = document.getElementById('voiceStatus');
+    const circleEl = document.getElementById('voiceVisualizer').querySelector('.voice-circle');
+    const recordBtn = document.getElementById('voiceRecordBtn');
+    const stopBtn = document.getElementById('voiceStopBtn');
+    
+    if (statusEl) statusEl.textContent = 'Recording...';
+    if (circleEl) circleEl.classList.add('recording');
+    if (recordBtn) recordBtn.classList.add('hidden');
+    if (stopBtn) stopBtn.classList.remove('hidden');
+    
+    recordingStartTime = Date.now();
+    recordingTimer = setInterval(updateRecordingDuration, 100);
+    
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        recordedChunks.push(event.data);
+      }
+    };
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+      voiceRecording = blob;
+      
+      const statusEl = document.getElementById('voiceStatus');
+      const circleEl = document.getElementById('voiceVisualizer').querySelector('.voice-circle');
+      const actionsEl = document.getElementById('voiceActions');
+      const stopBtn = document.getElementById('voiceStopBtn');
+      const playBtn = document.getElementById('voicePlayBtn');
+      
+      if (statusEl) statusEl.textContent = 'Recording complete';
+      if (circleEl) circleEl.classList.remove('recording');
+      if (actionsEl) actionsEl.classList.remove('hidden');
+      if (stopBtn) stopBtn.classList.add('hidden');
+      if (playBtn) playBtn.classList.remove('hidden');
+      
+      clearInterval(recordingTimer);
+      stream.getTracks().forEach(track => track.stop());
+    };
+    
+    mediaRecorder.start();
+  } catch (error) {
+    console.error('Error starting voice recording:', error);
+    showToast('Could not access microphone', 'error');
+  }
+}
+
+function stopVoiceRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
+  
+  const modal = document.getElementById('voiceRecordingModal');
+  if (modal) {
+    modal.classList.remove('open');
+  }
+}
+
+function updateRecordingDuration() {
+  if (recordingStartTime) {
+    const duration = Math.floor((Date.now() - recordingStartTime) / 1000);
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    const durationEl = document.getElementById('voiceDuration');
+    if (durationEl) {
+      durationEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+  }
+}
+
+function playVoiceRecording() {
+  if (voiceRecording) {
+    const audio = new Audio(URL.createObjectURL(voiceRecording));
+    audio.play();
+  }
+}
+
+function discardVoiceRecording() {
+  const modal = document.getElementById('voiceRecordingModal');
+  if (modal) {
+    modal.classList.remove('open');
+  }
+  resetVoiceRecording();
+}
+
+function saveVoiceRecording() {
+  if (!voiceRecording || !currentNote) {
+    showToast('No recording to save', 'error');
+    return;
+  }
+  
+  // Convert blob to base64 for storage
+  const reader = new FileReader();
+  reader.onload = () => {
+    const voiceNote = {
+      id: generateId(),
+      data: reader.result,
+      duration: document.getElementById('voiceDuration').textContent,
+      timestamp: Date.now()
+    };
+    
+    if (!currentNote.voiceNotes) {
+      currentNote.voiceNotes = [];
+    }
+    
+    currentNote.voiceNotes.push(voiceNote);
+    currentNote.lastModified = Date.now();
+    
+    updateEditorContent();
+    saveCurrentNote();
+    
+    const modal = document.getElementById('voiceRecordingModal');
+    if (modal) {
+      modal.classList.remove('open');
+    }
+    
+    showToast('Voice note added successfully', 'success');
+    resetVoiceRecording();
+  };
+  
+  reader.readAsDataURL(voiceRecording);
 }
 
 // Export for window global
