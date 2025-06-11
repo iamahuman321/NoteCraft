@@ -115,6 +115,9 @@ function initializeApp() {
         // Load shared shopping lists for all users (signed in and guest)
         loadSharedShoppingLists();
         
+        // Check for shared note to open
+        checkForSharedNoteToOpen();
+        
         updateShareButtonVisibility();
         updateSidebarAuth();
       });
@@ -139,6 +142,73 @@ function loadLocalData() {
   const savedFilter = localStorage.getItem("currentFilter");
   if (savedFilter) {
     currentFilter = savedFilter;
+  }
+}
+
+function checkForSharedNoteToOpen() {
+  const sharedNoteData = localStorage.getItem('openSharedNote');
+  if (sharedNoteData) {
+    try {
+      const sharedNote = JSON.parse(sharedNoteData);
+      
+      // Ensure proper list structure - convert legacy format to new format
+      if (sharedNote.listItems && !sharedNote.listSections) {
+        sharedNote.listSections = [{
+          id: generateId(),
+          type: sharedNote.listType || 'bulleted',
+          items: sharedNote.listItems
+        }];
+      }
+      
+      // Ensure all required properties exist
+      sharedNote.categories = sharedNote.categories || [];
+      sharedNote.images = sharedNote.images || [];
+      sharedNote.listSections = sharedNote.listSections || [];
+      
+      // Force reload from Firebase to get latest data
+      if (sharedNote.sharedId && window.database) {
+        const sharedNoteRef = window.database.ref(`sharedNotes/${sharedNote.sharedId}`);
+        sharedNoteRef.once('value').then((snapshot) => {
+          const latestData = snapshot.val();
+          if (latestData) {
+            // Update with latest Firebase data
+            Object.assign(sharedNote, {
+              title: latestData.title || '',
+              content: latestData.content || '',
+              categories: latestData.categories || [],
+              images: latestData.images || [],
+              listSections: latestData.listSections || [],
+              updatedAt: latestData.updatedAt
+            });
+            
+            // Handle legacy list format from Firebase
+            if (latestData.list && !latestData.listSections) {
+              sharedNote.listSections = [{
+                id: generateId(),
+                type: latestData.listType || 'bulleted',
+                items: latestData.list
+              }];
+            }
+          }
+          
+          // Open the note in editor
+          editNote(sharedNote);
+          localStorage.removeItem('openSharedNote');
+        }).catch((error) => {
+          console.error("Error loading latest shared note data:", error);
+          // Fallback to cached data
+          editNote(sharedNote);
+          localStorage.removeItem('openSharedNote');
+        });
+      } else {
+        // No Firebase or sharedId, use cached data
+        editNote(sharedNote);
+        localStorage.removeItem('openSharedNote');
+      }
+    } catch (error) {
+      console.error("Error parsing shared note data:", error);
+      localStorage.removeItem('openSharedNote');
+    }
   }
 }
 
@@ -418,8 +488,29 @@ function editNote(note) {
   }
   
   currentNote = note;
+  
+  // Ensure proper list structure before editing
+  if (!currentNote.listSections && currentNote.listItems) {
+    // Convert legacy format
+    currentNote.listSections = [{
+      id: generateId(),
+      type: currentNote.listType || 'bulleted',
+      items: currentNote.listItems
+    }];
+  }
+  
+  // Ensure all required arrays exist
+  currentNote.categories = currentNote.categories || [];
+  currentNote.images = currentNote.images || [];
+  currentNote.listSections = currentNote.listSections || [];
+  
   showEditorPage();
   updateEditorContent();
+  
+  // Force update list section after a brief delay to ensure DOM is ready
+  setTimeout(() => {
+    updateListSection();
+  }, 100);
 }
 
 function verifyNotePassword(note) {
@@ -2348,6 +2439,11 @@ function setupRealtimeCollaboration(sharedId) {
   
   // Setup user activity tracking
   trackUserActivity();
+  
+  // Force initial list section update to ensure everything renders properly
+  setTimeout(() => {
+    updateListSection();
+  }, 200);
   
   collaborativeEditingEnabled = true;
   console.log('Real-time collaboration enabled for shared note:', sharedId);
