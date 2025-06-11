@@ -3527,7 +3527,7 @@ function addSpeechToNote(text) {
   const contentTextarea = document.getElementById('contentTextarea');
   if (contentTextarea) {
     const currentContent = contentTextarea.value;
-    const formattedText = formatSpeechText(text);
+    const formattedText = formatMixedLanguageText(text);
     const newContent = currentContent ? `${currentContent}\n${formattedText}` : formattedText;
     
     contentTextarea.value = newContent;
@@ -3537,6 +3537,58 @@ function addSpeechToNote(text) {
     saveCurrentNote();
     showToast('Speech converted to text and added to note', 'success');
   }
+}
+
+// Language selector functions
+function showLanguageSelector() {
+  const modal = document.getElementById('languageSelectorModal');
+  if (modal) {
+    modal.classList.add('show');
+    updateLanguageSelector();
+  }
+}
+
+function hideLanguageSelector() {
+  const modal = document.getElementById('languageSelectorModal');
+  if (modal) {
+    modal.classList.remove('show');
+  }
+}
+
+function updateLanguageSelector() {
+  const currentLang = localStorage.getItem('speechLanguage') || detectUserLanguage();
+  const options = document.querySelectorAll('.language-option');
+  
+  options.forEach(option => {
+    option.classList.remove('selected');
+    if (option.dataset.lang === currentLang) {
+      option.classList.add('selected');
+    }
+  });
+  
+  updateLanguageDisplay(currentLang);
+}
+
+function updateLanguageDisplay(langCode) {
+  const langNames = {
+    'en-US': 'English',
+    'en-GB': 'English (UK)',
+    'hi-IN': 'हिन्दी',
+    'gu-IN': 'ગુજરાતી',
+    'nb-NO': 'Norsk'
+  };
+  
+  const display = document.getElementById('currentLanguageDisplay');
+  if (display) {
+    display.textContent = langNames[langCode] || 'English';
+  }
+}
+
+function selectLanguage(langCode) {
+  switchSpeechLanguage(langCode);
+  updateLanguageDisplay(langCode);
+  hideLanguageSelector();
+  showToast(`Speech language switched to ${langCode}`, 'success');
 }
 
 function stopSpeechRecognition() {
