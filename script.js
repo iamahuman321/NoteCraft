@@ -1379,7 +1379,7 @@ function showCategoryModal() {
   console.log("showCategoryModal called");
   console.log("Current global categories:", categories);
   
-  // Always reload the freshest categories from localStorage
+  // Use global categories if they have more items than localStorage
   const savedCategories = localStorage.getItem("categories");
   console.log("Saved categories from localStorage:", savedCategories);
   
@@ -1387,9 +1387,13 @@ function showCategoryModal() {
     try {
       const parsedCategories = JSON.parse(savedCategories);
       console.log("Parsed categories:", parsedCategories);
-      if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
+      
+      // Only use localStorage if it has more categories than global
+      if (parsedCategories.length > categories.length) {
         categories = parsedCategories;
-        console.log("Updated categories to:", categories);
+        console.log("Updated categories from localStorage:", categories);
+      } else {
+        console.log("Using global categories (more items):", categories);
       }
     } catch (error) {
       console.error("Error parsing categories:", error);
