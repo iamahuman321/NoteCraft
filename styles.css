@@ -104,7 +104,7 @@ body {
   right: 0;
   background: var(--background-color);
   border-bottom: none;
-  padding: 0.75rem 1rem 0;
+  padding: 0.75rem 1rem 0.75rem 1rem;
   margin: 0;
   z-index: 999;
   box-shadow: none;
@@ -556,7 +556,7 @@ body {
 /* Notes Container */
 .notes-container {
   padding: 1rem;
-  padding-top: 140px; /* Space for fixed header + search + filter sections */
+  padding-top: 156px; /* Space for fixed header + search + filter sections */
   padding-bottom: calc(var(--toolbar-height) + 1rem);
   min-height: calc(100vh - var(--header-height));
 }
@@ -630,7 +630,7 @@ body {
 /* Filter Chips */
 .filter-chips {
   position: fixed;
-  top: calc(var(--header-height) + 56px); /* Below header + search section with no gap */
+  top: calc(var(--header-height) + 68px); /* Below header + search section with no gap */
   left: 0;
   right: 0;
   display: flex;
@@ -639,7 +639,7 @@ body {
   overflow-x: auto;
   background: var(--background-color);
   border-bottom: 1px solid var(--border-color);
-  border-top: 1px solid var(--border-color);
+  border-top: none;
   -webkit-overflow-scrolling: touch;
   margin: 0;
   z-index: 998;
