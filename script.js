@@ -2318,11 +2318,11 @@ async function searchUsers(query) {
     } else {
       console.log("Rendering users to UI:", users);
       searchResults.innerHTML = users.map(user => `
-        <div class="user-search-item" onclick="selectUser('${user.uid}', '${escapeHtml(user.name)}', '${escapeHtml(user.username)}')">
-          <div class="user-info">
-            <div class="user-name">${escapeHtml(user.name)}</div>
-            <div class="user-username">@${escapeHtml(user.username)}</div>
-            <div class="user-email">${escapeHtml(user.email)}</div>
+        <div class="user-search-item" onclick="selectUser('${user.uid}', '${escapeHtml(user.name)}', '${escapeHtml(user.username)}')" style="background: #2d2d2d; padding: 12px; border-bottom: 1px solid #404040; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.background='#3a3a3a'" onmouseout="this.style.background='#2d2d2d'">
+          <div class="user-info" style="display: flex; flex-direction: column; gap: 4px;">
+            <div class="user-name" style="font-weight: 600; color: #ffffff; font-size: 14px;">${escapeHtml(user.name)}</div>
+            <div class="user-username" style="font-size: 13px; color: #b0b0b0;">@${escapeHtml(user.username)}</div>
+            <div class="user-email" style="font-size: 12px; color: #888888;">${escapeHtml(user.email)}</div>
           </div>
         </div>
       `).join("");
