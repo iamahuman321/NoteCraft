@@ -1265,6 +1265,7 @@ function updateEditorContent() {
   updateShareButtonVisibility();
   updateListSection();
   updateImagesSection();
+  updateVoiceNotesSection();
   updatePasswordButton();
   
   // Ensure list section is visible if there are list sections
@@ -3359,6 +3360,7 @@ function playVoiceRecording() {
 function discardVoiceRecording() {
   const modal = document.getElementById('voiceRecordingModal');
   if (modal) {
+    modal.style.display = 'none';
     modal.classList.remove('open');
   }
   resetVoiceRecording();
@@ -3392,6 +3394,7 @@ function saveVoiceRecording() {
     
     const modal = document.getElementById('voiceRecordingModal');
     if (modal) {
+      modal.style.display = 'none';
       modal.classList.remove('open');
     }
     
@@ -3400,6 +3403,46 @@ function saveVoiceRecording() {
   };
   
   reader.readAsDataURL(voiceRecording);
+}
+
+function updateVoiceNotesSection() {
+  const voiceSection = document.getElementById("voiceSection");
+  if (!voiceSection) return;
+  
+  if (!currentNote || !currentNote.voiceNotes || currentNote.voiceNotes.length === 0) {
+    voiceSection.classList.add("hidden");
+    return;
+  }
+  
+  voiceSection.classList.remove("hidden");
+  const voiceContainer = document.getElementById("voiceContainer");
+  if (!voiceContainer) return;
+  
+  voiceContainer.innerHTML = currentNote.voiceNotes
+    .map((voiceNote, index) => `
+      <div class="voice-note-item">
+        <div class="voice-note-header">
+          <i class="fas fa-microphone"></i>
+          <span class="voice-note-duration">${voiceNote.duration || '0:00'}</span>
+          <span class="voice-note-date">${formatDate(voiceNote.timestamp)}</span>
+          <button class="delete-voice-btn" onclick="deleteVoiceNote(${index})" title="Delete voice note">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+        <audio controls src="${voiceNote.data}"></audio>
+      </div>
+    `).join("");
+}
+
+function deleteVoiceNote(index) {
+  if (!currentNote || !currentNote.voiceNotes) return;
+  
+  currentNote.voiceNotes.splice(index, 1);
+  currentNote.lastModified = Date.now();
+  
+  updateVoiceNotesSection();
+  saveCurrentNote();
+  showToast('Voice note deleted', 'success');
 }
 
 // Export for window global
