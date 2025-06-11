@@ -4228,6 +4228,45 @@ function updateCollaboratorPresence(activeUsers) {
   }
 }
 
+// Complete the formatMixedLanguageText function
+function completeMixedLanguageFormatting(text) {
+  if (!text) return '';
+  
+  let formatted = text.trim().replace(/\s+/g, ' ');
+  
+  // Enhanced punctuation mapping for multiple languages
+  const multiLangPunctuationMap = {
+    // English
+    ' period': '.', ' comma': ',', ' question mark': '?', ' exclamation mark': '!',
+    // Hindi/Gujarati
+    ' पूर्ण विराम': '.', ' अल्प विराम': ',', ' प्रश्न चिह्न': '?',
+    ' પૂર્ણવિરામ': '.', ' અલ્પવિરામ': ',', ' પ્રશ્નચિહ્ન': '?',
+    // Norwegian
+    ' punktum': '.', ' komma': ',', ' spørsmålstegn': '?', ' utropstegn': '!',
+    // Common mixed patterns
+    ' full stop': '.', ' dot': '.', ' new line': '\n', ' new paragraph': '\n\n'
+  };
+  
+  // Apply punctuation replacements
+  Object.keys(multiLangPunctuationMap).forEach(key => {
+    formatted = formatted.replace(new RegExp(key, 'gi'), multiLangPunctuationMap[key]);
+  });
+  
+  // Capitalize first letter of sentences
+  formatted = formatted.replace(/(^|\. |\n)([a-zA-Z\u0900-\u097F\u0A80-\u0AFF])/g, (match, separator, letter) => {
+    return separator + letter.toUpperCase();
+  });
+  
+  // Ensure proper spacing around punctuation
+  formatted = formatted.replace(/\s*([.!?])\s*/g, '$1 ');
+  formatted = formatted.replace(/\s*,\s*/g, ', ');
+  
+  // Clean up multiple spaces
+  formatted = formatted.replace(/\s+/g, ' ').trim();
+  
+  return formatted;
+}
+
 // Export for window global
 window.renderNotes = renderNotes;
 window.renderCategories = renderCategories;
