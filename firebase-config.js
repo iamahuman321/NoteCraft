@@ -265,12 +265,34 @@ function loadUserData(user) {
           console.log("Using Firebase categories");
         }
 
-        // Force update global arrays
+        // Force update global arrays - preserve existing notes with categories if they exist
+        const existingNotes = JSON.parse(localStorage.getItem("notes")) || [];
+        const hasLocalNotesWithCategories = existingNotes.some(note => 
+          Array.isArray(note.categories) && note.categories.length > 0
+        );
+        
+        let finalNotes;
+        if (hasLocalNotesWithCategories && userNotes.length === existingNotes.length) {
+          // Local notes have categories and same count, preserve them
+          finalNotes = existingNotes;
+          console.log("Preserving local notes with categories");
+        } else {
+          // Use Firebase notes but preserve any category assignments from local
+          finalNotes = userNotes.map(firebaseNote => {
+            const localNote = existingNotes.find(note => note.id === firebaseNote.id);
+            if (localNote && Array.isArray(localNote.categories) && localNote.categories.length > 0) {
+              return { ...firebaseNote, categories: localNote.categories };
+            }
+            return firebaseNote;
+          });
+          console.log("Using Firebase notes but preserving local categories");
+        }
+        
         if (window.notes) {
           window.notes.length = 0;
-          window.notes.push(...userNotes);
+          window.notes.push(...finalNotes);
         } else {
-          window.notes = userNotes;
+          window.notes = finalNotes;
         }
 
         // Only update global categories if we're using Firebase data or if global is empty
@@ -286,8 +308,8 @@ function loadUserData(user) {
           window.categories = finalCategories;
         }
 
-        // Update localStorage with notes always, categories only when appropriate
-        localStorage.setItem("notes", JSON.stringify(userNotes));
+        // Update localStorage with final notes (preserving categories)
+        localStorage.setItem("notes", JSON.stringify(finalNotes));
         
         // Always update localStorage with final categories
         localStorage.setItem("categories", JSON.stringify(finalCategories));
@@ -315,12 +337,10 @@ function loadUserData(user) {
           }
         }
         
-        // Save local categories to Firebase if they were preserved
-        if (hasRecentLocalChanges || localCategories.length > firebaseCategories.length) {
-          setTimeout(() => {
-            saveUserData();
-          }, 1000);
-        }
+        // Always save the final notes and categories to Firebase to ensure persistence
+        setTimeout(() => {
+          saveUserData();
+        }, 1000);
 
         // Set data loaded flag
         window.dataLoaded = true;
