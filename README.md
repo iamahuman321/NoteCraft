@@ -33,7 +33,7 @@ A shared note-taking app built for our family! Perfect for keeping track of ever
 - **Shopping**: Grocery lists, gift ideas, things we need
 - **Daily Life**: Quick reminders, funny moments, family memories
 
-## Technical Notes (Dad)
+## Technical Notes
 
 - Built with vanilla JavaScript, Firebase backend
 - Real-time collaboration with WebSocket-like functionality
