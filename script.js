@@ -3248,15 +3248,21 @@ function showVoiceRecordingModal() {
 
 // Initialize speech recognition
 function initializeSpeechRecognition() {
+  console.log('Checking speech recognition support...');
+  console.log('webkitSpeechRecognition available:', 'webkitSpeechRecognition' in window);
+  console.log('SpeechRecognition available:', 'SpeechRecognition' in window);
+  
   if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     speechRecognition = new SpeechRecognition();
+    console.log('Speech recognition instance created:', speechRecognition);
     
     speechRecognition.continuous = true;
     speechRecognition.interimResults = true;
     speechRecognition.lang = 'en-US';
     
     speechRecognition.onstart = () => {
+      console.log('Speech recognition started');
       isListening = true;
       const statusEl = document.getElementById('voiceStatus');
       const circleEl = document.getElementById('voiceVisualizer').querySelector('.voice-circle');
@@ -3301,7 +3307,15 @@ function initializeSpeechRecognition() {
     
     speechRecognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
-      showToast('Speech recognition error: ' + event.error, 'error');
+      
+      if (event.error === 'not-allowed') {
+        showToast('Microphone access denied. Please allow microphone access and try again.', 'error');
+      } else if (event.error === 'no-speech') {
+        showToast('No speech detected. Please speak clearly and try again.', 'error');
+      } else {
+        showToast('Speech recognition error: ' + event.error, 'error');
+      }
+      
       stopSpeechRecognition();
     };
     
@@ -3414,13 +3428,19 @@ function startSpeechRecognition() {
   if (speechRecognition && !isListening) {
     console.log('Starting speech recognition...');
     recognizedText = '';
-    speechRecognition.start();
     
-    const recordBtn = document.getElementById('voiceRecordBtn');
-    const stopBtn = document.getElementById('voiceStopBtn');
-    
-    if (recordBtn) recordBtn.classList.add('hidden');
-    if (stopBtn) stopBtn.classList.remove('hidden');
+    try {
+      speechRecognition.start();
+      
+      const recordBtn = document.getElementById('voiceRecordBtn');
+      const stopBtn = document.getElementById('voiceStopBtn');
+      
+      if (recordBtn) recordBtn.classList.add('hidden');
+      if (stopBtn) stopBtn.classList.remove('hidden');
+    } catch (error) {
+      console.error('Failed to start speech recognition:', error);
+      showToast('Failed to start speech recognition. Please try again.', 'error');
+    }
   } else if (!speechRecognition) {
     console.log('Speech recognition not initialized, calling initializeSpeechRecognition');
     initializeSpeechRecognition();
