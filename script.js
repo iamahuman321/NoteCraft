@@ -473,7 +473,7 @@ function setupModalEventListeners() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       const modal = document.getElementById("imageViewerModal");
-      if (modal && modal.classList.contains("show")) {
+      if (modal && modal.classList.contains("open")) {
         closeImageViewer();
       }
     }
@@ -498,7 +498,7 @@ function setupModalEventListeners() {
   document.querySelectorAll(".modal").forEach(modal => {
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
-        modal.classList.remove("show");
+        modal.classList.remove("open");
       }
     });
   });
@@ -2112,7 +2112,7 @@ function openImageViewer(imageSrc, imageIndex) {
   
   if (modal && img) {
     img.src = imageSrc;
-    modal.classList.add("show");
+    modal.classList.add("open");
     
     // Prevent body scroll when modal is open
     document.body.style.overflow = "hidden";
@@ -2126,7 +2126,7 @@ function openImageViewer(imageSrc, imageIndex) {
 function closeImageViewer() {
   const modal = document.getElementById("imageViewerModal");
   if (modal) {
-    modal.classList.remove("show");
+    modal.classList.remove("open");
     document.body.style.overflow = "";
     currentImageSrc = null;
     currentImageIndex = null;
@@ -3404,7 +3404,6 @@ let recordingTimer = null;
 function showVoiceRecordingModal() {
   const modal = document.getElementById('voiceRecordingModal');
   if (modal) {
-    modal.style.display = 'flex';
     modal.classList.add('open');
     initializeSpeechRecognition();
     resetVoiceRecording();
@@ -3920,7 +3919,6 @@ function testVoiceModal() {
   console.log('Test voice modal called');
   const modal = document.getElementById('voiceRecordingModal');
   if (modal) {
-    modal.style.display = 'flex';
     modal.classList.add('open');
     console.log('Test modal opened successfully');
   } else {
