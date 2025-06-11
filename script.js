@@ -956,7 +956,12 @@ function setupToolbarButtons() {
     newListBtn.addEventListener("click", (e) => {
       console.log("List button clicked");
       e.preventDefault();
-      showListTypeModal();
+      console.log("Calling showListTypeModal function");
+      if (typeof showListTypeModal === 'function') {
+        showListTypeModal();
+      } else {
+        console.error("showListTypeModal function not found!");
+      }
     });
   }
   
@@ -966,7 +971,12 @@ function setupToolbarButtons() {
     newPasswordBtn.addEventListener("click", (e) => {
       console.log("Password button clicked");
       e.preventDefault();
-      showPasswordModal();
+      console.log("Calling showPasswordModal function");
+      if (typeof showPasswordModal === 'function') {
+        showPasswordModal();
+      } else {
+        console.error("showPasswordModal function not found!");
+      }
     });
   }
   
