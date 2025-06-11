@@ -410,6 +410,25 @@ function setupModalEventListeners() {
   if (confirmDeleteBtn) confirmDeleteBtn.addEventListener("click", confirmDelete);
   if (cancelDeleteBtn) cancelDeleteBtn.addEventListener("click", hideDeleteModal);
 
+  // Image viewer modal
+  const imageViewerClose = document.getElementById("imageViewerClose");
+  const imageViewerOverlay = document.getElementById("imageViewerOverlay");
+  const downloadImageBtn = document.getElementById("downloadImageBtn");
+
+  if (imageViewerClose) imageViewerClose.addEventListener("click", closeImageViewer);
+  if (imageViewerOverlay) imageViewerOverlay.addEventListener("click", closeImageViewer);
+  if (downloadImageBtn) downloadImageBtn.addEventListener("click", downloadImage);
+
+  // Close image viewer with Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const modal = document.getElementById("imageViewerModal");
+      if (modal && modal.classList.contains("show")) {
+        closeImageViewer();
+      }
+    }
+  });
+
   // Shopping Lists
   const groceryBtn = document.getElementById("groceryBtn");
   const pharmacyBtn = document.getElementById("pharmacyBtn");
@@ -1757,7 +1776,7 @@ function updateImagesSection() {
   if (imageGrid) {
     imageGrid.innerHTML = currentNote.images.map((image, index) => `
       <div class="image-item">
-        <img src="${image.data}" alt="${image.name}" />
+        <img src="${image}" alt="Note Image" onclick="openImageViewer('${image}', ${index})" style="cursor: pointer;" />
         <button class="image-delete" onclick="deleteImage(${index})">
           <i class="fas fa-times"></i>
         </button>
@@ -1772,6 +1791,63 @@ function deleteImage(index) {
   currentNote.images.splice(index, 1);
   updateImagesSection();
   saveCurrentNote();
+}
+
+// Image viewer functions
+let currentImageSrc = null;
+let currentImageIndex = null;
+
+function openImageViewer(imageSrc, imageIndex) {
+  currentImageSrc = imageSrc;
+  currentImageIndex = imageIndex;
+  
+  const modal = document.getElementById("imageViewerModal");
+  const img = document.getElementById("imageViewerImg");
+  
+  if (modal && img) {
+    img.src = imageSrc;
+    modal.classList.add("show");
+    
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = "hidden";
+  }
+}
+
+function closeImageViewer() {
+  const modal = document.getElementById("imageViewerModal");
+  if (modal) {
+    modal.classList.remove("show");
+    document.body.style.overflow = "";
+    currentImageSrc = null;
+    currentImageIndex = null;
+  }
+}
+
+function downloadImage() {
+  if (!currentImageSrc) return;
+  
+  try {
+    // Create a temporary link element
+    const link = document.createElement('a');
+    link.href = currentImageSrc;
+    
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const noteTitle = currentNote?.title || 'Note';
+    const filename = `${noteTitle}_Image_${timestamp}.png`;
+    
+    link.download = filename;
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast("Image downloaded successfully", "success");
+  } catch (error) {
+    console.error("Error downloading image:", error);
+    showToast("Error downloading image", "error");
+  }
 }
 
 // Collaborator functions
