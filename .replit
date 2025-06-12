@@ -13,10 +13,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Chat App Server"
+args = "Notes PWA Server"
 
 [[workflows.workflow]]
-name = "Chat App Server"
+name = "Notes PWA Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
