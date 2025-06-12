@@ -11,6 +11,8 @@ const firebaseConfig = {
   appId: "1:994636147128:web:af99bbf22fe78b7e123456"
 };
 
+console.log('Firebase Chat - Initializing...');
+
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 

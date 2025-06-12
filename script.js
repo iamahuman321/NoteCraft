@@ -26,10 +26,16 @@ let messages = {};
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('Family Chat App - DOM loaded');
   setupEventListeners();
   setupAutoResize();
   loadSettings();
-  initializeFamilyChats();
+  
+  // Wait a bit for Firebase to initialize
+  setTimeout(() => {
+    initializeFamilyChats();
+    console.log('Family Chat App - Initialized');
+  }, 1000);
 });
 
 function setupEventListeners() {
