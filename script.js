@@ -658,15 +658,8 @@ function saveLocalNote() {
   
   if (existingIndex >= 0) {
     notes[existingIndex] = noteToSave;
-    // Only show toast for manual saves, not auto-saves
-    if (!isAutoSave && !collaborativeEditingEnabled) {
-      showToast(t("noteUpdated"), "success");
-    }
   } else {
     notes.push(noteToSave);
-    if (!isAutoSave && !collaborativeEditingEnabled) {
-      showToast(t("noteAdded"), "success");
-    }
   }
   
   localStorage.setItem("notes", JSON.stringify(notes));
@@ -893,11 +886,7 @@ function showNotesPage() {
     saveCurrentNote();
     
     // Show toast notification for manual save when leaving editor
-    if (currentNote.isShared) {
-      showToast("Shared note saved", "success");
-    } else {
-      showToast("Note saved", "success");
-    }
+    showToast("Note saved", "success");
   }
   
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
@@ -1857,14 +1846,10 @@ function addListItemToSection(sectionId) {
   
   updateListSection();
   
-  // Use collaborative auto-save for shared notes
-  if (currentNote.isShared && collaborativeEditingEnabled) {
-    isAutoSave = true;
-    saveCurrentNote();
-    isAutoSave = false;
-  } else {
-    saveCurrentNote();
-  }
+  // Always use silent auto-save for list operations
+  isAutoSave = true;
+  saveCurrentNote();
+  isAutoSave = false;
 }
 
 function updateListItemInSection(sectionId, itemIndex, value) {
