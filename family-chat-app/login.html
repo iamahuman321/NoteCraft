@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign In - Family Chat</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Family Chat</h1>
+                <p>Sign in to chat with your family</p>
+            </div>
+
+            <div class="auth-form">
+                <!-- Google Sign In -->
+                <button class="auth-btn google-btn" id="googleSignInBtn">
+                    <i class="fab fa-google"></i>
+                    Continue with Google
+                </button>
+
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+
+                <!-- Email Sign In Form -->
+                <form id="signInForm">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required />
+                    </div>
+
+                    <button type="submit" class="auth-btn primary-btn">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Don't have an account? <a href="signup.html">Sign up here</a></p>
+                    <p><a href="#" id="guestBtn">Continue as Guest</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="firebase-config.js"></script>
+    <script>
+        // Auth form handling
+        document.addEventListener('DOMContentLoaded', () => {
+            const signInForm = document.getElementById('signInForm');
+            const googleSignInBtn = document.getElementById('googleSignInBtn');
+            const guestBtn = document.getElementById('guestBtn');
+
+            // Handle email sign in
+            if (signInForm) {
+                signInForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    
+                    if (email && password) {
+                        signInWithEmail(email, password);
+                    }
+                });
+            }
+
+            // Handle Google sign in
+            if (googleSignInBtn) {
+                googleSignInBtn.addEventListener('click', signInWithGoogle);
+            }
+
+            // Handle guest sign in
+            if (guestBtn) {
+                guestBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // For now, redirect to main app - guest mode can be implemented later
+                    showToast('Guest mode not available yet. Please sign in.', 'warning');
+                });
+            }
+
+            // Redirect if already signed in
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    window.location.href = 'index.html';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Family Chat</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="hamburger-btn" id="hamburgerBtn" title="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <h1 class="header-title">FAMILY CHAT</h1>
+            </div>
+            <div class="header-right">
+                <button class="online-users-btn" id="onlineUsersBtn" title="Online family members">
+                    <i class="fas fa-users"></i>
+                    <span class="online-count" id="onlineCount">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Family Chat</h2>
+            <button class="sidebar-close" id="sidebarClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="sidebar-nav">
+            <a href="#" class="nav-item active" id="navChat">
+                <i class="fas fa-comments"></i>
+                Family Chat
+            </a>
+            <a href="#" class="nav-item" id="navSettings">
+                <i class="fas fa-cog"></i>
+                Settings
+            </a>
+            <a href="login.html" class="nav-item" id="navSignIn">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In
+            </a>
+            <a href="#" class="nav-item hidden" id="navSignOut">
+                <i class="fas fa-sign-out-alt"></i>
+                Sign Out
+            </a>
+        </div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Chat Page -->
+        <div class="page active" id="chatPage">
+            <!-- Messages Container -->
+            <div class="messages-container" id="messagesContainer">
+                <div class="messages-list" id="messagesList">
+                    <!-- Messages will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Message Input -->
+            <div class="message-input-container">
+                <div class="message-input-wrapper">
+                    <button class="attach-btn" id="attachBtn" title="Attach image">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;" />
+                    <textarea 
+                        class="message-input" 
+                        id="messageInput" 
+                        placeholder="Type a message..."
+                        rows="1"></textarea>
+                    <button class="voice-btn" id="voiceBtn" title="Voice message">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="send-btn" id="sendBtn" title="Send message">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div class="page" id="settingsPage">
+            <div class="settings-container">
+                <h2>Settings</h2>
+                
+                <div class="setting-group">
+                    <label for="themeSelect">Theme</label>
+                    <select id="themeSelect">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label for="notificationSound">Notification Sound</label>
+                    <input type="checkbox" id="notificationSound" checked />
+                </div>
+
+                <div class="setting-group" id="userSettings" style="display: none;">
+                    <h3>User Information</h3>
+                    <div class="user-info">
+                        <div class="user-detail">
+                            <label>Name:</label>
+                            <span id="userNameDisplay">-</span>
+                            <button class="edit-btn" id="editNameBtn">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                        <div class="user-detail">
+                            <label>Email:</label>
+                            <span id="userEmailDisplay">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-actions">
+                    <button class="btn-primary" id="signInBtn" style="display: none;">
+                        Sign In
+                    </button>
+                    <button class="btn-secondary" id="signOutBtn" style="display: none;">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Online Users Modal -->
+    <div class="modal" id="onlineUsersModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Online Family Members</h3>
+                <button class="modal-close" onclick="hideOnlineUsersModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="online-users-list" id="onlineUsersList">
+                    <!-- Online users will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Recording Modal -->
+    <div class="modal" id="voiceRecordingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Voice Message</h3>
+                <button class="modal-close" onclick="hideVoiceModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="voice-recorder">
+                    <div class="voice-visualizer" id="voiceVisualizer">
+                        <div class="voice-circle"></div>
+                    </div>
+                    <div class="voice-status" id="voiceStatus">Ready to record</div>
+                    <div class="voice-duration" id="voiceDuration">00:00</div>
+                    <div class="voice-controls">
+                        <button class="btn-voice record" id="voiceRecordBtn" onclick="startVoiceRecording()">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <button class="btn-voice stop hidden" id="voiceStopBtn" onclick="stopVoiceRecording()">
+                            <i class="fas fa-stop"></i>
+                        </button>
+                        <button class="btn-voice play hidden" id="voicePlayBtn" onclick="playVoiceRecording()">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="btn-voice send hidden" id="voiceSendBtn" onclick="sendVoiceMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Name Edit Modal -->
+    <div class="modal" id="nameModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Name</h3>
+                <button class="modal-close" onclick="hideNameModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="nameInput" placeholder="Enter your name" />
+                <div class="modal-actions">
+                    <button class="btn-primary" onclick="saveName()">Save</button>
+                    <button class="btn-secondary" onclick="hideNameModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
