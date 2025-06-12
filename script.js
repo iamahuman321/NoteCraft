@@ -1860,14 +1860,10 @@ function updateListItemInSection(sectionId, itemIndex, value) {
   
   section.items[itemIndex].text = value;
   
-  // Use collaborative auto-save for shared notes
-  if (currentNote.isShared && collaborativeEditingEnabled) {
-    isAutoSave = true;
-    saveCurrentNote();
-    isAutoSave = false;
-  } else {
-    saveCurrentNote();
-  }
+  // Always use silent auto-save for list operations
+  isAutoSave = true;
+  saveCurrentNote();
+  isAutoSave = false;
 }
 
 function toggleListItemInSection(sectionId, itemIndex) {
@@ -1879,14 +1875,10 @@ function toggleListItemInSection(sectionId, itemIndex) {
   section.items[itemIndex].completed = !section.items[itemIndex].completed;
   updateListSection();
   
-  // Use collaborative auto-save for shared notes
-  if (currentNote.isShared && collaborativeEditingEnabled) {
-    isAutoSave = true;
-    saveCurrentNote();
-    isAutoSave = false;
-  } else {
-    saveCurrentNote();
-  }
+  // Always use silent auto-save for list operations
+  isAutoSave = true;
+  saveCurrentNote();
+  isAutoSave = false;
 }
 
 function deleteListItemInSection(sectionId, itemIndex) {
@@ -1905,14 +1897,10 @@ function deleteListItemInSection(sectionId, itemIndex) {
   
   updateListSection();
   
-  // Use collaborative auto-save for shared notes
-  if (currentNote.isShared && collaborativeEditingEnabled) {
-    isAutoSave = true;
-    saveCurrentNote();
-    isAutoSave = false;
-  } else {
-    saveCurrentNote();
-  }
+  // Always use silent auto-save for list operations
+  isAutoSave = true;
+  saveCurrentNote();
+  isAutoSave = false;
 }
 
 function deleteListSection(sectionId) {
@@ -1924,14 +1912,10 @@ function deleteListSection(sectionId) {
   currentNote.listSections.splice(sectionIndex, 1);
   updateListSection();
   
-  // Use collaborative auto-save for shared notes
-  if (currentNote.isShared && collaborativeEditingEnabled) {
-    isAutoSave = true;
-    saveCurrentNote();
-    isAutoSave = false;
-  } else {
-    saveCurrentNote();
-  }
+  // Always use silent auto-save for list operations
+  isAutoSave = true;
+  saveCurrentNote();
+  isAutoSave = false;
 }
 
 // Legacy functions for backward compatibility
