@@ -39,7 +39,22 @@
             <div class="chat-list-container">
                 <div class="search-bar">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search conversations..." />
+                    <input type="text" id="searchInput" placeholder="Search..." />
+                </div>
+                
+                <!-- Currently Active Section -->
+                <div class="section-header">
+                    <span class="section-badge">Currently Active</span>
+                </div>
+                
+                <div class="active-users-grid" id="activeUsersGrid">
+                    <!-- Active users will be loaded here -->
+                </div>
+                
+                <!-- Recent Chats Section -->
+                <div class="section-header">
+                    <span class="section-badge">Recents</span>
+                    <span class="notification-count">3</span>
                 </div>
                 
                 <div class="chat-list" id="chatList">

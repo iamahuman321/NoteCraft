@@ -119,22 +119,53 @@ function setupTouchGestures() {
 
 // Chat initialization and management
 function initializeFamilyChats() {
-  // Initialize predefined family chats
+  // Initialize predefined family chats with sample data like reference
   chats = [
     {
-      id: 'family-group',
-      name: 'Family Group',
-      type: 'group',
-      avatar: 'F',
-      lastMessage: 'Welcome to family chat!',
+      id: 'alexander',
+      name: 'Alexander',
+      type: 'individual',
+      avatar: 'alexander',
+      lastMessage: 'Hey, what\'s up?',
+      lastTime: Date.now() - 6 * 60 * 1000, // 6 minutes ago
+      unreadCount: 1,
+      isOnline: true
+    },
+    {
+      id: 'isabelle',
+      name: 'Isabelle',
+      type: 'individual', 
+      avatar: 'isabelle',
+      lastMessage: 'That sounds cool. What...',
+      lastTime: Date.now() - 35 * 60 * 1000, // 35 minutes ago
+      unreadCount: 1,
+      isOnline: true
+    },
+    {
+      id: 'harper',
+      name: 'Harper',
+      type: 'individual',
+      avatar: 'harper', 
+      lastMessage: 'I like to do a lot of different...',
+      lastTime: Date.now() - 59 * 60 * 1000, // 59 minutes ago
+      unreadCount: 1,
+      isOnline: true
+    },
+    {
+      id: 'ethan',
+      name: 'Ethan',
+      type: 'individual',
+      avatar: 'ethan',
+      lastMessage: '',
       lastTime: Date.now(),
       unreadCount: 0,
-      participants: []
+      isOnline: false
     }
   ];
   
   // Load family members and create individual chats
   loadFamilyMembers();
+  renderActiveUsers();
   renderChatList();
 }
 
@@ -255,6 +286,31 @@ function handleHeaderAction() {
 }
 
 // Chat list rendering
+function renderActiveUsers() {
+  const activeUsersGrid = document.getElementById('activeUsersGrid');
+  if (!activeUsersGrid) return;
+
+  const activeUsers = chats.filter(chat => chat.isOnline);
+  
+  activeUsersGrid.innerHTML = '';
+  
+  activeUsers.forEach(user => {
+    const userItem = document.createElement('div');
+    userItem.className = 'active-user-item';
+    userItem.onclick = () => openChat(user.id, user.type);
+    
+    userItem.innerHTML = `
+      <div class="active-user-avatar ${user.avatar}">
+        ${user.name.charAt(0)}
+        <div class="online-indicator"></div>
+      </div>
+      <div class="active-user-name">${user.name}</div>
+    `;
+    
+    activeUsersGrid.appendChild(userItem);
+  });
+}
+
 function renderChatList() {
   if (!chatList) return;
   
