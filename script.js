@@ -246,13 +246,14 @@ function handleImageUpload(event) {
 
 async function uploadAndSendImage(file) {
   try {
-    const imageUrl = await uploadImage(file);
-    if (imageUrl) {
-      await sendMessage('', 'image', imageUrl);
+    showToast('Processing image...', 'default');
+    const imageBase64 = await convertImageToBase64(file);
+    if (imageBase64) {
+      await sendMessage('', 'image', imageBase64);
       showToast('Image sent successfully', 'success');
     }
   } catch (error) {
-    console.error('Error uploading image:', error);
+    console.error('Error processing image:', error);
     showToast('Failed to send image', 'error');
   }
 }
@@ -384,9 +385,10 @@ async function sendVoiceMessage() {
   if (!voiceRecording) return;
   
   try {
-    const voiceUrl = await uploadVoiceMessage(voiceRecording);
-    if (voiceUrl) {
-      await sendMessage('', 'voice', voiceUrl);
+    showToast('Processing voice message...', 'default');
+    const voiceBase64 = await convertVoiceToBase64(voiceRecording);
+    if (voiceBase64) {
+      await sendMessage('', 'voice', voiceBase64);
       showToast('Voice message sent successfully', 'success');
       hideVoiceModal();
     }

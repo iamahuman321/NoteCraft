@@ -17,7 +17,6 @@ firebase.initializeApp(firebaseConfig);
 // Initialize services
 const auth = firebase.auth();
 const database = firebase.database();
-const storage = firebase.storage();
 
 // Global variables
 let currentUser = null;
@@ -137,48 +136,24 @@ async function sendMessage(text, type = 'text', attachmentUrl = null) {
   }
 }
 
-// Upload image function
-async function uploadImage(file) {
-  if (!currentUser) return null;
-  
-  try {
-    const timestamp = Date.now();
-    const fileName = `chat-images/${currentUser.uid}/${timestamp}_${file.name}`;
-    const storageRef = storage.ref(fileName);
-    
-    showToast('Uploading image...', 'default');
-    
-    const snapshot = await storageRef.put(file);
-    const downloadURL = await snapshot.ref.getDownloadURL();
-    
-    return downloadURL;
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    showToast('Failed to upload image', 'error');
-    return null;
-  }
+// Convert image to base64 for Realtime Database storage
+async function convertImageToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
-// Upload voice message function
-async function uploadVoiceMessage(audioBlob) {
-  if (!currentUser) return null;
-  
-  try {
-    const timestamp = Date.now();
-    const fileName = `chat-voice/${currentUser.uid}/${timestamp}.webm`;
-    const storageRef = storage.ref(fileName);
-    
-    showToast('Uploading voice message...', 'default');
-    
-    const snapshot = await storageRef.put(audioBlob);
-    const downloadURL = await snapshot.ref.getDownloadURL();
-    
-    return downloadURL;
-  } catch (error) {
-    console.error('Error uploading voice message:', error);
-    showToast('Failed to upload voice message', 'error');
-    return null;
-  }
+// Convert voice recording to base64 for Realtime Database storage
+async function convertVoiceToBase64(audioBlob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(audioBlob);
+  });
 }
 
 // Authentication functions
