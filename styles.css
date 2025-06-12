@@ -335,6 +335,22 @@ body {
   background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
 }
 
+.chat-avatar.isabelle {
+  background: linear-gradient(135deg, #ffd166, #f77f00);
+}
+
+.chat-avatar.ethan {
+  background: linear-gradient(135deg, #118ab2, #06d6a0);
+}
+
+.chat-avatar.harper {
+  background: linear-gradient(135deg, #06d6a0, #073b4c);
+}
+
+.chat-avatar.alexander {
+  background: linear-gradient(135deg, #073b4c, #118ab2);
+}
+
 .online-indicator {
   position: absolute;
   bottom: 2px;
@@ -396,6 +412,25 @@ body {
   margin-left: 8px;
 }
 
+/* Date Header */
+.date-header {
+  text-align: center;
+  padding: 16px;
+  position: sticky;
+  top: 0;
+  background: var(--background-color);
+  z-index: 10;
+}
+
+.date-header span {
+  background: var(--card-background);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 /* Messages Container */
 .messages-container {
   flex: 1;
@@ -415,56 +450,51 @@ body {
 .message {
   display: flex;
   margin-bottom: 16px;
-  opacity: 0;
-  transform: translateY(20px);
-  animation: messageSlideIn 0.3s ease forwards;
+  align-items: flex-end;
 }
 
-.message.own {
-  flex-direction: row-reverse;
+.message.sent {
+  justify-content: flex-end;
 }
 
-.message-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--accent-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-  font-size: 12px;
-  flex-shrink: 0;
-  margin: 0 8px;
-}
-
-.message.own .message-avatar {
-  display: none;
+.message.received {
+  justify-content: flex-start;
 }
 
 .message-content {
-  max-width: 70%;
+  max-width: 75%;
   display: flex;
   flex-direction: column;
 }
 
-.message.own .message-content {
+.message.sent .message-content {
   align-items: flex-end;
 }
 
-.message-bubble {
-  background: var(--message-bg);
-  padding: 10px 14px;
-  border-radius: var(--border-radius-large);
-  word-wrap: break-word;
-  position: relative;
-  margin-bottom: 4px;
+.message.received .message-content {
+  align-items: flex-start;
 }
 
-.message.own .message-bubble {
-  background: var(--own-message-bg);
+.message-text {
+  background: var(--card-background);
+  color: var(--text-primary);
+  padding: 12px 16px;
+  border-radius: 20px;
+  word-wrap: break-word;
+  line-height: 1.4;
+  font-size: 16px;
+}
+
+.message.sent .message-text {
+  background: var(--accent-color);
   color: white;
+  border-bottom-right-radius: 6px;
+}
+
+.message.received .message-text {
+  background: var(--card-background);
+  color: var(--text-primary);
+  border-bottom-left-radius: 6px;
 }
 
 .message-time {

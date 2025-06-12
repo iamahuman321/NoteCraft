@@ -330,18 +330,17 @@ function createChatListItem(chat) {
   chatElement.className = 'chat-item';
   chatElement.addEventListener('click', () => openChat(chat.id, chat.type));
   
-  const avatarClass = chat.type === 'group' ? 'chat-avatar group' : 'chat-avatar';
-  const onlineIndicator = chat.online && chat.type === 'individual' ? 
-    '<div class="online-indicator"></div>' : '';
+  const avatarClass = `chat-avatar ${chat.avatar}`;
+  const onlineIndicator = chat.isOnline ? '<div class="online-indicator"></div>' : '';
   
   const unreadBadge = chat.unreadCount > 0 ? 
     `<div class="unread-badge">${chat.unreadCount}</div>` : '';
   
-  const lastTime = chat.lastTime > 0 ? formatTime(chat.lastTime) : '';
+  const lastTime = chat.lastTime > 0 ? formatTime(chat.lastTime) : 'Today';
   
   chatElement.innerHTML = `
     <div class="${avatarClass}">
-      ${chat.avatar}
+      ${chat.name.charAt(0)}
       ${onlineIndicator}
     </div>
     <div class="chat-content">

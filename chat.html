@@ -20,13 +20,13 @@
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <div class="chat-info">
-                    <h1 class="header-title" id="headerTitle">Family Chat</h1>
+                    <h1 class="header-title" id="headerTitle">Messages</h1>
                     <span class="chat-status" id="chatStatus"></span>
                 </div>
             </div>
             <div class="header-right">
                 <button class="header-action-btn" id="headerActionBtn">
-                    <i class="fas fa-cog"></i>
+                    <i class="fas fa-ellipsis-h"></i>
                 </button>
             </div>
         </div>
@@ -65,31 +65,59 @@
 
         <!-- Individual Chat Page -->
         <div class="page" id="chatPage">
+            <!-- Date Header -->
+            <div class="date-header">
+                <span>Today</span>
+            </div>
+            
             <div class="messages-container" id="messagesContainer">
                 <div class="messages-list" id="messagesList">
-                    <!-- Messages will be loaded here -->
+                    <!-- Sample messages like in reference -->
+                    <div class="message received">
+                        <div class="message-content">
+                            <div class="message-text">Hey, what's up?</div>
+                        </div>
+                    </div>
+                    
+                    <div class="message sent">
+                        <div class="message-content">
+                            <div class="message-text">Not much, just hanging out at home. How about you?</div>
+                        </div>
+                    </div>
+                    
+                    <div class="message received">
+                        <div class="message-content">
+                            <div class="message-text">Same here. I've been trying to stay busy by working on some art projects.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="message sent">
+                        <div class="message-content">
+                            <div class="message-text">That sounds cool. What kind of art are you into?</div>
+                        </div>
+                    </div>
+                    
+                    <div class="message received">
+                        <div class="message-content">
+                            <div class="message-text">I like to do a lot of different things, but right now I'm really into painting. I've been working on a series of abstract landscapes.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="message-input-container">
                 <div class="message-input-wrapper">
                     <button class="attach-btn" id="attachBtn">
-                        <i class="fas fa-plus"></i>
+                        <i class="fas fa-paperclip"></i>
                     </button>
                     <input type="file" id="imageInput" accept="image/*" style="display: none;" />
                     <div class="input-wrapper">
                         <textarea 
                             class="message-input" 
                             id="messageInput" 
-                            placeholder="Message..."
+                            placeholder="Type your message"
                             rows="1"></textarea>
-                        <button class="emoji-btn" id="emojiBtn">
-                            <i class="fas fa-smile"></i>
-                        </button>
                     </div>
-                    <button class="voice-btn" id="voiceBtn">
-                        <i class="fas fa-microphone"></i>
-                    </button>
                     <button class="send-btn" id="sendBtn">
                         <i class="fas fa-paper-plane"></i>
                     </button>
