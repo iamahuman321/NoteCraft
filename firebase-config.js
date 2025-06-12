@@ -33,6 +33,11 @@ auth.onAuthStateChanged((user) => {
     initializeChat();
     updateUIForUser(user);
     setUserOnline();
+    
+    // Update the mobile chat interface
+    if (typeof initializeFamilyChats === 'function') {
+      initializeFamilyChats();
+    }
   } else {
     currentUser = null;
     console.log('User signed out');
@@ -74,7 +79,11 @@ function setupOnlineUsersListener() {
   
   onlineUsersListener = onlineUsersRef.on('value', (snapshot) => {
     const onlineUsers = snapshot.val() || {};
-    updateOnlineUsersDisplay(onlineUsers);
+    
+    // Update the chat interface if function exists
+    if (typeof updateOnlineUsersDisplay === 'function') {
+      updateOnlineUsersDisplay(onlineUsers);
+    }
   });
 }
 
