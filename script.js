@@ -233,6 +233,19 @@ function showPage(pageId) {
 function goBackToChatList() {
   currentChatId = null;
   currentChatType = null;
+  
+  // Reset header to main chat list view
+  if (headerTitle) {
+    headerTitle.innerHTML = 'Messages';
+  }
+  if (backBtn) backBtn.classList.add('hidden');
+  if (headerActionBtn) {
+    headerActionBtn.innerHTML = '<i class="fas fa-ellipsis-h"></i>';
+    // Remove any extra action buttons
+    const extraButtons = headerActionBtn.parentNode.querySelectorAll('.header-action-btn:not(#headerActionBtn)');
+    extraButtons.forEach(btn => btn.remove());
+  }
+  
   showPage('chatListPage');
 }
 
@@ -244,6 +257,29 @@ function openChat(chatId, chatType) {
   if (chat) {
     chat.unreadCount = 0;
     renderChatList();
+    
+    // Update header to show individual chat info like reference
+    if (headerTitle) {
+      headerTitle.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="chat-avatar ${chat.avatar}" style="width: 40px; height: 40px; margin: 0;">
+            ${chat.name.charAt(0)}
+            ${chat.isOnline ? '<div class="online-indicator"></div>' : ''}
+          </div>
+          <div>
+            <div style="font-size: 16px; font-weight: 600;">${chat.name}</div>
+            <div style="font-size: 12px; color: var(--online-color); font-weight: 500;">● active</div>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Show back button and update action buttons
+    if (backBtn) backBtn.classList.remove('hidden');
+    if (headerActionBtn) {
+      headerActionBtn.innerHTML = '<i class="fas fa-phone"></i>';
+      headerActionBtn.insertAdjacentHTML('afterend', '<button class="header-action-btn"><i class="fas fa-camera"></i></button>');
+    }
   }
   
   showPage('chatPage');
