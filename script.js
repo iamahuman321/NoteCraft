@@ -706,17 +706,18 @@ function saveLocalNote() {
 }
 
 function saveSharedNote() {
-  if (!currentNote.sharedId || isReceivingUpdate) return;
+  if (!currentNote.sharedId) return;
   
   const currentUser = window.authFunctions?.getCurrentUser();
-  if (currentUser && window.authFunctions?.updateSharedNote && window.database) {
+  if (currentUser && window.database) {
     try {
-      // Set a flag to prevent infinite loops
-      isReceivingUpdate = true;
+      // Get current values from DOM to ensure latest content
+      const titleInput = document.getElementById("titleInput");
+      const contentTextarea = document.getElementById("contentTextarea");
       
       const updateData = {
-        title: currentNote.title || '',
-        content: currentNote.content || '',
+        title: titleInput ? titleInput.value : (currentNote.title || ''),
+        content: contentTextarea ? contentTextarea.value : (currentNote.content || ''),
         categories: currentNote.categories || [],
         images: currentNote.images || [],
         listSections: currentNote.listSections || [],
@@ -728,23 +729,28 @@ function saveSharedNote() {
         lastModified: Date.now()
       };
       
-      // Update Firebase directly for real-time sync
+      // Update currentNote with latest values
+      currentNote.title = updateData.title;
+      currentNote.content = updateData.content;
+      currentNote.updatedAt = updateData.updatedAt;
+      currentNote.lastModified = updateData.lastModified;
+      
+      // Update Firebase directly for consistency
       window.database.ref(`sharedNotes/${currentNote.sharedId}`).set(updateData)
         .then(() => {
-          console.log('Shared note saved successfully');
-          isReceivingUpdate = false;
+          console.log('Shared note saved successfully to Firebase');
+          
+          // Update local note
+          const existingIndex = notes.findIndex(n => n.id === currentNote.id);
+          if (existingIndex >= 0) {
+            notes[existingIndex] = { ...currentNote };
+            localStorage.setItem("notes", JSON.stringify(notes));
+          }
         })
         .catch((error) => {
           console.error('Error saving shared note:', error);
-          isReceivingUpdate = false;
         });
       
-      // Also update local note
-      const existingIndex = notes.findIndex(n => n.id === currentNote.id);
-      if (existingIndex >= 0 && existingIndex < notes.length) {
-        notes[existingIndex] = { ...currentNote };
-        localStorage.setItem("notes", JSON.stringify(notes));
-      }
     } catch (error) {
       console.error("Error saving shared note:", error);
     }
@@ -2873,12 +2879,18 @@ function setupRealtimeCollaboration(sharedId) {
     const sharedNote = snapshot.val();
     if (!sharedNote) return;
     
-    // Skip if we're currently saving to prevent loops
-    if (isReceivingUpdate) return;
-    
     // Update the current note with shared data
     if (currentNote && currentNote.sharedId === sharedId) {
-      isReceivingUpdate = true;
+      // Check if this is a newer update
+      const isNewer = !currentNote.updatedAt || sharedNote.updatedAt > currentNote.updatedAt;
+      
+      // Skip if this is our own update or if it's older
+      const currentUser = window.authFunctions?.getCurrentUser();
+      const isOwnUpdate = currentUser && sharedNote.lastEditedBy === currentUser.uid;
+      
+      if (!isNewer && isOwnUpdate) return;
+      
+      console.log('Real-time update received - content synchronized');
       
       // Update note content
       currentNote.title = sharedNote.title || '';
@@ -2886,6 +2898,9 @@ function setupRealtimeCollaboration(sharedId) {
       currentNote.categories = sharedNote.categories || [];
       currentNote.images = sharedNote.images || [];
       currentNote.listSections = sharedNote.listSections || [];
+      currentNote.updatedAt = sharedNote.updatedAt;
+      currentNote.lastModified = sharedNote.lastModified;
+      
       // Handle legacy list format
       if (sharedNote.list && !sharedNote.listSections) {
         currentNote.listSections = [{
@@ -2894,27 +2909,26 @@ function setupRealtimeCollaboration(sharedId) {
           items: sharedNote.list
         }];
       }
-      currentNote.updatedAt = sharedNote.updatedAt;
       
       // Update current list type for UI
       if (sharedNote.listType) {
         currentListType = sharedNote.listType;
       }
       
-      // Update UI elements with real-time changes
+      // Update UI elements with real-time changes only if user isn't actively typing
       const titleInput = document.getElementById("titleInput");
       const contentTextarea = document.getElementById("contentTextarea");
+      const activeElement = document.activeElement;
       
-      // Always update fields with latest content from Firebase
-      if (titleInput) {
+      // Update title if user isn't typing in it
+      if (titleInput && activeElement !== titleInput) {
         titleInput.value = currentNote.title || '';
       }
       
-      if (contentTextarea) {
+      // Update content if user isn't typing in it
+      if (contentTextarea && activeElement !== contentTextarea) {
         contentTextarea.value = currentNote.content || '';
       }
-      
-      console.log('Real-time update received - content synchronized');
       
       // Update category chips
       updateCategoryChips();
@@ -3080,8 +3094,8 @@ function setupFastAutoSave() {
     }
   }
   
-  // Save every 150ms for near-instant real-time collaboration
-  const fastAutoSave = debounce(fastSave, 150);
+  // Save every 500ms for stable real-time collaboration
+  const fastAutoSave = debounce(fastSave, 500);
   
   if (titleInput) {
     titleInput.removeEventListener('input', fastAutoSave);
