@@ -346,7 +346,7 @@ body {
   }
 }
 
-/* Hamburger Menu Button - Mobile Optimized */
+/* Hamburger Menu Button - Ultra Smooth Mobile */
 .hamburger-btn {
   display: flex;
   flex-direction: column;
@@ -358,7 +358,7 @@ body {
   cursor: pointer;
   padding: 8px;
   border-radius: var(--border-radius-sm);
-  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   touch-action: manipulation;
@@ -370,7 +370,7 @@ body {
 
 .hamburger-btn:active {
   background-color: var(--border-color);
-  transform: scale(0.96);
+  transform: scale(0.94);
 }
 
 .hamburger-btn span {
@@ -379,7 +379,7 @@ body {
   height: 3px;
   background-color: var(--text-color);
   border-radius: 2px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   transform-origin: center;
   will-change: transform, opacity;
   backface-visibility: hidden;
@@ -389,7 +389,7 @@ body {
   margin-bottom: 5px;
 }
 
-/* Smooth Hamburger Animation */
+/* Ultra Smooth Hamburger Animation */
 .hamburger-btn.active span:nth-child(1) {
   transform: rotate(45deg) translate(8px, 8px);
   background-color: var(--primary-color);
@@ -397,7 +397,7 @@ body {
 
 .hamburger-btn.active span:nth-child(2) {
   opacity: 0;
-  transform: scale(0.8);
+  transform: scale(0.6);
 }
 
 .hamburger-btn.active span:nth-child(3) {
@@ -462,7 +462,7 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
-/* Sidebar Navigation - Mobile Optimized */
+/* Sidebar Navigation - Ultra Smooth Mobile */
 .sidebar {
   position: fixed;
   top: 0;
@@ -471,7 +471,7 @@ body {
   height: 100vh;
   background: var(--background-color);
   z-index: 1001;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   box-shadow: var(--shadow-lg);
   transform: translateX(0);
   will-change: transform;
@@ -492,8 +492,8 @@ body {
   background: rgba(0, 0, 0, 0.5);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
-              visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+              visibility 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   z-index: 1000;
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
@@ -529,7 +529,7 @@ body {
   cursor: pointer;
   border-radius: var(--border-radius-sm);
   font-size: 1.25rem;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   display: flex;
@@ -543,7 +543,7 @@ body {
 
 .sidebar-close:active {
   background: rgba(255, 255, 255, 0.2);
-  transform: scale(0.95);
+  transform: scale(0.92);
 }
 
 .sidebar-nav {
@@ -556,7 +556,7 @@ body {
   padding: 1rem 1.5rem;
   color: var(--text-color);
   text-decoration: none;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   font-weight: 500;
   min-height: 56px;
   -webkit-tap-highlight-color: transparent;
@@ -566,12 +566,12 @@ body {
 
 .nav-item:hover {
   background-color: var(--light-color);
-  transform: translateX(4px);
+  transform: translateX(6px);
 }
 
 .nav-item:active {
   background-color: var(--border-color);
-  transform: translateX(2px) scale(0.98);
+  transform: translateX(3px) scale(0.96);
 }
 
 .nav-item i {
