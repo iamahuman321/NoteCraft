@@ -98,6 +98,7 @@ function renderCategories() {
         )
 
         console.log(`Category ${category.name} has ${notesInCategory.length} notes`)
+        console.log(`Notes in category:`, notesInCategory.map(n => ({ id: n.id, title: n.title })))
 
         // Render notes list or empty message
         const notesHtml =
@@ -136,12 +137,14 @@ function toggleCategoryNotes(headerElement) {
   const categoryNotes = categoryItem.querySelector(".category-notes")
   const toggleIcon = headerElement.querySelector(".toggle-icon")
   
-  if (categoryNotes.style.display === "none") {
+  if (categoryNotes.style.display === "none" || categoryNotes.style.display === "") {
     categoryNotes.style.display = "block"
     toggleIcon.textContent = "▲"
+    console.log("Expanded category notes")
   } else {
     categoryNotes.style.display = "none"
     toggleIcon.textContent = "▼"
+    console.log("Collapsed category notes")
   }
 }
 
