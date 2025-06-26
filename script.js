@@ -2904,6 +2904,15 @@ function setupRealtimeCollaboration(sharedId) {
       // If user is typing, show a subtle indicator that content was updated by others
       if (document.activeElement === titleInput || document.activeElement === contentTextarea) {
         console.log('Real-time update received while user is typing');
+        // Show brief sync indicator without interrupting typing
+        const syncIndicator = document.querySelector('.sync-indicator');
+        if (syncIndicator) {
+          syncIndicator.textContent = '↻ Live sync';
+          syncIndicator.style.opacity = '1';
+          setTimeout(() => {
+            syncIndicator.style.opacity = '0';
+          }, 1500);
+        }
       }
       
       // Update category chips
@@ -2947,6 +2956,8 @@ function setupRealtimeCollaboration(sharedId) {
   
   // Setup faster auto-save for collaborative editing
   setupFastAutoSave();
+  
+  console.log("Real-time collaboration enabled for shared note:", sharedId);
   
   // Setup user activity tracking
   trackUserActivity();
@@ -3068,8 +3079,8 @@ function setupFastAutoSave() {
     }
   }
   
-  // Save every 750ms for optimal performance and real-time feel
-  const fastAutoSave = debounce(fastSave, 750);
+  // Save every 150ms for near-instant real-time collaboration
+  const fastAutoSave = debounce(fastSave, 150);
   
   if (titleInput) {
     titleInput.removeEventListener('input', fastAutoSave);
@@ -3195,7 +3206,7 @@ function updateCollaboratorPresence(activeUsers) {
   if (collaborators.length === 0) {
     activeCollaborators.innerHTML = '';
     if (collaborationText) {
-      collaborationText.textContent = 'Real-time collaboration active';
+      collaborationText.textContent = 'Live editing enabled';
     }
     return;
   }
