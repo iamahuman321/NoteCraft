@@ -64,6 +64,9 @@ function t(key) {
   return translations[currentLanguage]?.[key] || translations.en[key] || key;
 }
 
+// Global initialization flag
+let appInitialized = false;
+
 // Initialize app
 document.addEventListener("DOMContentLoaded", function() {
   initializeApp();
@@ -106,46 +109,78 @@ function initializeApp() {
     setupEventListeners();
     loadSettings();
     
+    // Wait for auth state to be determined before rendering anything
+    let authStateResolved = false;
+    let initialDataLoaded = false;
+    
+    function checkAndRender() {
+      if (authStateResolved && initialDataLoaded && !appInitialized) {
+        console.log("Both auth and data ready, rendering UI");
+        appInitialized = true;
+        renderNotes();
+        renderCategories();
+        updateFilterChips();
+        updateShareButtonVisibility();
+        updateSidebarAuth();
+      }
+    }
+    
     // Listen for auth state changes and load data accordingly
     if (window.auth) {
-      window.auth.onAuthStateChanged((user) => {
+      window.auth.onAuthStateChanged(async (user) => {
+        console.log("Auth state changed:", user ? "signed in" : "signed out");
         window.currentUser = user;
+        authStateResolved = true;
         
         // Load data after auth state is determined
         if (user && window.authFunctions && !window.authFunctions.isUserGuest()) {
-          // Authenticated user - data will be loaded by firebase-config
-          // Wait for data to be loaded, then render
-          const checkDataLoaded = () => {
-            if (window.dataLoaded || notes.length > 0) {
-              // Sync categories from CategoryManager after Firebase data loads
-              if (window.CategoryManager) {
-                categories = window.CategoryManager.getCategories();
-              }
-              renderNotes();
-              renderCategories();
-              updateFilterChips();
-            } else {
-              setTimeout(checkDataLoaded, 50);
-            }
+          // Authenticated user - wait for Firebase data to load
+          console.log("Loading user data from Firebase...");
+          
+          // Wait for data to be loaded by firebase-config
+          const waitForFirebaseData = () => {
+            return new Promise((resolve) => {
+              const checkData = () => {
+                if (window.dataLoaded || notes.length > 0) {
+                  // Sync categories from CategoryManager after Firebase data loads
+                  if (window.CategoryManager) {
+                    categories = window.CategoryManager.getCategories();
+                  }
+                  console.log("Firebase data loaded successfully");
+                  resolve();
+                } else {
+                  setTimeout(checkData, 100);
+                }
+              };
+              checkData();
+            });
           };
-          setTimeout(checkDataLoaded, 100);
+          
+          await waitForFirebaseData();
+          initialDataLoaded = true;
         } else {
-          // Guest user - load local data
+          // Guest user - load local data immediately
+          console.log("Loading local data for guest user");
           loadLocalData();
-          renderNotes();
-          renderCategories();
-          updateFilterChips();
+          initialDataLoaded = true;
         }
         
-        // Load shared shopping lists for all users (signed in and guest)
+        // Load shared shopping lists for all users
         loadSharedShoppingLists();
         
         // Check for shared note to open
         checkForSharedNoteToOpen();
         
-        updateShareButtonVisibility();
-        updateSidebarAuth();
+        // Check if we can render now
+        checkAndRender();
       });
+    } else {
+      // No auth system, load local data
+      console.log("No auth system, loading local data");
+      loadLocalData();
+      authStateResolved = true;
+      initialDataLoaded = true;
+      checkAndRender();
     }
   });
 }
@@ -723,6 +758,12 @@ function confirmDeleteNote(noteId) {
 
 // Rendering functions
 function renderNotes() {
+  // Don't render if app isn't fully initialized
+  if (!appInitialized && !window.dataLoaded) {
+    console.log("Skipping renderNotes - app not initialized");
+    return;
+  }
+  
   const notesContainer = document.getElementById("notesContainer");
   if (!notesContainer) return;
 
@@ -830,6 +871,12 @@ function renderNotes() {
 }
 
 function renderCategories() {
+  // Don't render if app isn't fully initialized
+  if (!appInitialized && !window.dataLoaded) {
+    console.log("Skipping renderCategories - app not initialized");
+    return;
+  }
+  
   // Sync categories from CategoryManager if available
   if (window.CategoryManager) {
     categories = window.CategoryManager.getCategories();
