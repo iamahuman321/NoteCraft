@@ -7,10 +7,10 @@ let notes = JSON.parse(localStorage.getItem("notes")) || []
 // Initialize the page with CategoryManager
 async function initializePage() {
   console.log("Initializing category page...")
-  console.log("Initial notes count:", notes.length)
   
-  // Load latest notes immediately
-  refreshNotesData()
+  // Load notes from localStorage
+  notes = JSON.parse(localStorage.getItem("notes")) || []
+  console.log("Loaded notes:", notes.length)
   
   // Wait for CategoryManager to be available
   if (window.CategoryManager) {
@@ -29,71 +29,14 @@ async function initializePage() {
     // Retry if CategoryManager not ready
     setTimeout(initializePage, 100)
   }
-  
-  // Set up Firebase authentication listener to refresh notes when user data loads
-  setupFirebaseListener()
 }
 
-// Setup Firebase listener to refresh notes data once
-function setupFirebaseListener() {
-  const checkAndSetupAuth = () => {
-    if (window.auth && window.authFunctions && window.database) {
-      window.auth.onAuthStateChanged((user) => {
-        if (user && !window.authFunctions.isUserGuest()) {
-          // User is authenticated, refresh notes once after auth
-          setTimeout(() => {
-            refreshNotesData()
-          }, 2000);
-        }
-      });
-    } else {
-      setTimeout(checkAndSetupAuth, 500);
-    }
-  };
-  
-  checkAndSetupAuth();
-}
 
-// Refresh notes data from localStorage/Firebase
-function refreshNotesData() {
-  try {
-    const latestNotes = JSON.parse(localStorage.getItem("notes")) || []
-    // Always update notes, not just when count differs
-    notes.length = 0
-    notes.push(...latestNotes)
-    console.log("Category page - Refreshed notes data:", notes.length)
-    console.log("Category page - Notes with categories:", notes.filter(n => n.categories && n.categories.length > 0).length)
-    
-    // Log sample note for debugging
-    if (notes.length > 0) {
-      console.log("Category page - Sample note:", {
-        id: notes[0].id,
-        title: notes[0].title,
-        categories: notes[0].categories
-      })
-      
-      // Log all notes to see their structure
-      notes.forEach((note, index) => {
-        if (index < 3) { // Only log first 3 notes
-          console.log(`Note ${index + 1}:`, {
-            id: note.id,
-            title: note.title,
-            categories: note.categories,
-            hasCategories: Array.isArray(note.categories) && note.categories.length > 0
-          })
-        }
-      })
-    }
-    
-    renderCategories() // Re-render with updated notes
-  } catch (error) {
-    console.error("Error refreshing notes data:", error)
-  }
-}
 
 // Start initialization when page loads
 document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(initializePage, 100)
+  initializePage()
+  setupEventListeners()
 })
 
 // Translations
@@ -371,21 +314,7 @@ function setupEventListeners() {
   setupHamburgerMenu()
 }
 
-// Initialize page
-function init() {
-  // Wait for potential Firebase initialization
-  setTimeout(() => {
-    // Reload categories from localStorage in case they were updated
-    categories = JSON.parse(localStorage.getItem("categories")) || [{ id: "all", name: "All" }]
-    
-    renderCategories()
-    setupEventListeners()
-  }, 100)
-}
-
 // Global functions for inline event handlers
 window.toggleCategoryNotes = toggleCategoryNotes
 window.deleteCategoryItem = deleteCategoryItem
 window.openNoteEditor = openNoteEditor
-
-document.addEventListener("DOMContentLoaded", init)
