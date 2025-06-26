@@ -2,9 +2,9 @@
 
 // Global variables
 let categories = [{ id: "all", name: "All" }]
-let notes = JSON.parse(localStorage.getItem("notes")) || []
+let notes = []
 
-// Initialize the page with CategoryManager
+// Initialize the page
 async function initializePage() {
   console.log("Initializing category page...")
   
@@ -30,8 +30,6 @@ async function initializePage() {
     setTimeout(initializePage, 100)
   }
 }
-
-
 
 // Start initialization when page loads
 document.addEventListener("DOMContentLoaded", () => {
@@ -69,50 +67,9 @@ function showToast(message) {
   }, 3000)
 }
 
-function saveData() {
-  // Save to localStorage and sessionStorage
-  localStorage.setItem("categories", JSON.stringify(categories))
-  localStorage.setItem("categoriesLastModified", Date.now().toString())
-  sessionStorage.setItem("categoriesBackup", JSON.stringify(categories))
-  
-  // Force update global categories if available
-  if (window.categories) {
-    window.categories.length = 0
-    window.categories.push(...categories)
-  }
-  
-  // Immediately save to Firebase - this is critical
-  if (window.authFunctions && typeof window.authFunctions.getCurrentUser === 'function') {
-    const currentUser = window.authFunctions.getCurrentUser()
-    const isGuest = window.authFunctions.isUserGuest()
-    
-    if (currentUser && !isGuest && window.database) {
-      // Save directly to Firebase immediately
-      const userRef = window.database.ref(`users/${currentUser.uid}`)
-      userRef.update({
-        categories: categories,
-        categoriesLastModified: Date.now(),
-        lastUpdated: Date.now()
-      }).then(() => {
-        console.log("Categories saved to Firebase successfully")
-      }).catch((error) => {
-        console.error("Error saving categories to Firebase:", error)
-      })
-    }
-  }
-}
-
-// Open note editor in SPA or alert if not supported
 function openNoteEditor(noteId) {
-  // Try to open note in SPA if available
-  if (window.opener && window.opener.editNote) {
-    window.opener.editNote(notes.find((n) => n.id === noteId))
-    window.close()
-  } else {
-    // Navigate to main page with note ID
-    localStorage.setItem('openNoteId', noteId)
-    window.location.href = 'index.html'
-  }
+  // Redirect to main page with note ID to open editor
+  window.location.href = `index.html?note=${noteId}`
 }
 
 function renderCategories() {
@@ -168,133 +125,117 @@ function renderCategories() {
   }
 }
 
-// Helper function to escape HTML
 function escapeHtml(text) {
-  const div = document.createElement('div')
+  const div = document.createElement("div")
   div.textContent = text
   return div.innerHTML
 }
 
 function toggleCategoryNotes(headerElement) {
-  const notesDiv = headerElement.nextElementSibling
-  if (!notesDiv) return
-  if (notesDiv.style.display === "none") {
-    notesDiv.style.display = "block"
-    headerElement.querySelector(".toggle-icon").textContent = "▲"
+  const categoryItem = headerElement.parentElement
+  const categoryNotes = categoryItem.querySelector(".category-notes")
+  const toggleIcon = headerElement.querySelector(".toggle-icon")
+  
+  if (categoryNotes.style.display === "none") {
+    categoryNotes.style.display = "block"
+    toggleIcon.textContent = "▲"
   } else {
-    notesDiv.style.display = "none"
-    headerElement.querySelector(".toggle-icon").textContent = "▼"
+    categoryNotes.style.display = "none"
+    toggleIcon.textContent = "▼"
   }
 }
 
 async function addCategory() {
   const input = document.getElementById("categoryInput")
-  if (!input) return
-  
   const name = input.value.trim()
+  
   if (!name) return
-
-  if (window.CategoryManager) {
-    const success = await window.CategoryManager.addCategory(name)
-    if (success) {
+  
+  // Check if category already exists
+  if (categories.some(cat => cat.name.toLowerCase() === name.toLowerCase())) {
+    showToast(t("categoryExists"))
+    return
+  }
+  
+  try {
+    if (window.CategoryManager) {
+      await window.CategoryManager.addCategory(name)
       categories = window.CategoryManager.getCategories()
-      renderCategories()
-      input.value = ""
-      showToast(t("categoryAdded"))
     } else {
-      showToast(t("categoryExists"))
+      // Fallback: add directly to local categories
+      const newCategory = {
+        id: generateId(),
+        name: name
+      }
+      categories.push(newCategory)
+      localStorage.setItem("categories", JSON.stringify(categories))
     }
-  } else {
-    // Fallback to original method
-    if (categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
-      showToast(t("categoryExists"))
-      return
-    }
-
-    const newCategory = {
-      id: generateId(),
-      name: name,
-      createdAt: Date.now()
-    }
-
-    categories.push(newCategory)
-    saveData()
-    renderCategories()
+    
     input.value = ""
+    renderCategories()
     showToast(t("categoryAdded"))
+  } catch (error) {
+    console.error("Error adding category:", error)
+    showToast("Error adding category")
   }
 }
 
 async function deleteCategoryItem(categoryId) {
-  // Don't allow deletion of "all" category
-  if (categoryId === "all") return
+  if (!confirm("Delete this category? Notes will not be deleted.")) return
   
-  if (window.CategoryManager) {
-    const success = await window.CategoryManager.deleteCategory(categoryId)
-    if (success) {
+  try {
+    if (window.CategoryManager) {
+      await window.CategoryManager.deleteCategory(categoryId)
       categories = window.CategoryManager.getCategories()
-      renderCategories()
-      showToast(t("categoryDeleted"))
+    } else {
+      // Fallback: remove from local categories
+      categories = categories.filter(cat => cat.id !== categoryId)
+      localStorage.setItem("categories", JSON.stringify(categories))
     }
-  } else {
-    // Fallback to original method
-    categories = categories.filter((c) => c.id !== categoryId)
     
-    // Remove category from all notes
-    const updatedNotes = notes.map(note => {
-      if (note.categories && note.categories.includes(categoryId)) {
-        note.categories = note.categories.filter(catId => catId !== categoryId)
-      }
-      return note
-    })
-    
-    localStorage.setItem("notes", JSON.stringify(updatedNotes))
-    
-    saveData()
     renderCategories()
     showToast(t("categoryDeleted"))
+  } catch (error) {
+    console.error("Error deleting category:", error)
+    showToast("Error deleting category")
   }
 }
 
 function generateId() {
-  return Math.random().toString(36).substr(2, 9) + Date.now().toString(36)
+  return Math.random().toString(36).substring(2) + Date.now().toString(36)
 }
 
-// Hamburger menu functions
 function setupHamburgerMenu() {
-  const hamburgerBtn = document.getElementById("hamburgerBtn");
-  const sidebar = document.getElementById("sidebar");
-  const sidebarClose = document.getElementById("sidebarClose");
-  const sidebarOverlay = document.getElementById("sidebarOverlay");
+  const hamburgerBtn = document.getElementById("hamburgerBtn")
+  const sidebar = document.getElementById("sidebar")
+  const sidebarClose = document.getElementById("sidebarClose")
+  const sidebarOverlay = document.getElementById("sidebarOverlay")
 
-  if (hamburgerBtn) {
-    hamburgerBtn.addEventListener("click", toggleSidebar);
-  }
-  if (sidebarClose) {
-    sidebarClose.addEventListener("click", closeSidebar);
-  }
-  if (sidebarOverlay) {
-    sidebarOverlay.addEventListener("click", closeSidebar);
-  }
+  if (hamburgerBtn) hamburgerBtn.addEventListener("click", toggleSidebar)
+  if (sidebarClose) sidebarClose.addEventListener("click", closeSidebar)
+  if (sidebarOverlay) sidebarOverlay.addEventListener("click", closeSidebar)
 }
 
 function toggleSidebar() {
-  const sidebar = document.getElementById("sidebar");
-  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const sidebar = document.getElementById("sidebar")
+  const overlay = document.getElementById("sidebarOverlay")
   
-  sidebar.classList.toggle("open");
-  hamburgerBtn.classList.toggle("active");
+  if (sidebar && overlay) {
+    sidebar.classList.toggle("open")
+    overlay.classList.toggle("active")
+  }
 }
 
 function closeSidebar() {
-  const sidebar = document.getElementById("sidebar");
-  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const sidebar = document.getElementById("sidebar")
+  const overlay = document.getElementById("sidebarOverlay")
   
-  sidebar.classList.remove("open");
-  hamburgerBtn.classList.remove("active");
+  if (sidebar && overlay) {
+    sidebar.classList.remove("open")
+    overlay.classList.remove("active")
+  }
 }
 
-// Event listeners
 function setupEventListeners() {
   const addBtn = document.getElementById("addCategoryFormBtn")
   const input = document.getElementById("categoryInput")
