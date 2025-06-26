@@ -706,26 +706,43 @@ function saveLocalNote() {
 }
 
 function saveSharedNote() {
-  if (!currentNote.sharedId) return;
+  if (!currentNote.sharedId || isReceivingUpdate) return;
   
   const currentUser = window.authFunctions?.getCurrentUser();
-  if (currentUser && window.authFunctions?.updateSharedNote) {
+  if (currentUser && window.authFunctions?.updateSharedNote && window.database) {
     try {
-      window.authFunctions.updateSharedNote(currentNote.sharedId, {
-        title: currentNote.title,
-        content: currentNote.content,
+      // Set a flag to prevent infinite loops
+      isReceivingUpdate = true;
+      
+      const updateData = {
+        title: currentNote.title || '',
+        content: currentNote.content || '',
         categories: currentNote.categories || [],
         images: currentNote.images || [],
         listSections: currentNote.listSections || [],
-        // Keep legacy list support for backwards compatibility
         list: currentNote.list || [],
-        listType: currentNote.listType || 'bulleted'
-      });
+        listType: currentNote.listType || 'bulleted',
+        lastEditedBy: currentUser.uid,
+        lastEditedByName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Unknown',
+        updatedAt: Date.now(),
+        lastModified: Date.now()
+      };
+      
+      // Update Firebase directly for real-time sync
+      window.database.ref(`sharedNotes/${currentNote.sharedId}`).set(updateData)
+        .then(() => {
+          console.log('Shared note saved successfully');
+          isReceivingUpdate = false;
+        })
+        .catch((error) => {
+          console.error('Error saving shared note:', error);
+          isReceivingUpdate = false;
+        });
       
       // Also update local note
       const existingIndex = notes.findIndex(n => n.id === currentNote.id);
       if (existingIndex >= 0 && existingIndex < notes.length) {
-        notes[existingIndex] = currentNote;
+        notes[existingIndex] = { ...currentNote };
         localStorage.setItem("notes", JSON.stringify(notes));
       }
     } catch (error) {
@@ -2853,10 +2870,11 @@ function setupRealtimeCollaboration(sharedId) {
   
   // Listen for changes to the shared note
   const listener = sharedNoteRef.on('value', (snapshot) => {
-    if (isReceivingUpdate) return; // Prevent infinite loops
-    
     const sharedNote = snapshot.val();
     if (!sharedNote) return;
+    
+    // Skip if we're currently saving to prevent loops
+    if (isReceivingUpdate) return;
     
     // Update the current note with shared data
     if (currentNote && currentNote.sharedId === sharedId) {
@@ -2887,33 +2905,16 @@ function setupRealtimeCollaboration(sharedId) {
       const titleInput = document.getElementById("titleInput");
       const contentTextarea = document.getElementById("contentTextarea");
       
-      // Update title field if user is not currently typing in it
-      if (titleInput && document.activeElement !== titleInput) {
-        if (titleInput.value !== (currentNote.title || '')) {
-          titleInput.value = currentNote.title || '';
-        }
+      // Always update fields with latest content from Firebase
+      if (titleInput) {
+        titleInput.value = currentNote.title || '';
       }
       
-      // Update content field if user is not currently typing in it
-      if (contentTextarea && document.activeElement !== contentTextarea) {
-        if (contentTextarea.value !== (currentNote.content || '')) {
-          contentTextarea.value = currentNote.content || '';
-        }
+      if (contentTextarea) {
+        contentTextarea.value = currentNote.content || '';
       }
       
-      // If user is typing, show a subtle indicator that content was updated by others
-      if (document.activeElement === titleInput || document.activeElement === contentTextarea) {
-        console.log('Real-time update received while user is typing');
-        // Show brief sync indicator without interrupting typing
-        const syncIndicator = document.querySelector('.sync-indicator');
-        if (syncIndicator) {
-          syncIndicator.textContent = '↻ Live sync';
-          syncIndicator.style.opacity = '1';
-          setTimeout(() => {
-            syncIndicator.style.opacity = '0';
-          }, 1500);
-        }
-      }
+      console.log('Real-time update received - content synchronized');
       
       // Update category chips
       updateCategoryChips();

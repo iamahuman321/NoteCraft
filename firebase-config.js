@@ -643,7 +643,14 @@ async function updateSharedNote(sharedId, updates) {
   }
 
   console.log('Updating shared note:', sharedId, 'with data:', updateData);
-  await window.database.ref(`sharedNotes/${sharedId}`).update(updateData)
+  
+  try {
+    await window.database.ref(`sharedNotes/${sharedId}`).set(updateData);
+    console.log('Shared note updated successfully in Firebase');
+  } catch (error) {
+    console.error('Error updating shared note:', error);
+    throw error;
+  }
 }
 
 async function updatePresence(sharedId, data) {
