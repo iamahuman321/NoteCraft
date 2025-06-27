@@ -557,6 +557,8 @@ function setupModalEventListeners() {
   const editRecipeBtn = document.getElementById("editRecipeBtn");
   const addIngredientBtn = document.getElementById("addIngredientBtn");
   const addStepBtn = document.getElementById("addStepBtn");
+  const addRecipeImageBtn = document.getElementById("addRecipeImageBtn");
+  const recipeImageUpload = document.getElementById("recipeImageUpload");
 
   if (addRecipeBtn) addRecipeBtn.addEventListener("click", createNewRecipe);
   if (saveRecipeBtn) saveRecipeBtn.addEventListener("click", saveRecipe);
@@ -564,6 +566,10 @@ function setupModalEventListeners() {
   if (editRecipeBtn) editRecipeBtn.addEventListener("click", editCurrentRecipe);
   if (addIngredientBtn) addIngredientBtn.addEventListener("click", addRecipeIngredient);
   if (addStepBtn) addStepBtn.addEventListener("click", addRecipeStep);
+  if (addRecipeImageBtn) addRecipeImageBtn.addEventListener("click", () => {
+    if (recipeImageUpload) recipeImageUpload.click();
+  });
+  if (recipeImageUpload) recipeImageUpload.addEventListener("change", processRecipeImageUpload);
 
   // Close modals on overlay click
   document.querySelectorAll(".modal").forEach(modal => {
@@ -4535,6 +4541,7 @@ function createNewRecipe() {
     description: '',
     ingredients: [''],
     method: [''],
+    images: [],
     createdAt: Date.now(),
     updatedAt: Date.now()
   };
@@ -4607,6 +4614,7 @@ function populateRecipeEditor() {
   
   renderRecipeIngredients();
   renderRecipeMethod();
+  renderRecipeImages();
 }
 
 // Populate recipe viewer with current recipe data
@@ -4617,6 +4625,8 @@ function populateRecipeViewer() {
   const descriptionEl = document.getElementById("recipeViewerDescription");
   const ingredientsEl = document.getElementById("recipeViewerIngredients");
   const methodEl = document.getElementById("recipeViewerMethod");
+  const imagesEl = document.getElementById("recipeViewerImages");
+  const imagesSection = document.getElementById("recipeViewerImagesSection");
   
   if (titleEl) titleEl.textContent = currentRecipe.title || 'Untitled Recipe';
   if (descriptionEl) {
@@ -4645,6 +4655,20 @@ function populateRecipeViewer() {
           <div class="recipe-viewer-step-text">${escapeHtml(step)}</div>
         </div>
       `).join('');
+  }
+  
+  // Handle images
+  if (imagesEl && imagesSection) {
+    if (currentRecipe.images && currentRecipe.images.length > 0) {
+      imagesSection.style.display = 'block';
+      imagesEl.innerHTML = currentRecipe.images.map((image, index) => `
+        <div class="recipe-image-item">
+          <img src="${image.data}" alt="Recipe photo ${index + 1}" onclick="openImageViewer('${image.data}', ${index})">
+        </div>
+      `).join('');
+    } else {
+      imagesSection.style.display = 'none';
+    }
   }
 }
 
@@ -4844,6 +4868,59 @@ function setupRecipeViewerSwipe() {
   }, 3000);
 }
 
+// Render recipe images in editor
+function renderRecipeImages() {
+  const recipeImages = document.getElementById("recipeImages");
+  if (!recipeImages || !currentRecipe) return;
+  
+  if (!currentRecipe.images) currentRecipe.images = [];
+  
+  recipeImages.innerHTML = currentRecipe.images.map((image, index) => `
+    <div class="recipe-image-item">
+      <img src="${image.data}" alt="Recipe photo ${index + 1}">
+      <button class="recipe-image-delete" onclick="deleteRecipeImage(${index})">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+// Process recipe image upload
+function processRecipeImageUpload(event) {
+  const files = event.target.files;
+  if (!files || files.length === 0 || !currentRecipe) return;
+  
+  Array.from(files).forEach(file => {
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageData = {
+          id: generateId(),
+          data: e.target.result,
+          name: file.name,
+          size: file.size,
+          timestamp: Date.now()
+        };
+        
+        if (!currentRecipe.images) currentRecipe.images = [];
+        currentRecipe.images.push(imageData);
+        renderRecipeImages();
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+  
+  // Clear the input
+  event.target.value = '';
+}
+
+// Delete recipe image
+function deleteRecipeImage(index) {
+  if (!currentRecipe || !currentRecipe.images) return;
+  currentRecipe.images.splice(index, 1);
+  renderRecipeImages();
+}
+
 // Initialize recipes when app loads
 document.addEventListener('DOMContentLoaded', () => {
   loadRecipes();
@@ -4864,3 +4941,4 @@ window.updateRecipeIngredient = updateRecipeIngredient;
 window.updateRecipeStep = updateRecipeStep;
 window.deleteRecipeIngredient = deleteRecipeIngredient;
 window.deleteRecipeStep = deleteRecipeStep;
+window.deleteRecipeImage = deleteRecipeImage;

@@ -201,6 +201,18 @@
                         </button>
                     </div>
 
+                    <div class="recipe-section">
+                        <h3>Photos</h3>
+                        <div class="recipe-images" id="recipeImages">
+                            <!-- Recipe images will be rendered here -->
+                        </div>
+                        <input type="file" id="recipeImageUpload" accept="image/*" multiple style="display: none;">
+                        <button class="btn-secondary" id="addRecipeImageBtn">
+                            <i class="fas fa-camera"></i>
+                            Add Photos
+                        </button>
+                    </div>
+
                     <div class="recipe-actions">
                         <button class="btn-primary" id="saveRecipeBtn">
                             <i class="fas fa-save"></i>
@@ -237,6 +249,11 @@
                     <div class="recipe-viewer-section">
                         <h3>Method</h3>
                         <div class="recipe-viewer-method" id="recipeViewerMethod"></div>
+                    </div>
+
+                    <div class="recipe-viewer-section" id="recipeViewerImagesSection">
+                        <h3>Photos</h3>
+                        <div class="recipe-viewer-images" id="recipeViewerImages"></div>
                     </div>
                 </div>
             </div>
