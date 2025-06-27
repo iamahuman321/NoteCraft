@@ -41,6 +41,11 @@ This is a Progressive Web Application (PWA) designed for family note-taking and 
 - **category.js**: Category-specific page logic
 - **category-manager.js**: Unified category management system with Firebase sync
 
+### Recipes System
+- **recipes.html**: Recipe management interface with multimedia support
+- **recipes.js**: Recipe creation, editing, and organization logic
+- **Media Support**: Photo and video uploads with viewer functionality
+
 ### Sharing System
 - **share.html**: Shared notes and invitations interface
 - **share.js**: Real-time collaboration logic
@@ -112,6 +117,7 @@ This is a Progressive Web Application (PWA) designed for family note-taking and 
 
 ```
 Changelog:
+- June 27, 2025. Added comprehensive recipes page with multimedia support
 - June 26, 2025. Initial setup
 ```
 
