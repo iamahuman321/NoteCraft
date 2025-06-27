@@ -340,8 +340,15 @@ function setupEventListeners() {
   if (backBtn) backBtn.addEventListener("click", () => {
     // Handle different back navigation contexts
     const shoppingCategoryPage = document.getElementById("shoppingCategoryPage");
+    const recipeEditorPage = document.getElementById("recipeEditorPage");
+    const recipeViewerPage = document.getElementById("recipeViewerPage");
+    
     if (shoppingCategoryPage && shoppingCategoryPage.classList.contains("active")) {
       showShoppingPage();
+    } else if (recipeEditorPage && recipeEditorPage.classList.contains("active")) {
+      showRecipesPage();
+    } else if (recipeViewerPage && recipeViewerPage.classList.contains("active")) {
+      showRecipesPage();
     } else {
       showNotesPage();
     }
@@ -381,6 +388,14 @@ function setupEventListeners() {
   if (navShopping) navShopping.addEventListener("click", (e) => {
     e.preventDefault();
     showShoppingPage();
+    closeSidebar();
+  });
+
+  // Recipes Navigation
+  const navRecipes = document.getElementById("navRecipes");
+  if (navRecipes) navRecipes.addEventListener("click", (e) => {
+    e.preventDefault();
+    showRecipesPage();
     closeSidebar();
   });
   if (navSignOut) navSignOut.addEventListener("click", (e) => {
@@ -534,6 +549,21 @@ function setupModalEventListeners() {
       addShoppingItem(currentShoppingCategory);
     }
   });
+
+  // Recipes
+  const addRecipeBtn = document.getElementById("addRecipeBtn");
+  const saveRecipeBtn = document.getElementById("saveRecipeBtn");
+  const cancelRecipeBtn = document.getElementById("cancelRecipeBtn");
+  const editRecipeBtn = document.getElementById("editRecipeBtn");
+  const addIngredientBtn = document.getElementById("addIngredientBtn");
+  const addStepBtn = document.getElementById("addStepBtn");
+
+  if (addRecipeBtn) addRecipeBtn.addEventListener("click", createNewRecipe);
+  if (saveRecipeBtn) saveRecipeBtn.addEventListener("click", saveRecipe);
+  if (cancelRecipeBtn) cancelRecipeBtn.addEventListener("click", cancelRecipeEditing);
+  if (editRecipeBtn) editRecipeBtn.addEventListener("click", editCurrentRecipe);
+  if (addIngredientBtn) addIngredientBtn.addEventListener("click", addRecipeIngredient);
+  if (addStepBtn) addStepBtn.addEventListener("click", addRecipeStep);
 
   // Close modals on overlay click
   document.querySelectorAll(".modal").forEach(modal => {
@@ -4382,6 +4412,443 @@ function editNoteCategories(noteId) {
   showCategoryModal();
 }
 
+// Recipes functionality
+let recipes = [];
+let currentRecipe = null;
+let isEditingRecipe = false;
+
+// Load recipes from Firebase/localStorage
+function loadRecipes() {
+  try {
+    // Load from localStorage first
+    const localRecipes = localStorage.getItem("globalRecipes");
+    if (localRecipes) {
+      recipes = JSON.parse(localRecipes);
+    }
+    
+    // Load from Firebase if available
+    if (window.database) {
+      window.database.ref('sharedNotes/global_recipes').once('value')
+        .then((snapshot) => {
+          const data = snapshot.val();
+          if (data && data.recipes) {
+            recipes = data.recipes;
+            localStorage.setItem("globalRecipes", JSON.stringify(recipes));
+            renderRecipes();
+          }
+        })
+        .catch((error) => {
+          console.error("Error loading recipes from Firebase:", error);
+        });
+    }
+  } catch (error) {
+    console.error("Error loading recipes:", error);
+    recipes = [];
+  }
+}
+
+// Save recipes to Firebase and localStorage
+function saveRecipes() {
+  try {
+    // Save to localStorage
+    localStorage.setItem("globalRecipes", JSON.stringify(recipes));
+    
+    // Save to Firebase if available
+    if (window.database) {
+      const recipeData = {
+        recipes: recipes,
+        lastUpdated: Date.now()
+      };
+      
+      window.database.ref('sharedNotes/global_recipes').set(recipeData)
+        .then(() => {
+          console.log("Recipes saved to Firebase successfully");
+        })
+        .catch((error) => {
+          console.error("Error saving recipes to Firebase:", error);
+        });
+    }
+  } catch (error) {
+    console.error("Error saving recipes:", error);
+  }
+}
+
+// Show recipes page
+function showRecipesPage() {
+  loadRecipes();
+  
+  document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+  const recipesPage = document.getElementById("recipesPage");
+  if (recipesPage) recipesPage.classList.add("active");
+  
+  const headerTitle = document.getElementById("headerTitle");
+  if (headerTitle) headerTitle.textContent = "RECIPES";
+  
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.classList.add("hidden");
+  
+  const fab = document.getElementById("addNoteBtn");
+  if (fab) fab.classList.add("hidden");
+  
+  renderRecipes();
+}
+
+// Render recipes list
+function renderRecipes() {
+  const recipesList = document.getElementById("recipesList");
+  if (!recipesList) return;
+  
+  if (!recipes || recipes.length === 0) {
+    recipesList.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-utensils"></i>
+        <h3>No recipes yet</h3>
+        <p>Tap the + button to add your first recipe</p>
+      </div>
+    `;
+    return;
+  }
+  
+  recipesList.innerHTML = recipes.map(recipe => `
+    <div class="recipe-card" onclick="viewRecipe('${recipe.id}')">
+      <h3 class="recipe-card-title">${escapeHtml(recipe.title)}</h3>
+      <p class="recipe-card-description">${escapeHtml(recipe.description || '')}</p>
+      <div class="recipe-card-meta">
+        <span class="recipe-card-ingredients">
+          <i class="fas fa-list"></i>
+          ${recipe.ingredients ? recipe.ingredients.length : 0} ingredients
+        </span>
+        <span class="recipe-card-steps">
+          <i class="fas fa-clock"></i>
+          ${recipe.method ? recipe.method.length : 0} steps
+        </span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Create new recipe
+function createNewRecipe() {
+  currentRecipe = {
+    id: generateId(),
+    title: '',
+    description: '',
+    ingredients: [''],
+    method: [''],
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+  isEditingRecipe = false;
+  showRecipeEditor();
+}
+
+// View recipe
+function viewRecipe(recipeId) {
+  const recipe = recipes.find(r => r.id === recipeId);
+  if (!recipe) return;
+  
+  currentRecipe = recipe;
+  showRecipeViewer();
+}
+
+// Edit current recipe
+function editCurrentRecipe() {
+  if (!currentRecipe) return;
+  isEditingRecipe = true;
+  showRecipeEditor();
+}
+
+// Show recipe editor
+function showRecipeEditor() {
+  document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+  const recipeEditorPage = document.getElementById("recipeEditorPage");
+  if (recipeEditorPage) recipeEditorPage.classList.add("active");
+  
+  const headerTitle = document.getElementById("headerTitle");
+  if (headerTitle) headerTitle.textContent = isEditingRecipe ? "EDIT RECIPE" : "NEW RECIPE";
+  
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.classList.remove("hidden");
+  
+  const fab = document.getElementById("addNoteBtn");
+  if (fab) fab.classList.add("hidden");
+  
+  populateRecipeEditor();
+}
+
+// Show recipe viewer
+function showRecipeViewer() {
+  document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+  const recipeViewerPage = document.getElementById("recipeViewerPage");
+  if (recipeViewerPage) recipeViewerPage.classList.add("active");
+  
+  const headerTitle = document.getElementById("headerTitle");
+  if (headerTitle) headerTitle.textContent = "RECIPE";
+  
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.classList.remove("hidden");
+  
+  const fab = document.getElementById("addNoteBtn");
+  if (fab) fab.classList.add("hidden");
+  
+  populateRecipeViewer();
+  setupRecipeViewerSwipe();
+}
+
+// Populate recipe editor with current recipe data
+function populateRecipeEditor() {
+  if (!currentRecipe) return;
+  
+  const titleInput = document.getElementById("recipeTitleInput");
+  const descriptionInput = document.getElementById("recipeDescriptionInput");
+  
+  if (titleInput) titleInput.value = currentRecipe.title || '';
+  if (descriptionInput) descriptionInput.value = currentRecipe.description || '';
+  
+  renderRecipeIngredients();
+  renderRecipeMethod();
+}
+
+// Populate recipe viewer with current recipe data
+function populateRecipeViewer() {
+  if (!currentRecipe) return;
+  
+  const titleEl = document.getElementById("recipeViewerTitle");
+  const descriptionEl = document.getElementById("recipeViewerDescription");
+  const ingredientsEl = document.getElementById("recipeViewerIngredients");
+  const methodEl = document.getElementById("recipeViewerMethod");
+  
+  if (titleEl) titleEl.textContent = currentRecipe.title || 'Untitled Recipe';
+  if (descriptionEl) {
+    if (currentRecipe.description) {
+      descriptionEl.textContent = currentRecipe.description;
+      descriptionEl.style.display = 'block';
+    } else {
+      descriptionEl.style.display = 'none';
+    }
+  }
+  
+  if (ingredientsEl) {
+    ingredientsEl.innerHTML = (currentRecipe.ingredients || [])
+      .filter(ingredient => ingredient.trim())
+      .map(ingredient => `
+        <div class="recipe-viewer-ingredient">${escapeHtml(ingredient)}</div>
+      `).join('');
+  }
+  
+  if (methodEl) {
+    methodEl.innerHTML = (currentRecipe.method || [])
+      .filter(step => step.trim())
+      .map((step, index) => `
+        <div class="recipe-viewer-step">
+          <div class="recipe-viewer-step-number">${index + 1}</div>
+          <div class="recipe-viewer-step-text">${escapeHtml(step)}</div>
+        </div>
+      `).join('');
+  }
+}
+
+// Render recipe ingredients in editor
+function renderRecipeIngredients() {
+  const ingredientsList = document.getElementById("ingredientsList");
+  if (!ingredientsList || !currentRecipe) return;
+  
+  ingredientsList.innerHTML = currentRecipe.ingredients.map((ingredient, index) => `
+    <div class="ingredient-item">
+      <div class="ingredient-number">${index + 1}</div>
+      <input type="text" class="ingredient-input" value="${escapeHtml(ingredient)}" 
+             onchange="updateRecipeIngredient(${index}, this.value)" 
+             placeholder="Enter ingredient...">
+      <button class="ingredient-delete" onclick="deleteRecipeIngredient(${index})" 
+              ${currentRecipe.ingredients.length <= 1 ? 'style="display:none"' : ''}>
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+// Render recipe method in editor
+function renderRecipeMethod() {
+  const methodSteps = document.getElementById("methodSteps");
+  if (!methodSteps || !currentRecipe) return;
+  
+  methodSteps.innerHTML = currentRecipe.method.map((step, index) => `
+    <div class="method-step">
+      <div class="step-number">${index + 1}</div>
+      <input type="text" class="step-input" value="${escapeHtml(step)}" 
+             onchange="updateRecipeStep(${index}, this.value)" 
+             placeholder="Enter step...">
+      <button class="step-delete" onclick="deleteRecipeStep(${index})" 
+              ${currentRecipe.method.length <= 1 ? 'style="display:none"' : ''}>
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+// Add recipe ingredient
+function addRecipeIngredient() {
+  if (!currentRecipe) return;
+  currentRecipe.ingredients.push('');
+  renderRecipeIngredients();
+}
+
+// Add recipe step
+function addRecipeStep() {
+  if (!currentRecipe) return;
+  currentRecipe.method.push('');
+  renderRecipeMethod();
+}
+
+// Update recipe ingredient
+function updateRecipeIngredient(index, value) {
+  if (!currentRecipe || !currentRecipe.ingredients) return;
+  currentRecipe.ingredients[index] = value;
+}
+
+// Update recipe step
+function updateRecipeStep(index, value) {
+  if (!currentRecipe || !currentRecipe.method) return;
+  currentRecipe.method[index] = value;
+}
+
+// Delete recipe ingredient
+function deleteRecipeIngredient(index) {
+  if (!currentRecipe || !currentRecipe.ingredients || currentRecipe.ingredients.length <= 1) return;
+  currentRecipe.ingredients.splice(index, 1);
+  renderRecipeIngredients();
+}
+
+// Delete recipe step
+function deleteRecipeStep(index) {
+  if (!currentRecipe || !currentRecipe.method || currentRecipe.method.length <= 1) return;
+  currentRecipe.method.splice(index, 1);
+  renderRecipeMethod();
+}
+
+// Save recipe
+function saveRecipe() {
+  if (!currentRecipe) return;
+  
+  const titleInput = document.getElementById("recipeTitleInput");
+  const descriptionInput = document.getElementById("recipeDescriptionInput");
+  
+  if (titleInput) currentRecipe.title = titleInput.value.trim();
+  if (descriptionInput) currentRecipe.description = descriptionInput.value.trim();
+  
+  if (!currentRecipe.title) {
+    showToast("Please enter a recipe title", "error");
+    return;
+  }
+  
+  // Filter out empty ingredients and steps
+  currentRecipe.ingredients = currentRecipe.ingredients.filter(ingredient => ingredient.trim());
+  currentRecipe.method = currentRecipe.method.filter(step => step.trim());
+  
+  if (currentRecipe.ingredients.length === 0) {
+    showToast("Please add at least one ingredient", "error");
+    return;
+  }
+  
+  if (currentRecipe.method.length === 0) {
+    showToast("Please add at least one step", "error");
+    return;
+  }
+  
+  currentRecipe.updatedAt = Date.now();
+  
+  if (isEditingRecipe) {
+    const index = recipes.findIndex(r => r.id === currentRecipe.id);
+    if (index !== -1) {
+      recipes[index] = currentRecipe;
+    }
+  } else {
+    recipes.unshift(currentRecipe);
+  }
+  
+  saveRecipes();
+  showToast(isEditingRecipe ? "Recipe updated successfully" : "Recipe saved successfully", "success");
+  showRecipesPage();
+}
+
+// Cancel recipe editing
+function cancelRecipeEditing() {
+  showRecipesPage();
+}
+
+// Setup swipe gestures for recipe viewer
+function setupRecipeViewerSwipe() {
+  const recipeViewer = document.getElementById("recipeViewerPage");
+  if (!recipeViewer) return;
+  
+  let startX = 0;
+  let startY = 0;
+  let threshold = 50;
+  
+  recipeViewer.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  });
+  
+  recipeViewer.addEventListener('touchend', (e) => {
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    
+    const deltaX = endX - startX;
+    const deltaY = endY - startY;
+    
+    // Check if it's a horizontal swipe (more horizontal than vertical)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > threshold) {
+      if (deltaX > 0) {
+        // Right swipe - enter edit mode
+        editCurrentRecipe();
+      }
+    }
+  });
+  
+  // Add visual hint for swipe functionality
+  const swipeHint = document.createElement('div');
+  swipeHint.className = 'swipe-hint';
+  swipeHint.innerHTML = '<i class="fas fa-arrow-right"></i> Swipe right to edit';
+  swipeHint.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary-color);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    opacity: 0.8;
+    animation: fadeInOut 3s ease-in-out;
+    z-index: 1000;
+  `;
+  
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 0.8; }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  recipeViewer.appendChild(swipeHint);
+  
+  // Remove hint after animation
+  setTimeout(() => {
+    if (swipeHint.parentNode) {
+      swipeHint.parentNode.removeChild(swipeHint);
+    }
+  }, 3000);
+}
+
+// Initialize recipes when app loads
+document.addEventListener('DOMContentLoaded', () => {
+  loadRecipes();
+});
+
 // Export for window global
 window.renderNotes = renderNotes;
 window.renderCategories = renderCategories;
@@ -4390,3 +4857,10 @@ window.validateAndRepairData = validateAndRepairData;
 window.duplicateNote = duplicateNote;
 window.shareNote = shareNote;
 window.editNoteCategories = editNoteCategories;
+window.showRecipesPage = showRecipesPage;
+window.renderRecipes = renderRecipes;
+window.viewRecipe = viewRecipe;
+window.updateRecipeIngredient = updateRecipeIngredient;
+window.updateRecipeStep = updateRecipeStep;
+window.deleteRecipeIngredient = deleteRecipeIngredient;
+window.deleteRecipeStep = deleteRecipeStep;

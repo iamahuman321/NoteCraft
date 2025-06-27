@@ -46,6 +46,12 @@ This is a Progressive Web Application (PWA) designed for family note-taking and 
 - **share.js**: Real-time collaboration logic
 - **Invitation System**: Email-based note sharing with accept/decline workflow
 
+### Recipes System
+- **Recipes Page**: Global recipe collection accessible to all users
+- **Recipe Editor**: Rich interface for creating and editing recipes with ingredients and method steps
+- **Recipe Viewer**: Clean cooking-mode interface with swipe-to-edit functionality
+- **Firebase Integration**: Global recipes stored at `sharedNotes/global_recipes` for universal access
+
 ### Service Worker
 - **sw.js**: Offline caching and PWA functionality
 - **Cache Strategy**: Network-first for dynamic content, cache-first for static assets
@@ -112,7 +118,8 @@ This is a Progressive Web Application (PWA) designed for family note-taking and 
 
 ```
 Changelog:
-- June 26, 2025. Initial setup
+- June 27, 2025: Added comprehensive Recipes system with global sharing, editor/viewer modes, and swipe-to-edit functionality
+- June 26, 2025: Initial setup
 ```
 
 ## User Preferences

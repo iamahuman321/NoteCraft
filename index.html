@@ -55,6 +55,10 @@
                 <i class="fas fa-shopping-cart"></i>
                 Shopping Lists
             </a>
+            <a href="#" class="nav-item" id="navRecipes">
+                <i class="fas fa-utensils"></i>
+                Recipes
+            </a>
             <a href="share.html" class="nav-item" id="navShared">
                 <i class="fas fa-share-alt"></i>
                 Shared Notes
@@ -145,6 +149,95 @@
                 </div>
                 <div class="shopping-list-items" id="shoppingListItems">
                     <!-- Shopping items will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Recipes Page -->
+        <div class="page" id="recipesPage">
+            <div class="recipes-container">
+                <div class="recipes-header">
+                    <h2>All Recipes</h2>
+                    <button class="btn-icon" id="addRecipeBtn">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="recipes-list" id="recipesList">
+                    <!-- Recipes will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Recipe Editor Page -->
+        <div class="page" id="recipeEditorPage">
+            <div class="recipe-editor-container">
+                <div class="recipe-editor-content">
+                    <input type="text" class="recipe-title-input" id="recipeTitleInput" placeholder="Recipe title..." />
+                    
+                    <div class="recipe-section">
+                        <h3>Description</h3>
+                        <textarea class="recipe-description" id="recipeDescriptionInput" placeholder="Brief description of the recipe..."></textarea>
+                    </div>
+
+                    <div class="recipe-section">
+                        <h3>Ingredients</h3>
+                        <div class="ingredients-list" id="ingredientsList">
+                            <!-- Ingredients will be rendered here -->
+                        </div>
+                        <button class="btn-secondary" id="addIngredientBtn">
+                            <i class="fas fa-plus"></i>
+                            Add Ingredient
+                        </button>
+                    </div>
+
+                    <div class="recipe-section">
+                        <h3>Method</h3>
+                        <div class="method-steps" id="methodSteps">
+                            <!-- Method steps will be rendered here -->
+                        </div>
+                        <button class="btn-secondary" id="addStepBtn">
+                            <i class="fas fa-plus"></i>
+                            Add Step
+                        </button>
+                    </div>
+
+                    <div class="recipe-actions">
+                        <button class="btn-primary" id="saveRecipeBtn">
+                            <i class="fas fa-save"></i>
+                            Save Recipe
+                        </button>
+                        <button class="btn-secondary" id="cancelRecipeBtn">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recipe Viewer Page -->
+        <div class="page" id="recipeViewerPage">
+            <div class="recipe-viewer-container">
+                <div class="recipe-viewer-content">
+                    <div class="recipe-viewer-header">
+                        <h1 class="recipe-viewer-title" id="recipeViewerTitle"></h1>
+                        <div class="recipe-viewer-actions">
+                            <button class="btn-icon" id="editRecipeBtn">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="recipe-viewer-description" id="recipeViewerDescription"></div>
+                    
+                    <div class="recipe-viewer-section">
+                        <h3>Ingredients</h3>
+                        <div class="recipe-viewer-ingredients" id="recipeViewerIngredients"></div>
+                    </div>
+
+                    <div class="recipe-viewer-section">
+                        <h3>Method</h3>
+                        <div class="recipe-viewer-method" id="recipeViewerMethod"></div>
+                    </div>
                 </div>
             </div>
         </div>
